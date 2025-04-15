@@ -36,3 +36,9 @@ flask db upgrade
 ```bash
 flask run
 ```
+
+## Ajouter le compte utilisateur super admin
+
+```bash
+python3 create_admin.py
+```

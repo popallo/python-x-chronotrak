@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models.client import Client
 from app.models.project import Project
 from app.models.task import Task, TimeEntry
+from app.models.user import User
 from sqlalchemy import func
 from app import db
 
@@ -66,13 +67,19 @@ def reports():
     project_times = db.session.query(
         Project.name, 
         func.sum(TimeEntry.hours).label('total_hours')
-    ).join(Task).join(TimeEntry).group_by(Project.name).all()
+    ).join(
+        Task, Task.project_id == Project.id
+    ).join(
+        TimeEntry, TimeEntry.task_id == Task.id
+    ).group_by(Project.name).all()
     
     # Temps enregistré par utilisateur
     user_times = db.session.query(
         User.name,
         func.sum(TimeEntry.hours).label('total_hours')
-    ).join(TimeEntry).group_by(User.name).all()
+    ).join(
+        TimeEntry, TimeEntry.user_id == User.id
+    ).group_by(User.name).all()
     
     # Temps enregistré par mois
     monthly_times = db.session.query(

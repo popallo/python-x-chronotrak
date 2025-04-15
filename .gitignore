@@ -1,0 +1,42 @@
+# Environnements virtuels
+venv/
+.venv/
+
+# Fichiers d'environnement
+.env
+.env.*
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configurations spécifiques à l'IDE
+.vscode/
+.idea/
+
+# Fichiers générés par Flask
+instance/
+*.log
+
+# Docker
+docker-compose.override.yml
+*.pid
+*.log
+
+# Fichiers de build
+build/
+dist/
+*.egg-info/
+
+# Node.js (si applicable pour le frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Autres fichiers temporaires
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

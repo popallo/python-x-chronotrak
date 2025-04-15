@@ -1,0 +1,73 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    {% if project %}
+                        <i class="fas fa-edit me-2"></i>Modifier le projet
+                    {% else %}
+                        <i class="fas fa-plus me-2"></i>Nouveau projet pour {{ client.name }}
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {% if form.name.errors %}
+                            {{ form.name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.name(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows=3) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.initial_credit.label(class="form-label") }}
+                        {% if form.initial_credit.errors %}
+                            {{ form.initial_credit(class="form-control is-invalid", step="0.1") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.initial_credit.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.initial_credit(class="form-control", step="0.1") }}
+                        {% endif %}
+                        <div class="form-text">
+                            {% if project %}
+                                Modifier le crédit initial ajustera automatiquement le crédit restant.
+                            {% else %}
+                                Le nombre d'heures allouées initialement au projet.
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        {% if project %}
+                            <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Retour
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('clients.client_details', client_id=client.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Retour
+                            </a>
+                        {% endif %}
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

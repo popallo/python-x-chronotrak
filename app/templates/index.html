@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Bienvenue sur ChronoTrak</h1>
+            <p class="lead mb-5">La plateforme de gestion de crédit-temps client</p>
+            
+            <div class="d-grid gap-2 d-sm-flex justify-content-center">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 me-sm-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5 pt-5">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                    <h4 class="card-title">Gestion des clients</h4>
+                    <p class="card-text">Gérez facilement vos clients et leurs informations.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-project-diagram fa-3x mb-3 text-primary"></i>
+                    <h4 class="card-title">Gestion des projets</h4>
+                    <p class="card-text">Suivez l'avancement et le crédit-temps de vos projets.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-3x mb-3 text-primary"></i>
+                    <h4 class="card-title">Gestion des tâches</h4>
+                    <p class="card-text">Organisez vos tâches avec un tableau Kanban intuitif.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

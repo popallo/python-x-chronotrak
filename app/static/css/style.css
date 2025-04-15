@@ -1,0 +1,110 @@
+/* General styling */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Dashboard stats */
+.stats-card {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.stats-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.stats-card .stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* Project credit progress bars */
+.credit-progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+/* Priority colors */
+.priority-basse {
+    color: #17a2b8;
+}
+
+.priority-normale {
+    color: #28a745;
+}
+
+.priority-haute {
+    color: #ffc107;
+}
+
+.priority-urgente {
+    color: #dc3545;
+}
+
+/* Kanban board */
+.kanban-column {
+    min-height: 400px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.kanban-card {
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+/* Time entry form */
+.time-entry-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+/* Form styling */
+.form-label {
+    font-weight: 500;
+}
+
+/* Task status badges */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.à-faire {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.en-cours {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.terminé {
+    background-color: #28a745;
+    color: white;
+}

@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Clients</h1>
+    <a href="{{ url_for('clients.new_client') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nouveau client
+    </a>
+</div>
+
+{% if clients %}
+    <div class="row">
+        {% for client in clients %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{{ client.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if client.contact_name %}
+                            <p><i class="fas fa-user me-2"></i>{{ client.contact_name }}</p>
+                        {% endif %}
+                        {% if client.email %}
+                            <p><i class="fas fa-envelope me-2"></i>{{ client.email }}</p>
+                        {% endif %}
+                        {% if client.phone %}
+                            <p><i class="fas fa-phone me-2"></i>{{ client.phone }}</p>
+                        {% endif %}
+                        <p>
+                            <i class="fas fa-project-diagram me-2"></i>
+                            {{ client.projects|length }} projet(s)
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between">
+                        <a href="{{ url_for('clients.client_details', client_id=client.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Détails
+                        </a>
+                        <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>Aucun client n'a été créé pour le moment.
+    </div>
+{% endif %}
+{% endblock %}

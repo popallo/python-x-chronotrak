@@ -21,15 +21,21 @@ class Project(db.Model):
         
     def add_credit(self, amount, note=None):
         """Ajoute du crédit au projet et crée une entrée dans l'historique"""
+        # Met à jour le crédit restant
         self.remaining_credit += amount
         
+        # Ne pas ajouter de log ici si le projet n'a pas encore d'ID
+        if self.id is None:
+            return
+            
+        # Crée une entrée dans l'historique
         log = CreditLog(
             project_id=self.id,
             amount=amount,
             note=note or f"Ajout de {amount}h de crédit"
         )
         db.session.add(log)
-        
+            
     def deduct_credit(self, amount, task_id=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
         self.remaining_credit -= amount

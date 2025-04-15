@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from app import db
-from app.models.project import Project
+from app.models.project import Project, CreditLog
 from app.models.client import Client
 from app.forms.project import ProjectForm, AddCreditForm
 
@@ -27,6 +27,7 @@ def new_project(client_id):
     form = ProjectForm()
     
     if form.validate_on_submit():
+        # Créer le projet sans appeler add_credit
         project = Project(
             name=form.name.data,
             description=form.description.data,
@@ -34,12 +35,22 @@ def new_project(client_id):
             remaining_credit=form.initial_credit.data,
             client_id=client.id
         )
+        
+        # Ajouter et commit pour obtenir l'ID
         db.session.add(project)
-        
-        # Ajouter le crédit initial à l'historique
-        project.add_credit(form.initial_credit.data, "Crédit initial")
-        
         db.session.commit()
+        
+        # Maintenant, créer manuellement l'entrée de log
+        credit_log = CreditLog(
+            project_id=project.id,  # Maintenant project.id devrait être défini
+            amount=form.initial_credit.data,
+            note="Crédit initial"
+        )
+        db.session.add(credit_log)
+        
+        # Commit à nouveau pour sauvegarder le log
+        db.session.commit()
+        
         flash(f'Projet {form.name.data} créé avec succès!', 'success')
         return redirect(url_for('clients.client_details', client_id=client.id))
         

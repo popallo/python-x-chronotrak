@@ -28,10 +28,10 @@
                         {% endif %}
                         <p>
                             <i class="fas fa-project-diagram me-2"></i>
-                            {{ client.projects|length }} projet(s)
+                            {{ client.projects|length }} projet{% if client.projects|length > 1 %}s{% endif %}
                         </p>
                     </div>
-                    <div class="card-footer bg-white d-flex justify-content-between">
+                    <div class="card-footer d-flex justify-content-between">
                         <a href="{{ url_for('clients.client_details', client_id=client.id) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye me-1"></i>Détails
                         </a>

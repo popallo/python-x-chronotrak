@@ -286,3 +286,60 @@ body.dark-mode .done-column .kanban-title {
 .dark-mode-toggle i {
     font-size: 1.2rem;
 }
+
+/* Tableaux en mode sombre */
+/* Réinitialiser les variables CSS personnalisées de Bootstrap */
+body.dark-mode .users-table-container .table {
+    --bs-table-color: #e0e0e0 !important;
+    --bs-table-bg: #1a1a1a !important;
+    --bs-table-accent-bg: transparent !important;
+}
+
+/* Surcharger toutes les règles de couleur pour les cellules */
+body.dark-mode .users-table-container .table>:not(caption)>*>* {
+    color: #e0e0e0 !important;
+    background-color: #1a1a1a !important;
+    border-color: #3c3c3c !important;
+    box-shadow: none !important; /* Supprimer le box-shadow qui crée l'effet de fond */
+}
+
+/* Styles spécifiques pour les lignes du tbody */
+body.dark-mode .users-table-container .table>tbody>tr:nth-of-type(odd)>* {
+    background-color: #252525 !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode .users-table-container .table>tbody>tr:nth-of-type(even)>* {
+    background-color: #1e1e1e !important;
+    box-shadow: none !important;
+}
+
+/* Styles pour l'en-tête du tableau */
+body.dark-mode .users-table-container .table>thead>tr>* {
+    background-color: #2c2c2c !important;
+    color: #ffffff !important;
+    border-color: #3c3c3c !important;
+    box-shadow: none !important;
+}
+
+/* Style pour le hover sur les lignes */
+body.dark-mode .users-table-container .table-hover>tbody>tr:hover>* {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* S'assurer que le conteneur de la table n'a pas de bordures ou de fond clair */
+body.dark-mode .users-table-container .card-body {
+    padding: 0 !important;
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .users-table-container .card {
+    background-color: #1e1e1e !important;
+    border-color: #3c3c3c !important;
+}
+
+body.dark-mode .users-table-container .table-responsive {
+    background-color: #1e1e1e !important;
+}

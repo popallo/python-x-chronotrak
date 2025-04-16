@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
-    CREDIT_THRESHOLD = 5  # Seuil de crédit pour les alertes
+    CREDIT_THRESHOLD = 2  # Seuil de crédit pour les alertes
 
 class DevelopmentConfig(Config):
     DEBUG = True

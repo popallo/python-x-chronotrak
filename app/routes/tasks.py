@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from datetime import datetime
 from app import db
-from app.models.task import Task, TimeEntry
+from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
-from app.forms.task import TaskForm, TimeEntryForm
+from app.forms.task import TaskForm, TimeEntryForm, CommentForm
 
 tasks = Blueprint('tasks', __name__)
 
@@ -40,13 +40,21 @@ def task_details(task_id):
     task = Task.query.get_or_404(task_id)
     time_entries = TimeEntry.query.filter_by(task_id=task.id).order_by(TimeEntry.created_at.desc()).all()
     
+    # Récupérer les commentaires liés à cette tâche
+    comments = Comment.query.filter_by(task_id=task.id).order_by(Comment.created_at.desc()).all()
+    
     # Formulaire pour ajouter du temps
     time_form = TimeEntryForm()
     
+    # Formulaire pour ajouter un commentaire
+    comment_form = CommentForm()
+    
     return render_template('tasks/task_detail.html', 
                            task=task, 
-                           time_entries=time_entries, 
+                           time_entries=time_entries,
+                           comments=comments, 
                            time_form=time_form,
+                           comment_form=comment_form,
                            title=task.title)
 
 @tasks.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
@@ -167,3 +175,37 @@ def my_tasks():
                           tasks_todo=tasks_todo,
                           tasks_in_progress=tasks_in_progress,
                           title='Mes tâches')
+
+@tasks.route('/tasks/<int:task_id>/add_comment', methods=['POST'])
+@login_required
+def add_comment(task_id):
+    task = Task.query.get_or_404(task_id)
+    form = CommentForm()
+    
+    if form.validate_on_submit():
+        comment = Comment(
+            content=form.content.data,
+            task_id=task.id,
+            user_id=current_user.id
+        )
+        db.session.add(comment)
+        db.session.commit()
+        flash('Votre commentaire a été ajouté!', 'success')
+    
+    return redirect(url_for('tasks.task_details', task_id=task.id))
+
+@tasks.route('/comments/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    task_id = comment.task_id
+    
+    # Vérifier que l'utilisateur est l'auteur du commentaire ou un administrateur
+    if comment.user_id != current_user.id and not current_user.is_admin():
+        flash('Vous n\'êtes pas autorisé à supprimer ce commentaire.', 'danger')
+        return redirect(url_for('tasks.task_details', task_id=task_id))
+    
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Commentaire supprimé avec succès!', 'success')
+    return redirect(url_for('tasks.task_details', task_id=task_id))

@@ -10,7 +10,7 @@
             <div class="card-body">
                 <i class="fas fa-users"></i>
                 <div class="stats-number">{{ total_clients }}</div>
-                <div class="stats-title">Clients</div>
+                <div class="stats-title">Client{{ 's' if total_clients != 1 else '' }}</div>
             </div>
         </div>
     </div>
@@ -19,7 +19,7 @@
             <div class="card-body">
                 <i class="fas fa-project-diagram"></i>
                 <div class="stats-number">{{ total_projects }}</div>
-                <div class="stats-title">Projets</div>
+                <div class="stats-title">Projet{{ 's' if total_projects != 1 else '' }}</div>
             </div>
         </div>
     </div>
@@ -28,7 +28,7 @@
             <div class="card-body">
                 <i class="fas fa-tasks"></i>
                 <div class="stats-number">{{ total_tasks }}</div>
-                <div class="stats-title">Tâches</div>
+                <div class="stats-title">Tâche{{ 's' if total_tasks != 1 else '' }}</div>
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
             <div class="card-body">
                 <i class="fas fa-exclamation-circle"></i>
                 <div class="stats-number">{{ projects_low_credit }}</div>
-                <div class="stats-title">Projets en crédit faible</div>
+                <div class="stats-title">Projet{{ 's' if projects_low_credit != 1 else '' }} en crédit faible</div>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ project.name }}</h5>
                                     <small class="{% if project.remaining_credit < 1 %}text-danger{% else %}text-warning{% endif %}">
-                                        {{ project.remaining_credit }}h restantes
+                                        {{ project.remaining_credit }}h restante{{ 's' if project.remaining_credit != 1 else '' }}
                                     </small>
                                 </div>
                                 <p class="mb-1">{{ project.client.name }}</p>

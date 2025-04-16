@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from app.models.client import Client
 from app.models.project import Project
@@ -20,15 +20,19 @@ def index():
 @login_required
 def dashboard():
     """Tableau de bord principal"""
+    
     # Statistiques clients
     total_clients = Client.query.count()
     
     # Statistiques projets
     total_projects = Project.query.count()
-    projects_low_credit = Project.query.filter(Project.remaining_credit < 2).count()
     
-    # Projets avec le moins de crédit restant
-    low_credit_projects = Project.query.filter(Project.remaining_credit > 0).order_by(Project.remaining_credit).limit(5).all()
+    projects_low_credit = Project.query.filter(Project.remaining_credit < current_app.config['CREDIT_THRESHOLD']).count()
+    
+    low_credit_projects = Project.query.filter(
+        Project.remaining_credit < current_app.config['CREDIT_THRESHOLD'], 
+        Project.remaining_credit > 0
+    ).order_by(Project.remaining_credit).limit(5).all()
     
     # Statistiques tâches
     total_tasks = Task.query.count()

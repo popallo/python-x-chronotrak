@@ -32,3 +32,7 @@ class TimeEntryForm(FlaskForm):
     hours = FloatField('Heures passées', validators=[DataRequired(), NumberRange(min=0.1)])
     description = TextAreaField('Description du travail effectué', validators=[Optional()])
     submit = SubmitField('Enregistrer le temps')
+
+class CommentForm(FlaskForm):
+    content = TextAreaField('Commentaire', validators=[DataRequired()])
+    submit = SubmitField('Ajouter un commentaire')

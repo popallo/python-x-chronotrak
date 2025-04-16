@@ -109,6 +109,34 @@ main {
     color: white;
 }
 
+/* Styles pour les commentaires */
+.comment-item {
+    border-left: 3px solid #007bff;
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #007bff;
+}
+
+.comment-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.comment-content {
+    white-space: pre-line;
+}
+
 /* Mode sombre */
 body.dark-mode {
     background-color: #121212;

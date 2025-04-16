@@ -158,6 +158,61 @@
                 {% endif %}
             </div>
         </div>
+        <!-- Commentaires -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Commentaires</h5>
+            </div>
+            <div class="card-body">
+                <!-- Formulaire pour ajouter un commentaire -->
+                <form method="POST" action="{{ url_for('tasks.add_comment', task_id=task.id) }}" class="mb-4">
+                    {{ comment_form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ comment_form.content.label(class="form-label") }}
+                        {% if comment_form.content.errors %}
+                            {{ comment_form.content(class="form-control is-invalid", rows=2) }}
+                            <div class="invalid-feedback">
+                                {% for error in comment_form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ comment_form.content(class="form-control", rows=2) }}
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        {{ comment_form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+
+                <hr>
+                <!-- Liste des commentaires existants -->
+                {% if comments %}
+                    <div class="comment-list">
+                        {% for comment in comments %}
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <span class="comment-author">{{ comment.user.name }}</span>
+                                    <div>
+                                        <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                        {% if comment.user_id == current_user.id or current_user.is_admin() %}
+                                            <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-2">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="comment-content">{{ comment.content }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun commentaire pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 

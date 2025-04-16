@@ -19,6 +19,7 @@ class Task(db.Model):
     
     # Relations
     time_entries = db.relationship('TimeEntry', backref='task', lazy=True, cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='task', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}')"
@@ -56,3 +57,18 @@ class TimeEntry(db.Model):
     
     def __repr__(self):
         return f"TimeEntry(Task: {self.task_id}, User: {self.user.name}, Hours: {self.hours})"
+    
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Clés étrangères
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relations
+    user = db.relationship('User', backref='comments', lazy=True)
+    
+    def __repr__(self):
+        return f"Comment(Task: {self.task_id}, User: {self.user.name}, Date: {self.created_at})"

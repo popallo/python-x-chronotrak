@@ -66,14 +66,10 @@
         margin-top: 5px;
     }
     
-    /* Classe pour s'assurer que les deux cartes ont la même hauteur */
-    .equal-height-row {
-        display: flex;
-        flex-wrap: wrap;
-    }
-    
-    .equal-height-row .card {
-        height: 100%;
+    /* Classe pour le conteneur d'historique des crédits avec hauteur limitée */
+    .credit-history-container {
+        max-height: 300px;
+        overflow-y: auto;
     }
 </style>
 {% endblock %}
@@ -94,192 +90,186 @@
     </div>
 </div>
 
-<div class="row equal-height-row mb-4">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
+<!-- Informations du projet - pleine largeur -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Client :</strong> <a href="{{ url_for('clients.client_details', client_id=project.client.id) }}">{{ project.client.name }}</a></p>
+                <p><strong>Date de création :</strong> {{ project.created_at.strftime('%d/%m/%Y') }}</p>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Client :</strong> <a href="{{ url_for('clients.client_details', client_id=project.client.id) }}">{{ project.client.name }}</a></p>
-                        <p><strong>Date de création :</strong> {{ project.created_at.strftime('%d/%m/%Y') }}</p>
+            <div class="col-md-6">
+                <p>
+                    <strong>Crédit restant :</strong> 
+                    <span class="{% if project.credit_percent < 20 %}text-danger{% elif project.credit_percent < 50 %}text-warning{% else %}text-success{% endif %}">
+                        {{ project.remaining_credit }}h / {{ project.initial_credit }}h
+                    </span>
+                </p>
+                <div class="progress credit-progress">
+                    <div class="progress-bar {% if project.credit_percent < 20 %}bg-danger{% elif project.credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                            role="progressbar" 
+                            style="width: {{ project.credit_percent }}%" 
+                            aria-valuenow="{{ project.remaining_credit }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="{{ project.initial_credit }}">
                     </div>
-                    <div class="col-md-6">
-                        <p>
-                            <strong>Crédit restant :</strong> 
-                            <span class="{% if project.credit_percent < 20 %}text-danger{% elif project.credit_percent < 50 %}text-warning{% else %}text-success{% endif %}">
-                                {{ project.remaining_credit }}h / {{ project.initial_credit }}h
-                            </span>
-                        </p>
-                        <div class="progress credit-progress">
-                            <div class="progress-bar {% if project.credit_percent < 20 %}bg-danger{% elif project.credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}" 
-                                 role="progressbar" 
-                                 style="width: {{ project.credit_percent }}%" 
-                                 aria-valuenow="{{ project.remaining_credit }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ project.initial_credit }}">
-                            </div>
-                        </div>
-                    </div>
-                    {% if project.description %}
-                        <div class="mt-3">
-                            <strong>Description :</strong>
-                            <p>{{ project.description }}</p>
-                        </div>
-                    {% endif %}
                 </div>
             </div>
+            {% if project.description %}
+                <div class="col-12 mt-3">
+                    <strong>Description :</strong>
+                    <p>{{ project.description }}</p>
+                </div>
+            {% endif %}
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <!-- Historique des crédits -->
-        <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des crédits</h5>
-            </div>
-            <div class="card-body">
-                {% if credit_logs %}
-                    <div class="list-group">
-                        {% for log in credit_logs %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">
-                                        {% if log.amount > 0 %}
-                                            <span class="text-success">+{{ log.amount }}h</span>
-                                        {% else %}
-                                            <span class="text-danger">{{ log.amount }}h</span>
-                                        {% endif %}
-                                    </h6>
-                                    <small class="text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+</div>
+
+<!-- Tableau Kanban des tâches - Pleine largeur -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Tâches</h5>
+        <a href="{{ url_for('tasks.new_task', project_id=project.id) }}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus me-1"></i>Nouvelle tâche
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="kanban-container">
+            <div class="kanban-board">
+                <!-- Colonne "À faire" -->
+                <div class="kanban-column todo-column" data-status="à faire">
+                    <div class="kanban-title">À faire <span class="badge bg-secondary">{{ tasks_todo|length }}</span></div>
+                    <div class="kanban-items">
+                        {% for task in tasks_todo %}
+                            <div class="kanban-task" data-task-id="{{ task.id }}">
+                                <div class="task-title">{{ task.title }}</div>
+                                <div class="text-{{ task.priority }}">
+                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
                                 </div>
-                                <p class="mb-1">{{ log.note }}</p>
-                                {% if log.task_id %}
-                                    <small>
-                                        <a href="{{ url_for('tasks.task_details', task_id=log.task_id) }}">
-                                            Voir la tâche
-                                        </a>
-                                    </small>
-                                {% endif %}
+                                <div class="task-info">
+                                    <span>
+                                        {% if task.estimated_time %}
+                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
+                                        {% endif %}
+                                    </span>
+                                    <span>
+                                        {% if task.user_id %}
+                                            <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
+                                </div>
                             </div>
                         {% endfor %}
                     </div>
-                {% else %}
-                    <p class="text-muted">Aucun historique de crédit disponible.</p>
-                {% endif %}
+                </div>
+                
+                <!-- Colonne "En cours" -->
+                <div class="kanban-column progress-column" data-status="en cours">
+                    <div class="kanban-title">En cours <span class="badge bg-secondary">{{ tasks_in_progress|length }}</span></div>
+                    <div class="kanban-items">
+                        {% for task in tasks_in_progress %}
+                            <div class="kanban-task" data-task-id="{{ task.id }}">
+                                <div class="task-title">{{ task.title }}</div>
+                                <div class="text-{{ task.priority }}">
+                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
+                                </div>
+                                <div class="task-info">
+                                    <span>
+                                        {% if task.estimated_time %}
+                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
+                                        {% endif %}
+                                    </span>
+                                    <span>
+                                        {% if task.user_id %}
+                                            <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Colonne "Terminé" -->
+                <div class="kanban-column done-column" data-status="terminé">
+                    <div class="kanban-title">Terminé <span class="badge bg-secondary">{{ tasks_done|length }}</span></div>
+                    <div class="kanban-items">
+                        {% for task in tasks_done %}
+                            <div class="kanban-task" data-task-id="{{ task.id }}">
+                                <div class="task-title">{{ task.title }}</div>
+                                <div class="text-{{ task.priority }}">
+                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
+                                </div>
+                                <div class="task-info">
+                                    <span>
+                                        {% if task.actual_time %}
+                                            <i class="fas fa-clock me-1"></i>{{ task.actual_time }}h
+                                        {% endif %}
+                                    </span>
+                                    <span>
+                                        {% if task.completed_at %}
+                                            <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m') }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tableau Kanban des tâches - Maintenant en pleine largeur -->
-<div class="row">
-    <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Tâches</h5>
-                <a href="{{ url_for('tasks.new_task', project_id=project.id) }}" class="btn btn-sm btn-light">
-                    <i class="fas fa-plus me-1"></i>Nouvelle tâche
-                </a>
-            </div>
-            <div class="card-body">
-                <div class="kanban-container">
-                    <div class="kanban-board">
-                        <!-- Colonne "À faire" -->
-                        <div class="kanban-column todo-column" data-status="à faire">
-                            <div class="kanban-title">À faire <span class="badge bg-secondary">{{ tasks_todo|length }}</span></div>
-                            <div class="kanban-items">
-                                {% for task in tasks_todo %}
-                                    <div class="kanban-task" data-task-id="{{ task.id }}">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="text-{{ task.priority }}">
-                                            <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                        </div>
-                                        <div class="task-info">
-                                            <span>
-                                                {% if task.estimated_time %}
-                                                    <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
-                                                {% endif %}
-                                            </span>
-                                            <span>
-                                                {% if task.user_id %}
-                                                    <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                        </div>
-                                    </div>
-                                {% endfor %}
+<!-- Historique des crédits - pleine largeur avec hauteur limitée et défilement -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des crédits</h5>
+        <span class="badge bg-light text-secondary">{{ credit_logs|length }}</span>
+    </div>
+    <div class="card-body">
+        {% if credit_logs %}
+            <div class="credit-history-container">
+                <div class="list-group">
+                    {% for log in credit_logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if log.amount > 0 %}
+                                        <span class="text-success">+{{ log.amount }}h</span>
+                                    {% else %}
+                                        <span class="text-danger">{{ log.amount }}h</span>
+                                    {% endif %}
+                                </h6>
+                                <small class="text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                             </div>
+                            <p class="mb-1">{{ log.note }}</p>
+                            {% if log.task_id %}
+                                <small>
+                                    <a href="{{ url_for('tasks.task_details', task_id=log.task_id) }}">
+                                        Voir la tâche
+                                    </a>
+                                </small>
+                            {% endif %}
                         </div>
-                        
-                        <!-- Colonne "En cours" -->
-                        <div class="kanban-column progress-column" data-status="en cours">
-                            <div class="kanban-title">En cours <span class="badge bg-secondary">{{ tasks_in_progress|length }}</span></div>
-                            <div class="kanban-items">
-                                {% for task in tasks_in_progress %}
-                                    <div class="kanban-task" data-task-id="{{ task.id }}">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="text-{{ task.priority }}">
-                                            <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                        </div>
-                                        <div class="task-info">
-                                            <span>
-                                                {% if task.estimated_time %}
-                                                    <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
-                                                {% endif %}
-                                            </span>
-                                            <span>
-                                                {% if task.user_id %}
-                                                    <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        
-                        <!-- Colonne "Terminé" -->
-                        <div class="kanban-column done-column" data-status="terminé">
-                            <div class="kanban-title">Terminé <span class="badge bg-secondary">{{ tasks_done|length }}</span></div>
-                            <div class="kanban-items">
-                                {% for task in tasks_done %}
-                                    <div class="kanban-task" data-task-id="{{ task.id }}">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="text-{{ task.priority }}">
-                                            <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                        </div>
-                                        <div class="task-info">
-                                            <span>
-                                                {% if task.actual_time %}
-                                                    <i class="fas fa-clock me-1"></i>{{ task.actual_time }}h
-                                                {% endif %}
-                                            </span>
-                                            <span>
-                                                {% if task.completed_at %}
-                                                    <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m') }}
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
+        {% else %}
+            <p class="text-muted">Aucun historique de crédit disponible.</p>
+        {% endif %}
     </div>
 </div>
         

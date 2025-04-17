@@ -4,7 +4,7 @@
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card shadow">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-success text-white">
                 <h4 class="mb-0">
                     {% if project %}
                         <i class="fas fa-edit me-2"></i>Modifier le projet
@@ -45,7 +45,7 @@
                         {% else %}
                             {{ form.initial_credit(class="form-control", step="0.1") }}
                         {% endif %}
-                        <div class="form-text">
+                        <div class="form-text text-muted">
                             {% if project %}
                                 Modifier le crédit initial ajustera automatiquement le crédit restant.
                             {% else %}
@@ -63,7 +63,7 @@
                                 <i class="fas fa-arrow-left me-1"></i>Retour
                             </a>
                         {% endif %}
-                        {{ form.submit(class="btn btn-primary") }}
+                        {{ form.submit(class="btn btn-success") }}
                     </div>
                 </form>
             </div>

@@ -16,203 +16,200 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p>
-                            <strong>Projet :</strong> 
-                            <a href="{{ url_for('projects.project_details', project_id=task.project.id) }}">{{ task.project.name }}</a>
-                        </p>
-                        <p>
-                            <strong>Client :</strong> 
-                            <a href="{{ url_for('clients.client_details', client_id=task.project.client.id) }}">{{ task.project.client.name }}</a>
-                        </p>
-                        <p>
-                            <strong>Statut :</strong> 
-                            <span class="badge status-badge {{ task.status }}">{{ task.status }}</span>
-                        </p>
-                        <p>
-                            <strong>Priorité :</strong> 
-                            <span class="text-{{ task.priority }}">{{ task.priority }}</span>
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <p>
-                            <strong>Assigné à :</strong> 
-                            {% if task.user_id %}
-                                {{ task.assigned_to.name }}
-                            {% else %}
-                                <span class="text-muted">Non assigné</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Temps estimé :</strong> 
-                            {% if task.estimated_time %}
-                                {{ task.estimated_time }}h
-                            {% else %}
-                                <span class="text-muted">Non défini</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Temps passé :</strong> 
-                            {% if task.actual_time %}
-                                {{ task.actual_time }}h
-                            {% else %}
-                                <span class="text-muted">0h</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Créée le :</strong> {{ task.created_at.strftime('%d/%m/%Y') }}
-                        </p>
-                        {% if task.completed_at %}
-                            <p>
-                                <strong>Terminée le :</strong> {{ task.completed_at.strftime('%d/%m/%Y') }}
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% if task.description %}
-                    <div class="mt-3">
-                        <strong>Description :</strong>
-                        <p>{{ task.description }}</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Formulaire pour enregistrer du temps -->
-        <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : <strong>{{ task.project.remaining_credit }}h</strong>
-                </div>
-                
-                <form method="POST" action="{{ url_for('tasks.log_time', task_id=task.id) }}">
-                    {{ time_form.hidden_tag() }}
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ time_form.hours.label(class="form-label") }}
-                                {% if time_form.hours.errors %}
-                                    {{ time_form.hours(class="form-control is-invalid", step="0.1") }}
-                                    <div class="invalid-feedback">
-                                        {% for error in time_form.hours.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    {{ time_form.hours(class="form-control", step="0.1") }}
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                {{ time_form.description.label(class="form-label") }}
-                                {{ time_form.description(class="form-control", rows=1) }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-grid">
-                        {{ time_form.submit(class="btn btn-secondary") }}
-                    </div>
-                </form>
-            </div>
-        </div>
+<!-- Informations principales de la tâche - pleine largeur -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
     </div>
-    
-    <div class="col-lg-4">
-        <!-- Historique des temps enregistrés -->
-        <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p>
+                    <strong>Projet :</strong> 
+                    <a href="{{ url_for('projects.project_details', project_id=task.project.id) }}">{{ task.project.name }}</a>
+                </p>
+                <p>
+                    <strong>Client :</strong> 
+                    <a href="{{ url_for('clients.client_details', client_id=task.project.client.id) }}">{{ task.project.client.name }}</a>
+                </p>
+                <p>
+                    <strong>Statut :</strong> 
+                    <span class="badge status-badge {{ task.status }}">{{ task.status }}</span>
+                </p>
+                <p>
+                    <strong>Priorité :</strong> 
+                    <span class="text-{{ task.priority }}">{{ task.priority }}</span>
+                </p>
             </div>
-            <div class="card-body">
-                {% if time_entries %}
-                    <div class="list-group">
-                        {% for entry in time_entries %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ entry.hours }}h</h6>
-                                    <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
-                                </div>
-                                <p class="mb-1">
-                                    <strong>{{ entry.user.name }}</strong>
-                                    {% if entry.description %}
-                                        : {{ entry.description }}
-                                    {% endif %}
-                                </p>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">Aucun temps n'a été enregistré sur cette tâche.</p>
+            <div class="col-md-6">
+                <p>
+                    <strong>Assigné à :</strong> 
+                    {% if task.user_id %}
+                        {{ task.assigned_to.name }}
+                    {% else %}
+                        <span class="text-muted">Non assigné</span>
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Temps estimé :</strong> 
+                    {% if task.estimated_time %}
+                        {{ task.estimated_time }}h
+                    {% else %}
+                        <span class="text-muted">Non défini</span>
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Temps passé :</strong> 
+                    {% if task.actual_time %}
+                        {{ task.actual_time }}h
+                    {% else %}
+                        <span class="text-muted">0h</span>
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Créée le :</strong> {{ task.created_at.strftime('%d/%m/%Y') }}
+                </p>
+                {% if task.completed_at %}
+                    <p>
+                        <strong>Terminée le :</strong> {{ task.completed_at.strftime('%d/%m/%Y') }}
+                    </p>
                 {% endif %}
             </div>
         </div>
-        <!-- Commentaires -->
-        <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Commentaires</h5>
+        {% if task.description %}
+            <div class="mt-3">
+                <strong>Description :</strong>
+                <p>{{ task.description }}</p>
             </div>
-            <div class="card-body">
-                <!-- Formulaire pour ajouter un commentaire -->
-                <form method="POST" action="{{ url_for('tasks.add_comment', task_id=task.id) }}" class="mb-4">
-                    {{ comment_form.hidden_tag() }}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Formulaire pour enregistrer du temps -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : <strong>{{ task.project.remaining_credit }}h</strong>
+        </div>
+        <form method="POST" action="{{ url_for('tasks.log_time', task_id=task.id) }}">
+            {{ time_form.hidden_tag() }}
+            <div class="row">
+                <div class="col-md-4">
                     <div class="mb-3">
-                        {{ comment_form.content.label(class="form-label") }}
-                        {% if comment_form.content.errors %}
-                            {{ comment_form.content(class="form-control is-invalid", rows=2) }}
+                        {{ time_form.hours.label(class="form-label") }}
+                        {% if time_form.hours.errors %}
+                            {{ time_form.hours(class="form-control is-invalid", step="0.1") }}
                             <div class="invalid-feedback">
-                                {% for error in comment_form.content.errors %}
+                                {% for error in time_form.hours.errors %}
                                     {{ error }}
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ comment_form.content(class="form-control", rows=2) }}
+                            {{ time_form.hours(class="form-control", step="0.1") }}
                         {% endif %}
                     </div>
-                    <div class="d-grid">
-                        {{ comment_form.submit(class="btn btn-secondary") }}
+                </div>
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        {{ time_form.description.label(class="form-label") }}
+                        {{ time_form.description(class="form-control", rows=1) }}
                     </div>
-                </form>
+                </div>
+            </div>
+            <div class="d-grid">
+                {{ time_form.submit(class="btn btn-secondary") }}
+            </div>
+        </form>
+    </div>
+</div>
 
-                <hr>
-                <!-- Liste des commentaires existants -->
-                {% if comments %}
-                    <div class="comment-list">
-                        {% for comment in comments %}
-                            <div class="comment-item">
-                                <div class="comment-header">
-                                    <span class="comment-author">{{ comment.user.name }}</span>
-                                    <div>
-                                        <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                                        {% if comment.user_id == current_user.id or current_user.is_admin() %}
-                                            <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-2">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="comment-content">{{ comment.content }}</div>
-                            </div>
+<!-- Historique des temps enregistrés -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
+        <span class="badge bg-light text-secondary">{{ time_entries|length }}</span>
+    </div>
+    <div class="card-body">
+        {% if time_entries %}
+            <div class="list-group">
+                {% for entry in time_entries %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ entry.hours }}h</h6>
+                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">
+                            <strong>{{ entry.user.name }}</strong>
+                            {% if entry.description %}
+                                : {{ entry.description }}
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Aucun temps n'a été enregistré sur cette tâche.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Commentaires -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Commentaires</h5>
+        <span class="badge bg-light text-primary">{{ comments|length }}</span>
+    </div>
+    <div class="card-body">
+        <!-- Formulaire pour ajouter un commentaire -->
+        <form method="POST" action="{{ url_for('tasks.add_comment', task_id=task.id) }}" class="mb-4">
+            {{ comment_form.hidden_tag() }}
+            <div class="mb-3">
+                {{ comment_form.content.label(class="form-label") }}
+                {% if comment_form.content.errors %}
+                    {{ comment_form.content(class="form-control is-invalid", rows=2) }}
+                    <div class="invalid-feedback">
+                        {% for error in comment_form.content.errors %}
+                            {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted">Aucun commentaire pour le moment.</p>
+                    {{ comment_form.content(class="form-control", rows=2) }}
                 {% endif %}
             </div>
-        </div>
+            <div class="d-grid">
+                {{ comment_form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+
+        <hr>
+        <!-- Liste des commentaires existants -->
+        {% if comments %}
+            <div class="comment-list">
+                {% for comment in comments %}
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-author">{{ comment.user.name }}</span>
+                            <div>
+                                <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                {% if comment.user_id == current_user.id or current_user.is_admin() %}
+                                    <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-2">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="comment-content">{{ comment.content }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Aucun commentaire pour le moment.</p>
+        {% endif %}
     </div>
 </div>
 

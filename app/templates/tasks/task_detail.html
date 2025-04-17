@@ -19,7 +19,7 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
             </div>
             <div class="card-body">
@@ -88,11 +88,11 @@
         
         <!-- Formulaire pour enregistrer du temps -->
         <div class="card mb-4">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
+                <div class="alert alert-warning">
                     <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : <strong>{{ task.project.remaining_credit }}h</strong>
                 </div>
                 
@@ -122,7 +122,7 @@
                         </div>
                     </div>
                     <div class="d-grid">
-                        {{ time_form.submit(class="btn btn-success") }}
+                        {{ time_form.submit(class="btn btn-secondary") }}
                     </div>
                 </form>
             </div>
@@ -132,7 +132,7 @@
     <div class="col-lg-4">
         <!-- Historique des temps enregistrés -->
         <div class="card mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
             </div>
             <div class="card-body">
@@ -181,7 +181,7 @@
                         {% endif %}
                     </div>
                     <div class="d-grid">
-                        {{ comment_form.submit(class="btn btn-primary") }}
+                        {{ comment_form.submit(class="btn btn-secondary") }}
                     </div>
                 </form>
 

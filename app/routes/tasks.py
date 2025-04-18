@@ -209,3 +209,35 @@ def delete_comment(comment_id):
     db.session.commit()
     flash('Commentaire supprimé avec succès!', 'success')
     return redirect(url_for('tasks.task_details', task_id=task_id))
+
+@tasks.route('/comments/<int:comment_id>/edit', methods=['POST'])
+@login_required
+def edit_comment(comment_id):
+    """Route pour modifier un commentaire récent (moins de 10 minutes)"""
+    comment = Comment.query.get_or_404(comment_id)
+    task_id = comment.task_id
+    
+    # Vérifier que l'utilisateur est l'auteur du commentaire
+    if comment.user_id != current_user.id and not current_user.is_admin():
+        flash('Vous n\'êtes pas autorisé à modifier ce commentaire.', 'danger')
+        return redirect(url_for('tasks.task_details', task_id=task_id))
+    
+    # Vérifier que le commentaire a moins de 10 minutes
+    delta = datetime.utcnow() - comment.created_at
+    if delta.total_seconds() > 600:  # 10 minutes = 600 secondes
+        flash('Ce commentaire ne peut plus être modifié (délai de 10 minutes dépassé).', 'warning')
+        return redirect(url_for('tasks.task_details', task_id=task_id))
+    
+    # Récupérer le nouveau contenu
+    new_content = request.form.get('content')
+    if not new_content or new_content.strip() == '':
+        flash('Le commentaire ne peut pas être vide.', 'danger')
+        return redirect(url_for('tasks.task_details', task_id=task_id))
+    
+    # Mettre à jour le commentaire
+    comment.content = new_content
+    # Pas de mise à jour de created_at pour garder l'horodatage d'origine
+    db.session.commit()
+    
+    flash('Commentaire modifié avec succès !', 'success')
+    return redirect(url_for('tasks.task_details', task_id=task_id))

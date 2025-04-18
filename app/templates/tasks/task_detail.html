@@ -123,6 +123,73 @@
         });
     });
 </script>
+<script>
+    // Gestionnaire pour l'édition des commentaires
+    document.addEventListener('DOMContentLoaded', function() {
+        // Boutons d'édition
+        const editButtons = document.querySelectorAll('.edit-comment-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const commentContent = document.querySelector(`#comment-${commentId} .comment-content`);
+                const editForm = document.querySelector(`#edit-form-${commentId}`);
+                
+                // Masquer le contenu et afficher le formulaire
+                commentContent.style.display = 'none';
+                editForm.style.display = 'block';
+            });
+        });
+        
+        // Boutons d'annulation
+        const cancelButtons = document.querySelectorAll('.cancel-edit-btn');
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const commentContent = document.querySelector(`#comment-${commentId} .comment-content`);
+                const editForm = document.querySelector(`#edit-form-${commentId}`);
+                
+                // Réafficher le contenu et masquer le formulaire
+                commentContent.style.display = 'block';
+                editForm.style.display = 'none';
+            });
+        });
+        
+        // Timer pour les commentaires
+        document.querySelectorAll('.edit-timer').forEach(timer => {
+            if (timer) {
+                const minutesText = timer.textContent.trim();
+                let minutes = parseInt(minutesText);
+                
+                if (!isNaN(minutes) && minutes > 0) {
+                    // Mettre à jour le timer chaque minute
+                    const intervalId = setInterval(() => {
+                        minutes--;
+                        if (minutes <= 0) {
+                            // Temps écoulé, supprimer les éléments d'édition
+                            const editButton = timer.closest('.comment-header').querySelector('.edit-comment-btn');
+                            if (editButton) editButton.remove();
+                            timer.remove();
+                            
+                            // Fermer le formulaire d'édition si ouvert
+                            const commentItem = timer.closest('.comment-item');
+                            const commentId = commentItem.id.split('-')[1];
+                            const editForm = document.querySelector(`#edit-form-${commentId}`);
+                            if (editForm && editForm.style.display !== 'none') {
+                                const commentContent = commentItem.querySelector('.comment-content');
+                                commentContent.style.display = 'block';
+                                editForm.style.display = 'none';
+                            }
+                            
+                            clearInterval(intervalId);
+                        } else {
+                            timer.textContent = `${minutes} min`;
+                        }
+                    }, 60000); // Toutes les minutes
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
 
 {% block content %}
@@ -301,21 +368,59 @@
         {% if comments %}
             <div class="comment-list">
                 {% for comment in comments %}
-                    <div class="comment-item">
+                    <div class="comment-item" id="comment-{{ comment.id }}">
                         <div class="comment-header">
                             <span class="comment-author">{{ comment.user.name }}</span>
                             <div>
                                 <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                                {% if comment.user_id == current_user.id or current_user.is_admin() %}
-                                    <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-2">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');">
-                                            <i class="fas fa-trash"></i>
+                                
+                                {# Calcul du temps écoulé en minutes depuis la création du commentaire #}
+                                {% set minutes_elapsed = ((now - comment.created_at).total_seconds() / 60)|int %}
+                                {% set can_edit = minutes_elapsed < 10 and (comment.user_id == current_user.id or current_user.is_admin()) %}
+                                
+                                <div class="d-inline-block ms-2">
+                                    {% if can_edit %}
+                                        <span class="badge bg-info edit-timer" title="Temps restant pour éditer">
+                                            {{ 10 - minutes_elapsed }} min
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-comment-btn" 
+                                                data-comment-id="{{ comment.id }}" title="Modifier">
+                                            <i class="fas fa-edit"></i>
                                         </button>
-                                    </form>
-                                {% endif %}
+                                    {% endif %}
+                                    
+                                    {% if comment.user_id == current_user.id or current_user.is_admin() %}
+                                        <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-1">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         <div class="comment-content">{{ comment.content }}</div>
+                        
+                        {# Formulaire d'édition masqué par défaut #}
+                        {% if can_edit %}
+                            <div class="edit-comment-form" id="edit-form-{{ comment.id }}" style="display: none;">
+                                <form method="POST" action="{{ url_for('tasks.edit_comment', comment_id=comment.id) }}">
+                                    <div class="mb-2">
+                                        <textarea name="content" class="form-control" rows="2" required>{{ comment.content }}</textarea>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-edit-btn" 
+                                                data-comment-id="{{ comment.id }}">
+                                            Annuler
+                                        </button>
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            Enregistrer
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

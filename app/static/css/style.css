@@ -355,7 +355,7 @@ body.dark-mode .done-column .kanban-title {
     font-size: 1.2rem;
 }
 
-//* Tableaux en mode sombre */
+/* Tableaux en mode sombre */
 /* Réinitialiser les variables CSS personnalisées de Bootstrap pour tous les tableaux en dark mode */
 body.dark-mode .table, 
 body.dark-mode .users-table-container .table,

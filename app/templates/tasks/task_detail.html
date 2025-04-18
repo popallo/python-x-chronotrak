@@ -1,5 +1,130 @@
 {% extends 'layout.html' %}
 
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestionnaire pour les boutons de changement de statut
+        const statusButtons = document.querySelectorAll('.status-btn');
+        
+        statusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const taskId = this.dataset.taskId;
+                const newStatus = this.dataset.status;
+                const currentButton = this;
+                
+                // Afficher un indicateur de chargement
+                currentButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                // Appel AJAX pour mettre à jour le statut
+                fetch('/tasks/update_status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: parseInt(taskId),  // Conversion explicite en nombre
+                        status: newStatus
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour visuellement les boutons
+                        statusButtons.forEach(btn => {
+                            if (btn.dataset.status === newStatus) {
+                                btn.classList.remove('btn-outline-info', 'btn-outline-warning', 'btn-outline-success');
+                                if (newStatus === 'à faire') btn.classList.add('btn-info');
+                                else if (newStatus === 'en cours') btn.classList.add('btn-warning');
+                                else if (newStatus === 'terminé') btn.classList.add('btn-success');
+                            } else {
+                                btn.classList.remove('btn-info', 'btn-warning', 'btn-success');
+                                if (btn.dataset.status === 'à faire') btn.classList.add('btn-outline-info');
+                                else if (btn.dataset.status === 'en cours') btn.classList.add('btn-outline-warning');
+                                else if (btn.dataset.status === 'terminé') btn.classList.add('btn-outline-success');
+                            }
+                            btn.innerHTML = btn.dataset.status === 'à faire' ? 'À faire' : 
+                                           btn.dataset.status === 'en cours' ? 'En cours' : 'Terminé';
+                        });
+                        
+                        // Mettre à jour le badge de statut
+                        const statusBadge = document.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.className = `badge status-badge ${newStatus}`;
+                            statusBadge.textContent = newStatus;
+                        }
+                        
+                        // Ajouter un message de succès temporaire
+                        const statusMsg = document.createElement('div');
+                        statusMsg.className = 'alert alert-success mt-2 status-update-msg';
+                        statusMsg.innerHTML = `<i class="fas fa-check me-2"></i>Statut mis à jour avec succès!`;
+                        document.querySelector('.status-toggle').appendChild(statusMsg);
+                        
+                        // Supprimer le message après quelques secondes
+                        setTimeout(() => {
+                            statusMsg.remove();
+                        }, 3000);
+                        
+                        // Gérer la date de fin - CORRECTION ICI
+                        if (newStatus === 'terminé') {
+                            const now = new Date();
+                            const formattedDate = now.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                            
+                            // Trouver la section où ajouter la date de fin (colonne de droite)
+                            const infoColumn = document.querySelector('.col-md-6:last-child');
+                            
+                            if (infoColumn) {
+                                // Vérifier si l'élément date de fin existe déjà
+                                let completedDateElem = document.querySelector('.completed-date');
+                                
+                                if (!completedDateElem) {
+                                    // Créer un nouvel élément pour la date de fin
+                                    completedDateElem = document.createElement('p');
+                                    completedDateElem.className = 'completed-date';
+                                    completedDateElem.innerHTML = `<strong>Terminée le :</strong> ${formattedDate}`;
+                                    
+                                    // Ajouter l'élément à la fin de la colonne
+                                    infoColumn.appendChild(completedDateElem);
+                                } else {
+                                    // Mettre à jour l'élément existant
+                                    completedDateElem.innerHTML = `<strong>Terminée le :</strong> ${formattedDate}`;
+                                }
+                            }
+                        } else {
+                            // Si le statut n'est pas "terminé", supprimer la date de fin si elle existe
+                            const completedDateElem = document.querySelector('.completed-date');
+                            if (completedDateElem) {
+                                completedDateElem.remove();
+                            }
+                        }
+                    } else {
+                        // Gérer l'erreur
+                        console.error('Erreur:', data.error);
+                        alert('Erreur lors de la mise à jour du statut: ' + data.error);
+                        resetButton();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue lors de la mise à jour');
+                    resetButton();
+                });
+                
+                function resetButton() {
+                    // Réinitialiser le texte du bouton
+                    currentButton.innerHTML = currentButton.dataset.status === 'à faire' ? 'À faire' : 
+                                              currentButton.dataset.status === 'en cours' ? 'En cours' : 'Terminé';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ task.title }}</h1>
@@ -37,7 +162,22 @@
                         </p>
                         <p>
                             <strong>Statut :</strong> 
-                            <span class="badge status-badge {{ task.status }}">{{ task.status }}</span>
+                            <div class="status-toggle mt-1">
+                                <div class="btn-group" role="group" aria-label="Changer le statut">
+                                    <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
+                                            data-status="à faire" data-task-id="{{ task.id }}">
+                                        À faire
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
+                                            data-status="en cours" data-task-id="{{ task.id }}">
+                                        En cours
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
+                                            data-status="terminé" data-task-id="{{ task.id }}">
+                                        Terminé
+                                    </button>
+                                </div>
+                            </div>
                         </p>
                         <p>
                             <strong>Priorité :</strong> 

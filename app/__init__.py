@@ -28,7 +28,7 @@ def create_app(config_name):
     # Contexte global pour les templates
     @app.context_processor
     def inject_now():
-        return {'now': datetime.now()}
+        return {'now': datetime.utcnow()}
     
     # Enregistrement des blueprints
     from app.routes.auth import auth

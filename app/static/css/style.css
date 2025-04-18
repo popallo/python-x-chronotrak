@@ -137,6 +137,50 @@ main {
     white-space: pre-line;
 }
 
+/* Styles pour les boutons de statut */
+.status-toggle {
+    display: inline-block;
+}
+
+.status-toggle .btn-group {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.status-toggle .btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.status-update-msg {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styles pour l'édition des commentaires */
+.edit-comment-form {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease;
+}
+
+.edit-timer {
+    font-size: 0.7rem;
+    vertical-align: middle;
+}
+
+/* Mode sombre pour le formulaire d'édition */
+body.dark-mode .edit-comment-form {
+    background-color: #2c2c2c;
+}
+
 /* Mode sombre */
 body.dark-mode {
     background-color: #121212;

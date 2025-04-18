@@ -141,7 +141,9 @@
             <div class="kanban-board">
                 <!-- Colonne "À faire" -->
                 <div class="kanban-column todo-column" data-status="à faire">
-                    <div class="kanban-title">À faire <span class="badge bg-secondary">{{ tasks_todo|length }}</span></div>
+                    <div class="kanban-title bg-info text-white">
+                        À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span>
+                    </div>
                     <div class="kanban-items">
                         {% for task in tasks_todo %}
                             <div class="kanban-task" data-task-id="{{ task.id }}">
@@ -171,7 +173,9 @@
                 
                 <!-- Colonne "En cours" -->
                 <div class="kanban-column progress-column" data-status="en cours">
-                    <div class="kanban-title">En cours <span class="badge bg-secondary">{{ tasks_in_progress|length }}</span></div>
+                    <div class="kanban-title bg-warning text-dark">
+                        En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span>
+                    </div>
                     <div class="kanban-items">
                         {% for task in tasks_in_progress %}
                             <div class="kanban-task" data-task-id="{{ task.id }}">
@@ -201,7 +205,9 @@
                 
                 <!-- Colonne "Terminé" -->
                 <div class="kanban-column done-column" data-status="terminé">
-                    <div class="kanban-title">Terminé <span class="badge bg-secondary">{{ tasks_done|length }}</span></div>
+                    <div class="kanban-title bg-success text-white">
+                        Terminé <span class="badge bg-light text-dark">{{ tasks_done|length }}</span>
+                    </div>
                     <div class="kanban-items">
                         {% for task in tasks_done %}
                             <div class="kanban-task" data-task-id="{{ task.id }}">

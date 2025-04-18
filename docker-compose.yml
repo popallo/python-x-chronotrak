@@ -1,0 +1,24 @@
+services:
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8000:5000"
+    volumes:
+      - ./instance:/app/instance
+    env_file:
+      - ./.env.${ENVIRONMENT:-development}
+    command: >
+      sh -c "mkdir -p /app/instance &&
+             if [ ! -f /app/instance/chronotrak.db ]; then
+               echo 'Initialisation de la base de données...'
+               flask db upgrade &&
+               python create_admin.py
+             else
+               echo 'Base de données existante détectée'
+             fi &&
+             gunicorn --bind 0.0.0.0:5000 wsgi:app"
+
+volumes:
+  sqlite_data:
+    driver: local

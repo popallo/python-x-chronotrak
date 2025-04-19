@@ -23,7 +23,7 @@
 <body>
     {% if current_user.is_authenticated %}
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-info">
+    <nav class="navbar navbar-expand-lg navbar-dark {{ request.path|nav_bg_color }}">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
                 <i class="fas fa-clock me-2"></i>ChronoTrak

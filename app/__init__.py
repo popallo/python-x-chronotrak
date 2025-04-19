@@ -38,6 +38,22 @@ def create_app(config_name):
             return ""
         return str(value).replace('.', ',')
     
+    # Gestion du background du header
+    @app.template_filter('nav_bg_color')
+    def nav_bg_color_filter(current_path):
+        """Détermine la couleur de fond de la navbar en fonction de l'URL actuelle"""
+        if '/clients/' in current_path or current_path == '/clients':
+            return 'bg-primary'
+        elif '/projects/' in current_path or current_path == '/projects':
+            return 'bg-success'
+        elif '/tasks/' in current_path or current_path == '/my_tasks':
+            return 'bg-info'
+        elif '/reports' in current_path:
+            return 'bg-secondary'
+        else:
+            # Page par défaut (dashboard)
+            return 'bg-secondary'
+    
     # Enregistrement des blueprints
     from app.routes.auth import auth
     from app.routes.clients import clients

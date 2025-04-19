@@ -20,7 +20,7 @@
                         {% endif %}
                         <p>
                             <strong>Crédit:</strong> 
-                            {{ project.remaining_credit }}h / {{ project.initial_credit }}h
+                            {{ project.remaining_credit|fr_number }}h / {{ project.initial_credit|fr_number }}h
                             <span class="badge {% if project.credit_percent < 20 %}bg-danger{% elif project.credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}">
                                 {{ project.credit_percent|round|int }}%
                             </span>

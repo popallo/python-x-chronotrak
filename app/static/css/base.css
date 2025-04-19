@@ -21,6 +21,30 @@ main {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
+.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #0f6674) !important;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #a71d2a) !important;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+}
+
+.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #d39e00) !important;
+}
+
 /* Form styling - Base */
 .form-label {
     font-weight: 500;

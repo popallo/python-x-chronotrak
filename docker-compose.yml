@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    image: chronotrak:latest
     restart: always
     ports:
       - "8000:5000"

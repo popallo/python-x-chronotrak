@@ -1,0 +1,20 @@
+/* Barre de rappel des couleurs */
+.color-reminder-bar {
+    height: 5px;
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    margin-bottom: 1px;
+}
+
+.color-reminder-bar .container {
+    height: 100%;
+}
+
+.color-item {
+    width: 16.66%;
+    height: 5px;
+    transition: height 0.3s ease;
+}
+
+.color-reminder-bar:hover .color-item {
+    height: 10px;
+}

@@ -4,7 +4,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from config import config
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -28,7 +28,15 @@ def create_app(config_name):
     # Contexte global pour les templates
     @app.context_processor
     def inject_now():
-        return {'now': datetime.utcnow()}
+        return {'now': datetime.now(timezone.utc)}
+    
+    # Filtre pour formater les nombres à la française (avec virgule)
+    @app.template_filter('fr_number')
+    def fr_number_filter(value):
+        """Formate un nombre avec une virgule décimale à la française"""
+        if value is None:
+            return ""
+        return str(value).replace('.', ',')
     
     # Enregistrement des blueprints
     from app.routes.auth import auth

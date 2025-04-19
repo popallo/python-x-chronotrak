@@ -1,0 +1,49 @@
+/* Styles de base pour l'ensemble de l'application */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Card styling - Base */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Form styling - Base */
+.form-label {
+    font-weight: 500;
+}
+
+/* Priority colors */
+.priority-basse {
+    color: #17a2b8;
+}
+
+.priority-normale {
+    color: #28a745;
+}
+
+.priority-haute {
+    color: #ffc107;
+}
+
+.priority-urgente {
+    color: #dc3545;
+}
+
+/* Footer */
+.footer {
+    background-color: #f8f9fa;
+}

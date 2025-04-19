@@ -1,77 +1,17 @@
 {% extends 'layout.html' %}
 
+{% block scripts %}
+<script type="module">
+    import { initProjectsPage } from "{{ url_for('static', filename='js/pages/projects.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initProjectsPage();
+    });
+</script>
+{% endblock %}
+
 {% block styles %}
-<style>
-    .kanban-container {
-        overflow-x: auto;
-        min-height: 400px;
-    }
-    
-    .kanban-board {
-        display: flex;
-        gap: 15px;
-        min-width: 900px;
-    }
-    
-    .kanban-column {
-        flex: 1;
-        min-width: 280px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-        padding: 10px;
-    }
-    
-    .kanban-title {
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 3px;
-        font-weight: bold;
-        text-align: center;
-    }
-    
-    .todo-column .kanban-title {
-        background-color: #e9ecef;
-    }
-    
-    .progress-column .kanban-title {
-        background-color: #fff3cd;
-    }
-    
-    .done-column .kanban-title {
-        background-color: #d1e7dd;
-    }
-    
-    .kanban-task {
-        background: white;
-        border-radius: 3px;
-        padding: 10px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-    }
-    
-    .kanban-task:hover {
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-    
-    .task-title {
-        font-weight: 500;
-        margin-bottom: 5px;
-    }
-    
-    .task-info {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.8rem;
-        margin-top: 5px;
-    }
-    
-    /* Classe pour le conteneur d'historique des crédits avec hauteur limitée */
-    .credit-history-container {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/project_detail.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -105,7 +45,7 @@
                 <p>
                     <strong>Crédit restant :</strong> 
                     <span class="{% if project.credit_percent < 20 %}text-danger{% elif project.credit_percent < 50 %}text-warning{% else %}text-success{% endif %}">
-                        {{ project.remaining_credit }}h / {{ project.initial_credit }}h
+                        {{ project.remaining_credit|fr_number }}h / {{ project.initial_credit|fr_number }}h
                     </span>
                 </p>
                 <div class="progress credit-progress">
@@ -254,9 +194,9 @@
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">
                                     {% if log.amount > 0 %}
-                                        <span class="text-success">+{{ log.amount }}h</span>
+                                        <span class="text-success">+{{ log.amount|fr_number }}h</span>
                                     {% else %}
-                                        <span class="text-danger">{{ log.amount }}h</span>
+                                        <span class="text-danger">{{ log.amount|fr_number }}h</span>
                                     {% endif %}
                                 </h6>
                                 <small class="text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
@@ -310,72 +250,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Fonctionnalités de glisser-déposer pour le Kanban
-    document.addEventListener('DOMContentLoaded', function() {
-        const kanbanTasks = document.querySelectorAll('.kanban-task');
-        const kanbanColumns = document.querySelectorAll('.kanban-column');
-        
-        // Configuration du drag and drop
-        kanbanTasks.forEach(task => {
-            task.setAttribute('draggable', true);
-            
-            task.addEventListener('dragstart', function(e) {
-                e.dataTransfer.setData('text/plain', task.dataset.taskId);
-                task.classList.add('dragging');
-            });
-            
-            task.addEventListener('dragend', function() {
-                task.classList.remove('dragging');
-            });
-        });
-        
-        kanbanColumns.forEach(column => {
-            column.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                column.classList.add('drag-over');
-            });
-            
-            column.addEventListener('dragleave', function() {
-                column.classList.remove('drag-over');
-            });
-            
-            column.addEventListener('drop', function(e) {
-                e.preventDefault();
-                column.classList.remove('drag-over');
-                
-                const taskId = e.dataTransfer.getData('text/plain');
-                const newStatus = column.dataset.status;
-                
-                // Appel AJAX pour mettre à jour le statut
-                fetch('/tasks/update_status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        task_id: taskId,
-                        status: newStatus
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Recharger la page pour refléter les changements
-                        location.reload();
-                    } else {
-                        alert('Erreur lors de la mise à jour du statut: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Une erreur est survenue lors de la mise à jour');
-                });
-            });
-        });
-    });
-</script>
 {% endblock %}

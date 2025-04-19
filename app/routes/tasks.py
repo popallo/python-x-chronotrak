@@ -5,6 +5,7 @@ from app import db
 from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
 from app.forms.task import TaskForm, TimeEntryForm, CommentForm
+from app.utils import get_utc_now
 
 tasks = Blueprint('tasks', __name__)
 
@@ -75,7 +76,7 @@ def edit_task(task_id):
         
         # Si la tâche est marquée comme terminée
         if task.status == 'terminé' and not task.completed_at:
-            task.completed_at = datetime.utcnow()
+            task.completed_at = get_utc_now()
         elif task.status != 'terminé':
             task.completed_at = None
             
@@ -118,7 +119,7 @@ def log_time(task_id):
     if form.validate_on_submit():
         # Vérifier s'il reste assez de crédit
         if task.project.remaining_credit < form.hours.data:
-            flash(f'Pas assez de crédit restant sur le projet! ({task.project.remaining_credit}h disponibles)', 'danger')
+            flash(f'Pas assez de crédit restant sur le projet! ({task.project.remaining_credit|fr_number}h disponibles)', 'danger')
             return redirect(url_for('tasks.task_details', task_id=task.id))
             
         # Enregistrer le temps
@@ -153,7 +154,7 @@ def update_status():
     
     # Si la tâche est marquée comme terminée
     if new_status == 'terminé' and not task.completed_at:
-        task.completed_at = datetime.utcnow()
+        task.completed_at = get_utc_now()
     elif new_status != 'terminé':
         task.completed_at = None
         
@@ -223,7 +224,7 @@ def edit_comment(comment_id):
         return redirect(url_for('tasks.task_details', task_id=task_id))
     
     # Vérifier que le commentaire a moins de 10 minutes
-    delta = datetime.utcnow() - comment.created_at
+    delta = datetime.now(datetime.timezone.utc) - comment.created_at
     if delta.total_seconds() > 600:  # 10 minutes = 600 secondes
         flash('Ce commentaire ne peut plus être modifié (délai de 10 minutes dépassé).', 'warning')
         return redirect(url_for('tasks.task_details', task_id=task_id))

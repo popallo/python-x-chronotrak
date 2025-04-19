@@ -29,9 +29,17 @@ class TaskForm(FlaskForm):
         ]
 
 class TimeEntryForm(FlaskForm):
-    hours = FloatField('Heures passées', validators=[DataRequired(), NumberRange(min=0.1)])
+    # Remplacer FloatField par SelectField
+    hours = SelectField('Heures passées', validators=[DataRequired()], coerce=float)
     description = TextAreaField('Description du travail effectué', validators=[Optional()])
     submit = SubmitField('Enregistrer le temps')
+    
+    def __init__(self, *args, **kwargs):
+        super(TimeEntryForm, self).__init__(*args, **kwargs)
+        # Créer des options par tranches de 15 minutes (0,25h) jusqu'à 8 heures
+        # Format: (valeur, étiquette) où l'étiquette utilise une virgule
+        hours_options = [(round(i * 0.25, 2), str(round(i * 0.25, 2)).replace('.', ',')) for i in range(1, 33)]
+        self.hours.choices = hours_options
 
 class CommentForm(FlaskForm):
     content = TextAreaField('Commentaire', validators=[DataRequired()])

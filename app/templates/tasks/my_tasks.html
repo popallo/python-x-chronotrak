@@ -22,7 +22,7 @@
                                 </div>
                                 <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                 {% if task.estimated_time %}
-                                    <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time }}h</small>
+                                    <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time|fr_number }}h</small>
                                 {% endif %}
                             </a>
                         {% endfor %}
@@ -53,10 +53,10 @@
                                 <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                 <div class="d-flex justify-content-between align-items-center">
                                     {% if task.estimated_time %}
-                                        <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time }}h</small>
+                                        <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time|fr_number }}h</small>
                                     {% endif %}
                                     {% if task.actual_time %}
-                                        <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time }}h passées</small>
+                                        <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|fr_number }}h passées</small>
                                     {% endif %}
                                 </div>
                             </a>

@@ -56,7 +56,7 @@
                             <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ project.name }}</h5>
-                                    <small>{{ project.remaining_credit }}h / {{ project.initial_credit }}h</small>
+                                    <small>{{ project.remaining_credit|fr_number }}h / {{ project.initial_credit|fr_number }}h</small>
                                 </div>
                                 {% if project.description %}
                                     <p class="mb-1">{{ project.description }}</p>

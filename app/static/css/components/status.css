@@ -1,0 +1,46 @@
+/* Task status badges */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.à-faire {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.en-cours {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.terminé {
+    background-color: #28a745;
+    color: white;
+}
+
+/* Styles pour les boutons de statut */
+.status-toggle {
+    display: inline-block;
+}
+
+.status-toggle .btn-group {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.status-toggle .btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.status-update-msg {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

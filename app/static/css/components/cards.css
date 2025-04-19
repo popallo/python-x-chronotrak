@@ -1,0 +1,27 @@
+/* Card styling - Specifics */
+.card-header {
+    font-weight: 500;
+}
+
+/* Dashboard stats */
+.stats-card {
+    text-align: center;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.stats-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.stats-card .stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* Project credit progress bars */
+.credit-progress {
+    height: 10px;
+    border-radius: 5px;
+}

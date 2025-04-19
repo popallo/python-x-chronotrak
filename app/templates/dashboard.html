@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1 class="mb-4">Tableau de bord</h1>
 

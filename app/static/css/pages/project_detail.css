@@ -1,0 +1,20 @@
+.project-header {
+    margin-bottom: 2rem;
+}
+
+.project-description {
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+/* Personnalisation des statuts pour le projet */
+.project-status {
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.project-status.low-credit {
+    background-color: #f8d7da;
+    color: #721c24;
+}

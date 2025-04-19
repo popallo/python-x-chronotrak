@@ -94,7 +94,7 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.estimated_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
+                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time|fr_number }}h
                                         {% endif %}
                                     </span>
                                     <span>
@@ -126,7 +126,7 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.estimated_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time }}h
+                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time|fr_number }}h
                                         {% endif %}
                                     </span>
                                     <span>
@@ -158,7 +158,7 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.actual_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.actual_time }}h
+                                            <i class="fas fa-clock me-1"></i>{{ task.actual_time|fr_number }}h
                                         {% endif %}
                                     </span>
                                     <span>

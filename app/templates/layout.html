@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/forms.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/status.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/kanban.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/navbar.css') }}">
     <!-- Dark Mode CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
     <!-- Styles spécifiques à chaque page -->
@@ -77,6 +78,21 @@
             </div>
         </div>
     </nav>
+    {% endif %}
+    {% if current_user.is_authenticated and request.path == url_for('main.dashboard') %}
+    <!-- Rappel des couleurs thématiques -->
+    <div class="color-reminder-bar">
+        <div class="container">
+            <div class="d-flex justify-content-center">
+                <div class="color-item bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clients"></div>
+                <div class="color-item bg-success" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Projets"></div>
+                <div class="color-item bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tâches"></div>
+                <div class="color-item bg-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Alertes"></div>
+                <div class="color-item bg-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Urgences"></div>
+                <div class="color-item bg-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Rapports"></div>
+            </div>
+        </div>
+    </div>
     {% endif %}
 
     <main class="container py-4">

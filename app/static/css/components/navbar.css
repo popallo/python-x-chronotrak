@@ -1,8 +1,12 @@
 /* Barre de rappel des couleurs */
 .color-reminder-bar {
     height: 5px;
-    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    background: #fff !important;
     margin-bottom: 1px;
+}
+
+.dark-mode .color-reminder-bar {
+    background: #121212 !important;
 }
 
 .color-reminder-bar .container {

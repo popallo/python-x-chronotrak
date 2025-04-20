@@ -45,6 +45,10 @@ main {
     background: linear-gradient(135deg, #ffc107, #d39e00) !important;
 }
 
+.bg-reports {
+    background: linear-gradient(135deg, #6f42c1, #4527a0) !important;
+}
+
 /* Form styling - Base */
 .form-label {
     font-weight: 500;

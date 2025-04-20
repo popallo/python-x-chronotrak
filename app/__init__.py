@@ -49,7 +49,7 @@ def create_app(config_name):
         elif '/tasks/' in current_path or current_path == '/my_tasks':
             return 'bg-info'
         elif '/reports' in current_path:
-            return 'bg-secondary'
+            return 'bg-reports'
         else:
             # Page par défaut (dashboard)
             return 'bg-secondary'

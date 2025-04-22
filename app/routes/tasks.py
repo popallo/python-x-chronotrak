@@ -148,7 +148,8 @@ def log_time(task_id):
     if form.validate_on_submit():
         # Vérifier s'il reste assez de crédit
         if task.project.remaining_credit < form.hours.data:
-            flash(f'Pas assez de crédit restant sur le projet! ({task.project.remaining_credit|fr_number}h disponibles)', 'danger')
+            credit_display = str(task.project.remaining_credit).replace('.', ',')
+            flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
             return redirect(url_for('tasks.task_details', task_id=task.id))
             
         # Enregistrer le temps

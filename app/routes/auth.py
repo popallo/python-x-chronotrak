@@ -3,9 +3,11 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.client import Client
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm
+from app.models.notification import NotificationPreference
 from app.models.task import Task, TimeEntry, Comment
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm
+
 
 auth = Blueprint('auth', __name__)
 
@@ -77,6 +79,18 @@ def users():
 @login_required
 def profile():
     form = ProfileForm()
+    
+    # Obtenir ou créer les préférences de notification
+    if not current_user.notification_preferences:
+        preferences = NotificationPreference(user_id=current_user.id)
+        db.session.add(preferences)
+        db.session.commit()
+    else:
+        preferences = current_user.notification_preferences
+    
+    # Initialiser le formulaire des préférences
+    notif_form = NotificationPreferenceForm(obj=preferences)
+    
     if form.validate_on_submit():
         current_user.name = form.name.data
         
@@ -89,6 +103,33 @@ def profile():
     elif request.method == 'GET':
         form.name.data = current_user.name
         form.email.data = current_user.email
+        
+    return render_template('auth/profile.html', form=form, notif_form=notif_form, title='Mon profil')
+
+@auth.route('/profile/notifications', methods=['POST'])
+@login_required
+def notification_preferences():
+    # Obtenir ou créer les préférences de notification
+    if not current_user.notification_preferences:
+        preferences = NotificationPreference(user_id=current_user.id)
+        db.session.add(preferences)
+    else:
+        preferences = current_user.notification_preferences
+    
+    form = NotificationPreferenceForm()
+    
+    if form.validate_on_submit():
+        # Mettre à jour les préférences
+        preferences.email_notifications_enabled = form.email_notifications_enabled.data
+        preferences.task_status_change = form.task_status_change.data
+        preferences.task_comment_added = form.task_comment_added.data
+        preferences.task_time_logged = form.task_time_logged.data
+        preferences.project_credit_low = form.project_credit_low.data
+        
+        db.session.commit()
+        flash('Vos préférences de notification ont été mises à jour!', 'success')
+    
+    return redirect(url_for('auth.profile'))
         
     return render_template('auth/profile.html', form=form, title='Mon profil')
 

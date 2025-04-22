@@ -1,0 +1,73 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-envelope me-2"></i>Test de configuration SMTP
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p><i class="fas fa-info-circle me-2"></i>Cette page vous permet de tester la configuration SMTP de l'application.</p>
+                    <p>Si l'envoi réussit, vous recevrez un email de test à l'adresse indiquée.</p>
+                </div>
+                
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.recipient.label(class="form-label") }}
+                        {% if form.recipient.errors %}
+                            {{ form.recipient(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.recipient.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.recipient(class="form-control", value=current_user.email) }}
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-danger") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Configuration SMTP actuelle
+                </h4>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Serveur</dt>
+                    <dd class="col-sm-8">{{ config.MAIL_SERVER }}</dd>
+                    
+                    <dt class="col-sm-4">Port</dt>
+                    <dd class="col-sm-8">{{ config.MAIL_PORT }}</dd>
+                    
+                    <dt class="col-sm-4">Sécurité</dt>
+                    <dd class="col-sm-8">
+                        {% if config.MAIL_USE_TLS %}TLS{% elif config.MAIL_USE_SSL %}SSL{% else %}Aucune{% endif %}
+                    </dd>
+                    
+                    <dt class="col-sm-4">Nom d'utilisateur</dt>
+                    <dd class="col-sm-8">{{ config.MAIL_USERNAME or "Non configuré" }}</dd>
+                    
+                    <dt class="col-sm-4">Expéditeur par défaut</dt>
+                    <dd class="col-sm-8">{{ config.MAIL_DEFAULT_SENDER or "Non configuré" }}</dd>
+                </dl>
+                
+                <div class="alert alert-warning mt-3">
+                    <p><i class="fas fa-exclamation-triangle me-2"></i>Pour modifier ces paramètres, vous devez mettre à jour les variables d'environnement ou le fichier .env de l'application.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

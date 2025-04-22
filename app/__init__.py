@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from config import config
 from datetime import datetime, timezone
+from flask_mail import Mail
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -14,10 +15,14 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
 login_manager.login_message_category = "info"
 bcrypt = Bcrypt()
+mail = Mail()
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+
+    # Initialiser Mail
+    mail.init_app(app)
     
     # Initialisation des extensions avec l'app
     db.init_app(app)
@@ -60,11 +65,13 @@ def create_app(config_name):
     from app.routes.projects import projects
     from app.routes.tasks import tasks
     from app.routes.main import main
+    from app.routes.admin import admin
     
     app.register_blueprint(auth)
     app.register_blueprint(clients)
     app.register_blueprint(projects)
     app.register_blueprint(tasks)
     app.register_blueprint(main)
+    app.register_blueprint(admin)
     
     return app

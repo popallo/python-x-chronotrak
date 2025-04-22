@@ -67,3 +67,11 @@ class UserEditForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('Cet email est déjà utilisé. Veuillez en choisir un autre.')
+            
+class NotificationPreferenceForm(FlaskForm):
+    email_notifications_enabled = BooleanField('Activer les notifications par email', default=True)
+    task_status_change = BooleanField('Changements de statut des tâches', default=True)
+    task_comment_added = BooleanField('Nouveaux commentaires', default=True)
+    task_time_logged = BooleanField('Enregistrement de temps', default=True)
+    project_credit_low = BooleanField('Alerte de crédit faible', default=True)
+    submit = SubmitField('Enregistrer les préférences')

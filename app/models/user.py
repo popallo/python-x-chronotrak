@@ -29,6 +29,12 @@ class User(db.Model, UserMixin):
                               backref=db.backref('users', lazy=True),
                               lazy='subquery')
     
+    # Préférence de notification
+    notification_preferences = db.relationship('NotificationPreference', 
+                                          backref='user', 
+                                          uselist=False,
+                                          cascade='all, delete-orphan')
+    
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
         

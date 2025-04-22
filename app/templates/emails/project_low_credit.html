@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; }
+        .header { background-color: #dc3545; color: white; padding: 15px; }
+        .content { padding: 20px; }
+        .alert-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 15px 0; }
+        .credit-info { font-size: 18px; font-weight: bold; color: #dc3545; }
+        .footer { text-align: center; font-size: 12px; color: #6c757d; padding: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ChronoTrak - Alerte de crédit faible</h2>
+        </div>
+        <div class="content">
+            <div class="alert-box">
+                <p>Le crédit du projet "{{ project.name }}" est très bas!</p>
+                <p class="credit-info">Crédit restant: {{ project.remaining_credit }} heures</p>
+            </div>
+            
+            <h3>Détails du projet:</h3>
+            <ul>
+                <li><strong>Client:</strong> {{ project.client.name }}</li>
+                <li><strong>Crédit initial:</strong> {{ project.initial_credit }} heures</li>
+                <li><strong>Pourcentage restant:</strong> 
+                    {% if project.initial_credit > 0 %}
+                        {{ (project.remaining_credit / project.initial_credit * 100) | round(1) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </li>
+            </ul>
+            
+            <p>Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.</p>
+            
+            <p style="margin-top: 20px;">
+                <a href="{{ url }}" style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
+                    Voir le projet
+                </a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Ceci est un message automatique envoyé par ChronoTrak.</p>
+            <p>Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.</p>
+        </div>
+    </div>
+</body>
+</html>

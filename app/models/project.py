@@ -19,10 +19,17 @@ class Project(db.Model):
     def __repr__(self):
         return f"Project('{self.name}', Client: '{self.client.name}', Credit: {self.remaining_credit}h)"
         
+    credit_alert_sent = db.Column(db.Boolean, default=False)
+
     def add_credit(self, amount, note=None):
         """Ajoute du crédit au projet et crée une entrée dans l'historique"""
         # Met à jour le crédit restant
         self.remaining_credit += amount
+        
+        # Réinitialiser l'état d'alerte si le crédit est suffisant
+        threshold = 2  # Même seuil que dans deduct_credit
+        if self.credit_alert_sent and self.remaining_credit >= threshold:
+            self.credit_alert_sent = False
         
         # Ne pas ajouter de log ici si le projet n'a pas encore d'ID
         if self.id is None:
@@ -36,10 +43,13 @@ class Project(db.Model):
         )
         db.session.add(log)
             
+    # app/models/project.py (modifiez la méthode deduct_credit)
     def deduct_credit(self, amount, task_id=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
+        # Déduire le crédit
         self.remaining_credit -= amount
         
+        # Créer l'entrée dans l'historique
         log = CreditLog(
             project_id=self.id,
             amount=-amount,
@@ -47,6 +57,26 @@ class Project(db.Model):
             note=f"Déduction de {amount}h de crédit"
         )
         db.session.add(log)
+        
+        # Vérifier si le crédit est passé sous le seuil et envoyer une alerte si nécessaire
+        threshold = 2  # Seuil en heures
+        
+        # Seulement si on n'a pas déjà envoyé d'alerte pour ce passage sous le seuil
+        if self.remaining_credit < threshold and not self.credit_alert_sent:
+            # Marquer l'alerte comme envoyée
+            self.credit_alert_sent = True
+            
+            # Import ici pour éviter les imports circulaires
+            # Flask-Mail a besoin du contexte d'application
+            from app.utils.email import send_low_credit_notification
+            from flask import current_app
+            
+            # Vérifier si on est dans un contexte d'application (pour les tests)
+            if current_app:
+                # Utilisation d'un thread pour éviter de bloquer la requête
+                from threading import Thread
+                thread = Thread(target=send_low_credit_notification, args=(self,))
+                thread.start()
 
     def get_total_credit_allocated(self):
         """Calcule le crédit total alloué au projet au fil du temps"""

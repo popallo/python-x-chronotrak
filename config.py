@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import base64
 
-load_dotenv()
+load_dotenv(override=True)
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'You-Cant-Guess-This'
@@ -11,6 +11,13 @@ class Config:
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
     CREDIT_THRESHOLD = 2  # Seuil de crédit pour les alertes
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     
     # Clé de chiffrement pour les données sensibles
     # Si non définie dans les variables d'environnement, une clé temporaire sera générée

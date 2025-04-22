@@ -136,6 +136,8 @@ def delete_task(task_id):
 @tasks.route('/tasks/<int:task_id>/log_time', methods=['POST'])
 @login_required
 def log_time(task_id):
+    from app.utils.email import send_task_notification
+    
     task = Task.query.get_or_404(task_id)
     
     # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
@@ -151,15 +153,30 @@ def log_time(task_id):
             credit_display = str(task.project.remaining_credit).replace('.', ',')
             flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
             return redirect(url_for('tasks.task_details', task_id=task.id))
-            
-        # Enregistrer le temps
-        task.log_time(
-            hours=form.hours.data,
+        
+        # Créer l'entrée de temps
+        time_entry = TimeEntry(
+            task_id=task.id,
             user_id=current_user.id,
+            hours=form.hours.data,
             description=form.description.data
         )
+        db.session.add(time_entry)
+        
+        # Mettre à jour le temps total passé sur la tâche
+        if task.actual_time is None:
+            task.actual_time = form.hours.data
+        else:
+            task.actual_time += form.hours.data
+        
+        # Déduire du crédit du projet
+        task.project.deduct_credit(form.hours.data, task.id)
         
         db.session.commit()
+        
+        # Envoyer une notification par email
+        send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
+        
         flash(f'{form.hours.data}h enregistrées sur la tâche!', 'success')
         
         # Si le crédit devient faible, afficher une alerte
@@ -172,6 +189,8 @@ def log_time(task_id):
 @login_required
 def update_status():
     """Route pour mettre à jour le statut d'une tâche (via drag & drop du kanban)"""
+    from app.utils.email import send_task_notification
+    
     task_id = request.json.get('task_id')
     new_status = request.json.get('status')
     
@@ -196,6 +215,13 @@ def update_status():
         task.completed_at = None
         
     db.session.commit()
+    
+    # Envoyer une notification par email
+    additional_data = {
+        'old_status': old_status,
+        'new_status': new_status
+    }
+    send_task_notification(task, 'status_change', current_user, additional_data)
     
     return jsonify({
         'success': True, 
@@ -226,6 +252,8 @@ def my_tasks():
 @tasks.route('/tasks/<int:task_id>/add_comment', methods=['POST'])
 @login_required
 def add_comment(task_id):
+    from app.utils.email import send_task_notification
+    
     task = Task.query.get_or_404(task_id)
     
     # Vérifier si le client a accès à ce projet
@@ -245,6 +273,10 @@ def add_comment(task_id):
         )
         db.session.add(comment)
         db.session.commit()
+        
+        # Envoyer une notification par email
+        send_task_notification(task, 'comment_added', current_user, {'comment': comment})
+        
         flash('Votre commentaire a été ajouté!', 'success')
     
     return redirect(url_for('tasks.task_details', task_id=task.id))

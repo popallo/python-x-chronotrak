@@ -11,6 +11,7 @@ import { initRegistrationForm } from './pages/user_registration.js';
 import { initUserEditForm } from './pages/user_edit.js';
 import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
+import { initNotificationPreferences } from './pages/notification_preferences.js';
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -51,5 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page des projets - liste
     if (currentPath === '/projects') {
         initProjectFilters();
+    }
+
+    // Page de profil - préférences de notification
+    if (currentPath === '/profile') {
+        initNotificationPreferences();
     }
 });

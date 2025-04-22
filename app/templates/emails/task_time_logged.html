@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; }
+        .header { background-color: #007bff; color: white; padding: 15px; }
+        .content { padding: 20px; }
+        .time-details { background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 10px; margin: 10px 0; }
+        .footer { text-align: center; font-size: 12px; color: #6c757d; padding: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ChronoTrak - Temps enregistré</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour,</p>
+            <p>Du temps a été enregistré sur la tâche "{{ task.title }}":</p>
+            <ul>
+                <li><strong>Projet:</strong> {{ task.project.name }}</li>
+                <li><strong>Client:</strong> {{ task.project.client.name }}</li>
+                <li><strong>Enregistré par:</strong> {{ user.name }}</li>
+            </ul>
+            <div class="time-details">
+                <p><strong>Temps:</strong> {{ time_entry.hours }} heures</p>
+                {% if time_entry.description %}
+                    <p><strong>Description:</strong> {{ time_entry.description }}</p>
+                {% endif %}
+            </div>
+            <p>
+                <a href="{{ url }}">Voir la tâche</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Ceci est un message automatique envoyé par ChronoTrak.</p>
+            <p>Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.</p>
+        </div>
+    </div>
+</body>
+</html>

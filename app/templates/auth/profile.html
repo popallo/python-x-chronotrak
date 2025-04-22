@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card shadow">
+        <div class="card shadow mb-4">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">
                     <i class="fas fa-user me-2"></i>Mon profil
@@ -65,6 +65,57 @@
                 </form>
             </div>
         </div>
+        
+        <!-- Préférences de notification -->
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>Préférences de notification
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.notification_preferences') }}">
+                    {{ notif_form.hidden_tag() }}
+                    
+                    <div class="form-check form-switch mb-3">
+                        {{ notif_form.email_notifications_enabled(class="form-check-input") }}
+                        {{ notif_form.email_notifications_enabled.label(class="form-check-label") }}
+                    </div>
+                    
+                    <div class="notification-options" id="notification-options">
+                        <div class="mb-3">
+                            <label class="form-label">Recevoir des notifications pour :</label>
+                            <div class="ms-3">
+                                <div class="form-check mb-2">
+                                    {{ notif_form.task_status_change(class="form-check-input") }}
+                                    {{ notif_form.task_status_change.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ notif_form.task_comment_added(class="form-check-input") }}
+                                    {{ notif_form.task_comment_added.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ notif_form.task_time_logged(class="form-check-input") }}
+                                    {{ notif_form.task_time_logged.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ notif_form.project_credit_low(class="form-check-input") }}
+                                    {{ notif_form.project_credit_low.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ notif_form.submit(class="btn btn-info") }}
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/notification_preferences.js') }}"></script>
 {% endblock %}

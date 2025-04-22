@@ -8,6 +8,8 @@ import { autoCloseAlerts, initTooltips, highlightActiveNavItem } from './utils/d
 import { initTasksPage } from './pages/tasks.js';
 import { initProjectsPage } from './pages/projects.js';
 import { initRegistrationForm } from './pages/user_registration.js';
+import { initUserEditForm } from './pages/user_edit.js';
+import { initUserManagement } from './pages/user_management.js';
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -33,5 +35,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page d'inscription utilisateur
     if (currentPath.includes('/register')) {
         initRegistrationForm();
+    }
+
+    // Page d'édition utilisateur
+    if (currentPath.includes('/users/') && currentPath.includes('/edit')) {
+        initUserEditForm();
+    }
+
+    // Page de gestion des utilisateurs
+    if (currentPath.includes('/users') && !currentPath.includes('/edit')) {
+        initUserManagement();
     }
 });

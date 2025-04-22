@@ -21,8 +21,9 @@ def list_projects():
     
     # Calculer le pourcentage de crédit restant pour chaque projet
     for project in all_projects:
-        if project.initial_credit > 0:
-            project.credit_percent = (project.remaining_credit / project.initial_credit) * 100
+        total_credit = project.get_total_credit_allocated()
+        if total_credit > 0:
+            project.credit_percent = (project.remaining_credit / total_credit) * 100
         else:
             project.credit_percent = 0
             

@@ -84,8 +84,8 @@ def project_details(project_id):
     else:
         project.credit_percent = 0
         
-    # Récupérer l'historique des crédits
-    credit_logs = project.credit_logs
+    # Récupérer l'historique des crédits, trié du plus récent au plus ancien
+    credit_logs = CreditLog.query.filter_by(project_id=project.id).order_by(CreditLog.created_at.desc()).all()
     
     # Récupérer les tâches organisées par statut pour le kanban
     tasks_todo = [t for t in project.tasks if t.status == 'à faire']

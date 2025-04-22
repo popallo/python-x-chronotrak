@@ -24,7 +24,7 @@
                     <p><strong>Contact :</strong> {{ client.contact_name }}</p>
                 {% endif %}
                 {% if client.email %}
-                    <p><strong>Email :</strong> <a href="mailto:{{ client.email }}">{{ client.email }}</a></p>
+                    <p><strong>Email :</strong> <a href="mailto:{{ client.safe_email }}">{{ client.safe_email }}</a></p>
                 {% endif %}
                 {% if client.phone %}
                     <p><strong>Téléphone :</strong> {{ client.phone }}</p>

@@ -249,14 +249,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="comment-content">{{ comment.content }}</div>
+                        <div class="comment-content">{{ comment.safe_content }}</div>
                         
                         {# Formulaire d'édition masqué par défaut #}
                         {% if can_edit %}
                             <div class="edit-comment-form" id="edit-form-{{ comment.id }}" style="display: none;">
                                 <form method="POST" action="{{ url_for('tasks.edit_comment', comment_id=comment.id) }}">
                                     <div class="mb-2">
-                                        <textarea name="content" class="form-control" rows="2" required>{{ comment.content }}</textarea>
+                                        <textarea name="content" class="form-control" rows="2" required>{{ comment.safe_content }}</textarea>
                                     </div>
                                     <div class="d-flex justify-content-end gap-2">
                                         <button type="button" class="btn btn-sm btn-outline-secondary cancel-edit-btn" 

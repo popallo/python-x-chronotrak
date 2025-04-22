@@ -20,18 +20,24 @@
                         {% endif %}
                         <p>
                             <strong>Crédit:</strong> 
-                            {{ project.remaining_credit|fr_number }}h / {{ project.initial_credit|fr_number }}h
-                            <span class="badge {% if project.credit_percent < 20 %}bg-danger{% elif project.credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}">
-                                {{ project.credit_percent|round|int }}%
+                            {{ project.remaining_credit|fr_number }}h / {{ project.get_total_credit_allocated()|fr_number }}h
+                            {% set total_allocated = project.get_total_credit_allocated() %}
+                            {% if total_allocated > 0 %}
+                                {% set credit_percent = (project.remaining_credit / total_allocated * 100) %}
+                            {% else %}
+                                {% set credit_percent = 0 %}
+                            {% endif %}
+                            <span class="badge {% if credit_percent < 20 %}bg-danger{% elif credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ credit_percent|round|int }}%
                             </span>
                         </p>
                         <div class="progress credit-progress">
-                            <div class="progress-bar {% if project.credit_percent < 20 %}bg-danger{% elif project.credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}" 
-                                 role="progressbar" 
-                                 style="width: {{ project.credit_percent }}%" 
-                                 aria-valuenow="{{ project.remaining_credit }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ project.initial_credit }}">
+                            <div class="progress-bar {% if credit_percent < 20 %}bg-danger{% elif credit_percent < 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ credit_percent }}%" 
+                                aria-valuenow="{{ project.remaining_credit }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="{{ total_allocated }}">
                             </div>
                         </div>
                         <p class="mt-3">

@@ -2,7 +2,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
+from app.models.client import Client
 from app.forms.auth import LoginForm, RegistrationForm, ProfileForm
+from app.models.task import Task, TimeEntry, Comment
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm
 
 auth = Blueprint('auth', __name__)
 
@@ -45,6 +48,14 @@ def register():
         )
         user.set_password(form.password.data)
         db.session.add(user)
+        
+        # Si l'utilisateur est un client, associer les clients sélectionnés
+        if form.role.data == 'client' and form.clients.data:
+            for client_id in form.clients.data:
+                client = Client.query.get(client_id)
+                if client:
+                    user.clients.append(client)
+        
         db.session.commit()
         flash(f'Compte créé pour {form.name.data}!', 'success')
         return redirect(url_for('auth.users'))
@@ -80,3 +91,87 @@ def profile():
         form.email.data = current_user.email
         
     return render_template('auth/profile.html', form=form, title='Mon profil')
+
+@auth.route('/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    # Vérifier les droits administrateur
+    if not current_user.is_admin():
+        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Empêcher l'admin de supprimer son propre compte
+    if current_user.id == user_id:
+        flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Pour les utilisateurs de type client, vérifier s'ils sont liés à des tâches
+    tasks_assigned = Task.query.filter_by(user_id=user.id).count()
+    if tasks_assigned > 0:
+        flash(f'Impossible de supprimer cet utilisateur car {tasks_assigned} tâche(s) lui sont assignées.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    # Vérifier les entrées de temps
+    time_entries = TimeEntry.query.filter_by(user_id=user.id).count()
+    if time_entries > 0:
+        flash(f'Impossible de supprimer cet utilisateur car {time_entries} entrée(s) de temps lui sont associées.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    # Vérifier les commentaires
+    comments = Comment.query.filter_by(user_id=user.id).count()
+    if comments > 0:
+        flash(f'Impossible de supprimer cet utilisateur car {comments} commentaire(s) lui sont associés.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    # Si tout est OK, supprimer l'utilisateur
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'Utilisateur {user.name} supprimé avec succès!', 'success')
+    return redirect(url_for('auth.users'))
+
+@auth.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    # Vérifier les droits administrateur
+    if not current_user.is_admin():
+        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    user = User.query.get_or_404(user_id)
+    form = UserEditForm(original_email=user.email)
+    
+    if form.validate_on_submit():
+        user.name = form.name.data
+        user.email = form.email.data
+        user.role = form.role.data
+        
+        # Gérer les associations client seulement si c'est un utilisateur de type client
+        if form.role.data == 'client':
+            # Vider les associations actuelles
+            user.clients = []
+            # Ajouter les nouvelles associations
+            if form.clients.data:
+                for client_id in form.clients.data:
+                    client = Client.query.get(client_id)
+                    if client:
+                        user.clients.append(client)
+        
+        # Modifier le mot de passe si fourni
+        if form.password.data:
+            user.set_password(form.password.data)
+        
+        db.session.commit()
+        flash(f'Utilisateur {user.name} mis à jour avec succès!', 'success')
+        return redirect(url_for('auth.users'))
+    
+    elif request.method == 'GET':
+        form.name.data = user.name
+        form.email.data = user.email
+        form.role.data = user.role
+        # Pré-remplir les clients sélectionnés
+        if user.role == 'client':
+            form.clients.data = [client.id for client in user.clients]
+    
+    return render_template('auth/edit_user.html', form=form, user=user, title='Modifier utilisateur')

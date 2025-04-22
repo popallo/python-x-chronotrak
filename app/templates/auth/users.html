@@ -8,7 +8,7 @@
     </a>
 </div>
 
-<div class="users-table-container"> <!-- Classe spécifique pour le ciblage CSS -->
+<div class="users-table-container">
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -29,15 +29,29 @@
                                 <td>{{ user.email }}</td>
                                 <td>
                                     {% if user.is_admin() %}
-                                        <span class="badge bg-primary">Administrateur</span>
+                                        <span class="badge bg-danger">Administrateur</span>
+                                    {% elif user.is_client() %}
+                                        <span class="badge bg-primary">Client</span>
+                                        {% if user.clients %}
+                                            <small class="text-muted">
+                                                ({{ user.clients|length }} client{% if user.clients|length > 1 %}s{% endif %})
+                                            </small>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge bg-secondary">Technicien</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
                                 <td class="text-end">
-                                    {% if not user.is_admin() or current_user.id != user.id %}
-                                        <button class="btn btn-sm btn-outline-danger">
+                                    <a href="{{ url_for('auth.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if current_user.id != user.id %}
+                                        <button class="btn btn-sm btn-outline-danger delete-user-btn" 
+                                                data-user-id="{{ user.id }}"
+                                                data-user-name="{{ user.name }}"
+                                                data-is-client="{{ user.is_client()|lower }}"
+                                                data-client-count="{{ user.clients|length if user.is_client() else 0 }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     {% endif %}
@@ -50,4 +64,38 @@
         </div>
     </div>
 </div>
+
+<!-- Une seule modale pour tous les utilisateurs -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteUserModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong id="userName"></strong> ?</p>
+                
+                <div id="clientWarning" class="alert alert-warning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Cet utilisateur est lié à 
+                    <span id="clientCount"></span> client<span id="clientPlural"></span>.
+                </div>
+                
+                <p class="text-danger mt-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteUserForm" action="" method="POST">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/user_management.js') }}"></script>
 {% endblock %}

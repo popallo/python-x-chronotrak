@@ -46,9 +46,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('tasks.my_tasks') }}">Mes tâches</a>
                     </li>
+                    {% if not current_user.is_client() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
                     </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <!-- Bouton Dark Mode -->
@@ -67,6 +69,13 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user me-1"></i>{{ current_user.name }}
+                            {% if current_user.is_client() %}
+                            <span class="badge bg-info">Client</span>
+                            {% elif current_user.is_admin() %}
+                            <span class="badge bg-danger">Admin</span>
+                            {% else %}
+                            <span class="badge bg-success">Technicien</span>
+                            {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>

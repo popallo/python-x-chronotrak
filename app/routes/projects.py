@@ -13,11 +13,11 @@ projects = Blueprint('projects', __name__)
 def list_projects():
     # Pour les admins et techniciens, montrer tous les projets
     if current_user.is_admin() or current_user.is_technician():
-        all_projects = Project.query.order_by(Project.created_at.desc()).all()
+        all_projects = Project.query.order_by(Project.name.asc()).all()
     # Pour les clients, montrer uniquement les projets des clients associés
     else:
         client_ids = [client.id for client in current_user.clients]
-        all_projects = Project.query.filter(Project.client_id.in_(client_ids)).order_by(Project.created_at.desc()).all()
+        all_projects = Project.query.filter(Project.client_id.in_(client_ids)).order_by(Project.name.asc()).all()
     
     # Calculer le pourcentage de crédit restant pour chaque projet
     for project in all_projects:

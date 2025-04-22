@@ -1,10 +1,145 @@
 {% extends 'layout.html' %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/filters.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Projets</h1>
+    <div>
+        <!-- Si l'utilisateur est admin ou technicien, afficher le bouton de création -->
+        {% if not current_user.is_client() %}
+        <a href="#" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>Nouveau projet
+        </a>
+        {% endif %}
+    </div>
 </div>
 
+<!-- Panneau de filtres -->
+<div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
+    <div id="filtersToggle" class="filters-header">
+        <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+        <button type="button" class="btn btn-sm">
+            <i id="filtersIcon" class="fas {% if filters_active %}fa-minus{% else %}fa-plus{% endif %}"></i>
+        </button>
+    </div>
+    <div id="filtersBody" class="filters-body {% if not filters_active %}hidden{% endif %}">
+        <form id="projectsFilterForm" method="GET" action="{{ url_for('projects.list_projects') }}" class="mt-3">
+            <div class="row">
+                <!-- Filtre par client -->
+                <div class="col-md-6 mb-3">
+                    <label for="client_id" class="form-label">Client</label>
+                    <select name="client_id" id="client_id" class="form-select" {% if current_user.is_client() %}disabled{% endif %}>
+                        <option value="">Tous les clients</option>
+                        {% for client in all_clients %}
+                            <option value="{{ client.id }}" {% if request.args.get('client_id')|int == client.id %}selected{% endif %}>
+                                {{ client.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Filtre par état de crédit -->
+                <div class="col-md-6 mb-3">
+                    <label for="credit_status" class="form-label">État du crédit</label>
+                    <select name="credit_status" id="credit_status" class="form-select">
+                        <option value="">Tous les crédits</option>
+                        <option value="critical" {% if request.args.get('credit_status') == 'critical' %}selected{% endif %}>Critique (< 2h)</option>
+                        <option value="low" {% if request.args.get('credit_status') == 'low' %}selected{% endif %}>Bas (< 5h)</option>
+                        <option value="normal" {% if request.args.get('credit_status') == 'normal' %}selected{% endif %}>Normal (≥ 5h)</option>
+                    </select>
+                </div>
+                
+                <!-- Recherche par nom -->
+                <div class="col-md-6 mb-3">
+                    <label for="search" class="form-label">Recherche par nom</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher un projet..." value="{{ request.args.get('search', '') }}">
+                </div>
+                
+                <!-- Options de tri -->
+                <div class="col-md-6 mb-3">
+                    <label for="sort_by" class="form-label">Trier par</label>
+                    <select name="sort_by" id="sort_by" class="form-select">
+                        <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Nom</option>
+                        <option value="date_asc" {% if request.args.get('sort_by') == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
+                        <option value="date_desc" {% if request.args.get('sort_by', 'date_desc') == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
+                        <option value="credit_asc" {% if request.args.get('sort_by') == 'credit_asc' %}selected{% endif %}>Crédit (plus bas)</option>
+                        <option value="credit_desc" {% if request.args.get('sort_by') == 'credit_desc' %}selected{% endif %}>Crédit (plus haut)</option>
+                    </select>
+                </div>
+                
+                <!-- Période de création -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Période de création</label>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="date_from" name="date_from" placeholder="De" value="{{ request.args.get('date_from', '') }}">
+                        </div>
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="date_to" name="date_to" placeholder="À" value="{{ request.args.get('date_to', '') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filters-actions">
+                <button type="button" id="resetFilters" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-search me-1"></i>Appliquer les filtres
+                </button>
+            </div>
+        </form>
+        
+        <!-- Filtres actifs -->
+        {% if filters_active %}
+        <div id="activeFilters" class="active-filters">
+            {% if request.args.get('client_id') %}
+                {% set client = get_client_by_id(request.args.get('client_id')|int) %}
+                {% if client %}
+                <div class="filter-badge" data-type="client_id" data-value="{{ client.id }}">
+                    Client: {{ client.name }}
+                    <span class="remove-filter">×</span>
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            {% if request.args.get('credit_status') %}
+                <div class="filter-badge" data-type="credit_status" data-value="{{ request.args.get('credit_status') }}">
+                    Crédit: 
+                    {% if request.args.get('credit_status') == 'critical' %}Critique
+                    {% elif request.args.get('credit_status') == 'low' %}Bas
+                    {% else %}Normal
+                    {% endif %}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+            
+            {% if request.args.get('search') %}
+                <div class="filter-badge" data-type="search" data-value="{{ request.args.get('search') }}">
+                    Recherche: {{ request.args.get('search') }}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+            
+            {% if request.args.get('date_from') or request.args.get('date_to') %}
+                <div class="filter-badge" data-type="date_range" data-value="date_range">
+                    Période: 
+                    {% if request.args.get('date_from') %}{{ request.args.get('date_from') }}{% else %}...{% endif %}
+                    à
+                    {% if request.args.get('date_to') %}{{ request.args.get('date_to') }}{% else %}...{% endif %}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Affichage des projets filtrés -->
 {% if projects %}
     <div class="row">
         {% for project in projects %}
@@ -32,17 +167,76 @@
                         <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="btn btn-outline-success">
                             <i class="fas fa-eye me-1"></i>Détails
                         </a>
+                        {% if not current_user.is_client() %}
                         <a href="{{ url_for('projects.add_credit', project_id=project.id) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-plus me-1"></i>Ajouter du crédit
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+    <!-- Pagination si nécessaire -->
+    {% if pagination %}
+    <nav aria-label="Pagination des projets">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, **request.args) }}">
+                        <i class="fas fa-chevron-left"></i> Précédent
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i> Précédent</span>
+                </li>
+            {% endif %}
+            
+            {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                    {% if page == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page, **request.args) }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, **request.args) }}">
+                        Suivant <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Suivant <i class="fas fa-chevron-right"></i></span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 {% else %}
     <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>Aucun projet n'a été créé pour le moment.
+        <i class="fas fa-info-circle me-2"></i>
+        {% if filters_active %}
+            Aucun projet ne correspond aux filtres sélectionnés.
+        {% else %}
+            Aucun projet n'a été créé pour le moment.
+        {% endif %}
     </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/project_filters.js') }}"></script>
 {% endblock %}

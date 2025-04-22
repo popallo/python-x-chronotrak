@@ -21,7 +21,7 @@
                             <p><i class="fas fa-user me-2"></i>{{ client.contact_name }}</p>
                         {% endif %}
                         {% if client.email %}
-                            <p><i class="fas fa-envelope me-2"></i>{{ client.email }}</p>
+                            <p><i class="fas fa-envelope me-2"></i>{{ client.safe_email }}</p>
                         {% endif %}
                         {% if client.phone %}
                             <p><i class="fas fa-phone me-2"></i>{{ client.phone }}</p>

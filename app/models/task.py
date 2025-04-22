@@ -1,5 +1,8 @@
 from app import db
 from datetime import datetime
+from app.utils.encryption import EncryptedType
+from flask import current_app
+from cryptography.fernet import Fernet
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,7 +63,7 @@ class TimeEntry(db.Model):
     
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(EncryptedType, nullable=False)  # Contenu chiffré
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Clés étrangères
@@ -72,3 +75,21 @@ class Comment(db.Model):
     
     def __repr__(self):
         return f"Comment(Task: {self.task_id}, User: {self.user.name}, Date: {self.created_at})"
+        
+    # Méthode de secours pour déchiffrer manuellement si nécessaire
+    def decrypt_content(self):
+        if not self.content or not isinstance(self.content, str) or not self.content.startswith('gAAA'):
+            return self.content
+            
+        try:
+            key = current_app.config.get('ENCRYPTION_KEY')
+            f = Fernet(key)
+            return f.decrypt(self.content.encode('utf-8')).decode('utf-8')
+        except Exception as e:
+            current_app.logger.error(f"Erreur lors du déchiffrement d'un commentaire: {e}")
+            return "[Erreur de déchiffrement]"
+    
+    # Propriété pour accéder au contenu déchiffré
+    @property
+    def safe_content(self):
+        return self.decrypt_content()

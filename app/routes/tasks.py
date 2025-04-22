@@ -6,11 +6,13 @@ from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
 from app.forms.task import TaskForm, TimeEntryForm, CommentForm
 from app.utils import get_utc_now
+from app.utils.decorators import client_required
 
 tasks = Blueprint('tasks', __name__)
 
 @tasks.route('/projects/<int:project_id>/tasks/new', methods=['GET', 'POST'])
 @login_required
+@client_required
 def new_task(project_id):
     project = Project.query.get_or_404(project_id)
     form = TaskForm()
@@ -39,6 +41,14 @@ def new_task(project_id):
 @login_required
 def task_details(task_id):
     task = Task.query.get_or_404(task_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            flash("Vous n'avez pas accès à cette tâche.", "danger")
+            return redirect(url_for('main.dashboard'))
+    
     time_entries = TimeEntry.query.filter_by(task_id=task.id).order_by(TimeEntry.created_at.desc()).all()
     
     # Récupérer les commentaires liés à cette tâche
@@ -62,6 +72,14 @@ def task_details(task_id):
 @login_required
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            flash("Vous n'avez pas accès à cette tâche.", "danger")
+            return redirect(url_for('main.dashboard'))
+    
     form = TaskForm()
     
     if form.validate_on_submit():
@@ -100,6 +118,11 @@ def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
     project_id = task.project_id
     
+    # Vérifier si le client a accès à ce projet et interdire la suppression pour les clients
+    if current_user.is_client():
+        flash('Accès refusé. Les clients ne peuvent pas supprimer de tâches.', 'danger')
+        return redirect(url_for('tasks.task_details', task_id=task.id))
+    
     # Vérifier s'il y a du temps enregistré sur cette tâche
     if task.time_entries:
         flash(f'Impossible de supprimer cette tâche car du temps y a été enregistré.', 'danger')
@@ -114,6 +137,12 @@ def delete_task(task_id):
 @login_required
 def log_time(task_id):
     task = Task.query.get_or_404(task_id)
+    
+    # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
+    if current_user.is_client():
+        flash('Accès refusé. Les clients ne peuvent pas enregistrer de temps.', 'danger')
+        return redirect(url_for('tasks.task_details', task_id=task.id))
+    
     form = TimeEntryForm()
     
     if form.validate_on_submit():
@@ -149,6 +178,13 @@ def update_status():
         return jsonify({'success': False, 'error': 'Données manquantes'}), 400
         
     task = Task.query.get_or_404(task_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
+    
     old_status = task.status
     task.status = new_status
     
@@ -172,6 +208,15 @@ def my_tasks():
     tasks_todo = Task.query.filter_by(user_id=current_user.id, status='à faire').all()
     tasks_in_progress = Task.query.filter_by(user_id=current_user.id, status='en cours').all()
     
+    # Si c'est un client, filtrer pour n'afficher que les tâches auxquelles il a accès
+    if current_user.is_client():
+        client_ids = [client.id for client in current_user.clients]
+        projects = Project.query.filter(Project.client_id.in_(client_ids)).all()
+        project_ids = [project.id for project in projects]
+        
+        tasks_todo = [t for t in tasks_todo if t.project_id in project_ids]
+        tasks_in_progress = [t for t in tasks_in_progress if t.project_id in project_ids]
+    
     return render_template('tasks/my_tasks.html', 
                           tasks_todo=tasks_todo,
                           tasks_in_progress=tasks_in_progress,
@@ -181,6 +226,14 @@ def my_tasks():
 @login_required
 def add_comment(task_id):
     task = Task.query.get_or_404(task_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            flash("Vous n'avez pas accès à cette tâche.", "danger")
+            return redirect(url_for('main.dashboard'))
+    
     form = CommentForm()
     
     if form.validate_on_submit():

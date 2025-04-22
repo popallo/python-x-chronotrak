@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models.user import User
+from app.models.client import Client
 from app.forms.auth import LoginForm, RegistrationForm, ProfileForm
 
 auth = Blueprint('auth', __name__)
@@ -45,6 +46,14 @@ def register():
         )
         user.set_password(form.password.data)
         db.session.add(user)
+        
+        # Si l'utilisateur est un client, associer les clients sélectionnés
+        if form.role.data == 'client' and form.clients.data:
+            for client_id in form.clients.data:
+                client = Client.query.get(client_id)
+                if client:
+                    user.clients.append(client)
+        
         db.session.commit()
         flash(f'Compte créé pour {form.name.data}!', 'success')
         return redirect(url_for('auth.users'))

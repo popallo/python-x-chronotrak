@@ -20,9 +20,11 @@
         <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-edit me-1"></i>Modifier
         </a>
+        {% if not current_user.is_client() %}
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
             <i class="fas fa-trash me-1"></i>Supprimer
         </button>
+        {% endif %}
     </div>
 </div>
 
@@ -115,8 +117,9 @@
     </div>
     
     <div class="col-lg-4">
-        <!-- Enregistrement du temps -->
-        <div class="card h-100 mb-0">  <!-- Suppression de mb-4 ici -->
+        <!-- Enregistrement du temps - visible uniquement pour les administrateurs et techniciens -->
+        {% if not current_user.is_client() %}
+        <div class="card h-100 mb-0">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
             </div>
@@ -151,6 +154,33 @@
                 </form>
             </div>
         </div>
+        {% else %}
+        <!-- Informations sur le crédit pour les clients -->
+        <div class="card h-100 mb-0">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations du projet</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <strong>Crédit restant :</strong> {{ task.project.remaining_credit|fr_number }}h
+                </div>
+                
+                <p>Pour enregistrer du temps sur cette tâche ou demander l'ajout de crédit, veuillez contacter votre gestionnaire de compte.</p>
+
+                {% if task.estimated_time %}
+                <div class="mt-3">
+                    <strong>Temps estimé :</strong> {{ task.estimated_time|fr_number }}h
+                </div>
+                {% endif %}
+                
+                {% if task.actual_time %}
+                <div class="mt-2">
+                    <strong>Temps passé :</strong> {{ task.actual_time|fr_number }}h
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -290,7 +320,11 @@
             <div class="modal-body">
                 Êtes-vous sûr de vouloir supprimer la tâche <strong>{{ task.title }}</strong> ?
                 
-                {% if time_entries %}
+                {% if current_user.is_client() %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>En tant que client, vous n'êtes pas autorisé à supprimer des tâches.
+                    </div>
+                {% elif time_entries %}
                     <div class="alert alert-warning mt-3">
                         <i class="fas fa-exclamation-triangle me-2"></i>Cette tâche a du temps enregistré.
                         Vous ne pouvez pas la supprimer.
@@ -301,7 +335,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                {% if not time_entries %}
+                {% if not current_user.is_client() and not time_entries %}
                     <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST">
                         <button type="submit" class="btn btn-danger">Supprimer</button>
                     </form>

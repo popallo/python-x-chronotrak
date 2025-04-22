@@ -1,16 +1,24 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app import db
 from app.models.project import Project, CreditLog
 from app.models.client import Client
 from app.forms.project import ProjectForm, AddCreditForm
+from app.utils.decorators import client_required
 
 projects = Blueprint('projects', __name__)
 
 @projects.route('/projects')
 @login_required
 def list_projects():
-    all_projects = Project.query.order_by(Project.created_at.desc()).all()
+    # Pour les admins et techniciens, montrer tous les projets
+    if current_user.is_admin() or current_user.is_technician():
+        all_projects = Project.query.order_by(Project.created_at.desc()).all()
+    # Pour les clients, montrer uniquement les projets des clients associés
+    else:
+        client_ids = [client.id for client in current_user.clients]
+        all_projects = Project.query.filter(Project.client_id.in_(client_ids)).order_by(Project.created_at.desc()).all()
+    
     # Calculer le pourcentage de crédit restant pour chaque projet
     for project in all_projects:
         if project.initial_credit > 0:
@@ -22,7 +30,14 @@ def list_projects():
 
 @projects.route('/clients/<int:client_id>/projects/new', methods=['GET', 'POST'])
 @login_required
+@client_required
 def new_project(client_id):
+    # Seuls les admins et techniciens peuvent créer des projets
+    if current_user.is_client():
+        flash('Accès refusé. Vous ne pouvez pas créer de projets.', 'danger')
+        return redirect(url_for('clients.client_details', client_id=client_id))
+    
+    # Le reste du code reste inchangé
     client = Client.query.get_or_404(client_id)
     form = ProjectForm()
     
@@ -58,6 +73,7 @@ def new_project(client_id):
 
 @projects.route('/projects/<int:project_id>')
 @login_required
+@client_required
 def project_details(project_id):
     project = Project.query.get_or_404(project_id)
     
@@ -85,7 +101,14 @@ def project_details(project_id):
 
 @projects.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
+@client_required
 def edit_project(project_id):
+    # Seuls les admins et techniciens peuvent modifier des projets
+    if current_user.is_client():
+        flash('Accès refusé. Vous ne pouvez pas modifier de projets.', 'danger')
+        return redirect(url_for('projects.project_details', project_id=project_id))
+    
+    # Le reste du code reste inchangé
     project = Project.query.get_or_404(project_id)
     form = ProjectForm()
     
@@ -114,7 +137,14 @@ def edit_project(project_id):
 
 @projects.route('/projects/<int:project_id>/add_credit', methods=['GET', 'POST'])
 @login_required
+@client_required
 def add_credit(project_id):
+    # Seuls les admins et techniciens peuvent ajouter du crédit
+    if current_user.is_client():
+        flash('Accès refusé. Vous ne pouvez pas ajouter de crédit.', 'danger')
+        return redirect(url_for('projects.project_details', project_id=project_id))
+    
+    # Le reste du code reste inchangé
     project = Project.query.get_or_404(project_id)
     form = AddCreditForm()
     
@@ -128,7 +158,14 @@ def add_credit(project_id):
 
 @projects.route('/projects/<int:project_id>/delete', methods=['POST'])
 @login_required
+@client_required
 def delete_project(project_id):
+    # Seuls les admins et techniciens peuvent supprimer des projets
+    if current_user.is_client():
+        flash('Accès refusé. Vous ne pouvez pas supprimer de projets.', 'danger')
+        return redirect(url_for('projects.project_details', project_id=project_id))
+    
+    # Le reste du code reste inchangé
     project = Project.query.get_or_404(project_id)
     client_id = project.client_id
     

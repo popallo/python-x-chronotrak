@@ -66,7 +66,12 @@
                     </div>
                     <div class="mb-3">
                         {{ form.role.label(class="form-label") }}
-                        {{ form.role(class="form-select") }}
+                        {{ form.role(class="form-select", id="role-select") }}
+                    </div>
+                    <div class="mb-3 client-field" style="display: none;">
+                        {{ form.clients.label(class="form-label") }}
+                        {{ form.clients(class="form-select", multiple="multiple", size="5") }}
+                        <div class="form-text">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs clients</div>
                     </div>
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary">
@@ -79,4 +84,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { initRegistrationForm } from "{{ url_for('static', filename='js/pages/user_registration.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initRegistrationForm();
+    });
+</script>
 {% endblock %}

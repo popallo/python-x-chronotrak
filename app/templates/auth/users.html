@@ -29,7 +29,9 @@
                                 <td>{{ user.email }}</td>
                                 <td>
                                     {% if user.is_admin() %}
-                                        <span class="badge bg-primary">Administrateur</span>
+                                        <span class="badge bg-danger">Administrateur</span>
+                                    {% elif user.is_client() %}
+                                        <span class="badge bg-primary">Client</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Technicien</span>
                                     {% endif %}

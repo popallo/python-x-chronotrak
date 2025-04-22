@@ -7,6 +7,7 @@ import { initDarkMode } from './lib/dark-mode.js';
 import { autoCloseAlerts, initTooltips, highlightActiveNavItem } from './utils/dom.js';
 import { initTasksPage } from './pages/tasks.js';
 import { initProjectsPage } from './pages/projects.js';
+import { initRegistrationForm } from './pages/user_registration.js';
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -27,5 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page des projets
     if (currentPath.includes('/projects/')) {
         initProjectsPage();
+    }
+
+    // Page d'inscription utilisateur
+    if (currentPath.includes('/register')) {
+        initRegistrationForm();
     }
 });

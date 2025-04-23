@@ -1,17 +1,16 @@
-/**
- * Module de gestion du mode sombre
- */
-
 // Fonction pour activer/désactiver le mode sombre
 function toggleDarkMode() {
-    const body = document.body;
+    const html = document.documentElement;
     const darkModeIcon = document.getElementById('darkModeIcon');
     
-    // Basculer la classe dark-mode sur le body
-    body.classList.toggle('dark-mode');
+    // Basculer la classe dark-mode sur html
+    html.classList.toggle('dark-mode');
+    
+    // S'assurer que theme-loaded est toujours présent
+    html.classList.add('theme-loaded');
     
     // Mettre à jour l'icône
-    if (body.classList.contains('dark-mode')) {
+    if (html.classList.contains('dark-mode')) {
         darkModeIcon.classList.replace('fa-sun', 'fa-moon');
         localStorage.setItem('darkMode', 'enabled');
     } else {
@@ -26,10 +25,15 @@ function loadDarkModePreference() {
     const darkModeIcon = document.getElementById('darkModeIcon');
     
     if (darkMode === 'enabled') {
-        document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark-mode');
+        document.documentElement.classList.add('theme-loaded');
+        
         if (darkModeIcon) {
             darkModeIcon.classList.replace('fa-sun', 'fa-moon');
         }
+    } else {
+        // S'assurer que le thème est marqué comme chargé même en mode clair
+        document.documentElement.classList.add('theme-loaded');
     }
 }
 

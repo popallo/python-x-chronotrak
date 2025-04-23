@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, FloatField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from app.models.user import User
+from app.models.client import Client
 
 class TaskForm(FlaskForm):
     title = StringField('Titre', validators=[DataRequired(), Length(min=2, max=100)])
@@ -22,11 +23,54 @@ class TaskForm(FlaskForm):
     submit = SubmitField('Enregistrer')
     
     def __init__(self, *args, **kwargs):
+        # Extraire current_user des arguments
+        current_user = kwargs.pop('current_user', None)
+        
+        # Appeler le constructeur parent
         super(TaskForm, self).__init__(*args, **kwargs)
-        # Dynamiquement charger la liste des utilisateurs
-        self.user_id.choices = [(0, '-- Non assigné --')] + [
-            (user.id, user.name) for user in User.query.order_by(User.name).all()
-        ]
+        
+        # Logique pour filtrer les utilisateurs
+        if current_user and current_user.is_client():
+            # Récupérer les IDs des clients auxquels l'utilisateur est rattaché
+            client_ids = [client.id for client in current_user.clients]
+            
+            # Récupérer tous les utilisateurs clients qui sont rattachés aux mêmes clients
+            client_users = User.query.filter(
+                User.role == 'client',
+                User.clients.any(Client.id.in_(client_ids))
+            ).all()
+            
+            # Récupérer les IDs de ces utilisateurs
+            client_user_ids = [user.id for user in client_users]
+            
+            # Récupérer tous les admins et techniciens
+            other_users = User.query.filter(
+                (User.role == 'admin') | (User.role == 'technicien')
+            ).all()
+            
+            # Combiner les listes
+            all_visible_users = client_users + other_users
+            
+            # Supprimer les doublons éventuels
+            unique_users = []
+            seen_ids = set()
+            for user in all_visible_users:
+                if user.id not in seen_ids:
+                    unique_users.append(user)
+                    seen_ids.add(user.id)
+            
+            # Trier par nom
+            unique_users.sort(key=lambda x: x.name)
+            
+            # Définir les choix
+            self.user_id.choices = [(0, '-- Non assigné --')] + [
+                (user.id, user.name) for user in unique_users
+            ]
+        else:
+            # Pour les admins et techniciens, montrer tous les utilisateurs
+            self.user_id.choices = [(0, '-- Non assigné --')] + [
+                (user.id, user.name) for user in User.query.order_by(User.name).all()
+            ]
 
 class TimeEntryForm(FlaskForm):
     # Remplacer FloatField par SelectField

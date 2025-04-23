@@ -9,30 +9,30 @@
 }
 
 /* Adaptation au mode sombre */
-body.dark-mode .credit-info-card {
+html.dark-mode body .credit-info-card {
     background-color: #2c2c2c;
     border-color: #444 !important;
 }
 
-body.dark-mode .credit-info-card .card-body {
+html.dark-mode body .credit-info-card .card-body {
     background-color: #2c2c2c;
 }
 
 /* Maintenir la visibilité des couleurs en mode sombre */
-body.dark-mode .credit-info-card .text-success {
+html.dark-mode body .credit-info-card .text-success {
     color: #4CAF50 !important;
 }
 
-body.dark-mode .credit-info-card .text-warning {
+html.dark-mode body .credit-info-card .text-warning {
     color: #FFC107 !important;
 }
 
-body.dark-mode .credit-info-card .text-danger {
+html.dark-mode body .credit-info-card .text-danger {
     color: #FF5252 !important;
 }
 
 /* Rendons la progression plus visible en mode sombre */
-body.dark-mode .credit-info-card .progress {
+html.dark-mode body .credit-info-card .progress {
     background-color: #444;
 }
 

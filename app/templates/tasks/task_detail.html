@@ -156,28 +156,41 @@
         </div>
         {% else %}
         <!-- Informations sur le crédit pour les clients -->
+        <!-- Informations sur le crédit pour les clients -->
         <div class="card h-100 mb-0">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations du projet</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info mb-3">
-                    <strong>Crédit restant :</strong> {{ task.project.remaining_credit|fr_number }}h
+                {% set percent = (task.project.remaining_credit / task.project.initial_credit * 100) if task.project.initial_credit > 0 else 0 %}
+                {% set color = 'success' if percent > 50 else 'warning' if percent > 15 else 'danger' %}
+                
+                <div class="card mb-3 border-{{ color }} credit-info-card">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-{{ color }}">
+                                <i class="fas fa-clock me-2"></i>Crédit restant
+                            </h6>
+                            <span class="fs-5 fw-bold text-{{ color }}">
+                                {{ task.project.remaining_credit|fr_number }}h
+                            </span>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-{{ color }}" 
+                                 role="progressbar" 
+                                 style="width: {{ percent }}%" 
+                                 aria-valuenow="{{ task.project.remaining_credit }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ task.project.initial_credit }}">
+                            </div>
+                        </div>
+                        <small class="text-muted d-block text-end mt-1">
+                            sur {{ task.project.initial_credit|fr_number }}h initiales
+                        </small>
+                    </div>
                 </div>
                 
                 <p>Pour enregistrer du temps sur cette tâche ou demander l'ajout de crédit, veuillez contacter votre gestionnaire de compte.</p>
-
-                {% if task.estimated_time %}
-                <div class="mt-3">
-                    <strong>Temps estimé :</strong> {{ task.estimated_time|fr_number }}h
-                </div>
-                {% endif %}
-                
-                {% if task.actual_time %}
-                <div class="mt-2">
-                    <strong>Temps passé :</strong> {{ task.actual_time|fr_number }}h
-                </div>
-                {% endif %}
             </div>
         </div>
         {% endif %}

@@ -1,0 +1,98 @@
+/* Styles pour les cartes réductibles */
+
+/* Bouton de collapse dans le header */
+.card-header {
+    position: relative;
+}
+
+.card-collapse-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: inherit;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    border-radius: 4px;
+    z-index: 5; /* S'assurer que le bouton est au-dessus d'autres éléments */
+}
+
+/* Déplacer le badge pour éviter le chevauchement avec le bouton */
+.card-header .badge {
+    margin-right: 20px; /* Espace pour le bouton de collapse */
+}
+
+.card-collapse-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-collapse-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* État réduit de la carte */
+.card-body.collapsed {
+    max-height: 70px; /* Hauteur suffisante pour montrer un aperçu */
+    padding-top: 10px;
+    padding-bottom: 10px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    display: block;
+    position: relative;
+}
+
+/* Effet de dégradé pour indiquer qu'il y a plus de contenu */
+.card-body.collapsed::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+}
+
+/* Adapter le dégradé au mode sombre */
+body.dark-mode .card-body.collapsed::after {
+    background: linear-gradient(to bottom, rgba(30, 30, 30, 0), rgba(30, 30, 30, 0.9));
+}
+
+.card-body {
+    max-height: 1000px; /* Valeur suffisamment grande */
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
+}
+
+/* Styles spécifiques pour le mode sombre */
+body.dark-mode .card-collapse-btn {
+    color: #e0e0e0;
+}
+
+body.dark-mode .card-collapse-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Animation pour le bouton de collapse */
+.card-collapse-btn i {
+    transition: transform 0.3s ease;
+}
+
+.card-header:hover .card-collapse-btn {
+    opacity: 1;
+}
+
+/* Ajustement pour les cartes avec d'autres boutons dans l'en-tête */
+.card-header .card-header-buttons {
+    margin-right: 30px; /* Espace pour le bouton de collapse */
+}

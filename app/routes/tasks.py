@@ -15,7 +15,7 @@ tasks = Blueprint('tasks', __name__)
 @client_required
 def new_task(project_id):
     project = Project.query.get_or_404(project_id)
-    form = TaskForm()
+    form = TaskForm(current_user=current_user)
     
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None
@@ -80,7 +80,7 @@ def edit_task(task_id):
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
-    form = TaskForm()
+        form = TaskForm(current_user=current_user)
     
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None

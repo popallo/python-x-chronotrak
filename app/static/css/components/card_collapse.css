@@ -64,7 +64,7 @@
 }
 
 /* Adapter le dégradé au mode sombre */
-body.dark-mode .card-body.collapsed::after {
+html.dark-mode body .card-body.collapsed::after {
     background: linear-gradient(to bottom, rgba(30, 30, 30, 0), rgba(30, 30, 30, 0.9));
 }
 
@@ -75,11 +75,11 @@ body.dark-mode .card-body.collapsed::after {
 }
 
 /* Styles spécifiques pour le mode sombre */
-body.dark-mode .card-collapse-btn {
+html.dark-mode body .card-collapse-btn {
     color: #e0e0e0;
 }
 
-body.dark-mode .card-collapse-btn:hover {
+html.dark-mode body .card-collapse-btn:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 

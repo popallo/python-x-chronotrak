@@ -12,6 +12,8 @@ import { initUserEditForm } from './pages/user_edit.js';
 import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
+import { initCardCollapse } from './pages/card_collapse.js'; // Module de collapse des cartes
+import { initDashboard } from './pages/dashboard.js'; // Module du tableau de bord
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,8 +23,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initTooltips();
     highlightActiveNavItem();
     
+    // Initialiser la fonctionnalité de collapse des cartes sur toutes les pages
+    initCardCollapse();
+    
     // Détection de la page courante et initialisation spécifique
     const currentPath = window.location.pathname;
+    
+    // Page du tableau de bord
+    if (currentPath === '/' || currentPath === '/dashboard') {
+        initDashboard();
+    }
     
     // Page des tâches
     if (currentPath.includes('/tasks/') || currentPath.includes('/my_tasks')) {

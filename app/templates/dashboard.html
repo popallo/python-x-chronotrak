@@ -5,7 +5,12 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Tableau de bord</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Tableau de bord</h1>
+    <button id="resetCardCollapse" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-expand-alt me-1"></i>Développer toutes les cartes
+    </button>
+</div>
 
 <!-- Statistiques -->
 <div class="row mb-4">
@@ -48,10 +53,10 @@
 </div>
 
 <!-- Projets avec peu de crédit (PRIORITÉ #1) -->
-<div class="card mb-4">
+<div class="card mb-4" id="card-low-credit">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-battery-quarter me-2"></i>Projets avec peu de crédit</h5>
-        <span class="badge bg-dark text-white">{{ projects_low_credit }}</span>
+        <span class="badge bg-dark text-white me-4">{{ projects_low_credit }}</span>
     </div>
     <div class="card-body">
         {% if low_credit_projects %}
@@ -91,10 +96,10 @@
 </div>
 
 <!-- Tâches urgentes (PRIORITÉ #2) -->
-<div class="card mb-4">
+<div class="card mb-4" id="card-urgent-tasks">
     <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Tâches urgentes</h5>
-        <span class="badge bg-light text-danger">{{ urgent_tasks|length }}</span>
+        <span class="badge bg-light text-danger me-4">{{ urgent_tasks|length }}</span>
     </div>
     <div class="card-body">
         {% if urgent_tasks %}
@@ -129,10 +134,10 @@
 </div>
 
 <!-- Mes tâches en cours (PRIORITÉ #3) -->
-<div class="card mb-4">
+<div class="card mb-4" id="card-my-tasks">
     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Mes tâches en cours</h5>
-        <span class="badge bg-light text-info">{{ my_tasks|length }}</span>
+        <span class="badge bg-light text-info me-4">{{ my_tasks|length }}</span>
     </div>
     <div class="card-body">
         {% if my_tasks %}
@@ -163,10 +168,10 @@
 </div>
 
 <!-- Temps récemment enregistré (PRIORITÉ #4) -->
-<div class="card mb-4">
+<div class="card mb-4" id="card-recent-time">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Temps récemment enregistré</h5>
-        <span class="badge bg-light text-secondary">{{ recent_time_entries|length }}</span>
+        <span class="badge bg-light text-secondary me-4">{{ recent_time_entries|length }}</span>
     </div>
     <div class="card-body">
         {% if recent_time_entries %}

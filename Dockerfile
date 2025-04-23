@@ -23,7 +23,7 @@ RUN pip install pip-audit && \
 # Copier uniquement les fichiers nécessaires
 COPY app/ ./app/
 COPY migrations/ ./migrations/
-COPY config.py run.py wsgi.py create_admin.py ./
+COPY config.py run.py wsgi.py ./
 
 # Créer le répertoire instance et définir les permissions
 RUN mkdir -p /app/instance && \

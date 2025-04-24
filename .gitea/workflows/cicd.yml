@@ -16,25 +16,29 @@ jobs:
     steps:
       - name: Configuration du runner
         run: |
-          apk add --no-cache git nodejs npm curl
-      
-      - name: Checkout du code
-        uses: actions/checkout@v4
+          apk add --no-cache git curl
 
-      # Authentification au registre
+      - name: Checkout manuel du code
+        run: |
+          mkdir -p /tmp/repo
+          cd /tmp/repo
+          git init
+          git remote add origin ${{ github.server_url }}/${{ github.repository }}.git
+          git fetch --depth=1 origin ${{ github.ref }}
+          git checkout FETCH_HEAD
+          cp -r . /workspace/
+          cd /workspace/
+
       - name: Login au registre Docker
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      # Construction et push de l'image
       - name: Build et push de l'image Docker
         run: |
           docker buildx build --provenance=false --push --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest .
 
-      # Analyse de sécurité avec Trivy (installation directe)
       - name: Installation et exécution de Trivy
         run: |
-          apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
           trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL
 

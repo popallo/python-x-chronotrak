@@ -14,6 +14,7 @@ import { initProjectFilters } from './pages/project_filters.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
 import { initCardCollapse } from './pages/card_collapse.js'; // Module de collapse des cartes
 import { initDashboard } from './pages/dashboard.js'; // Module du tableau de bord
+import { initWelcomePage } from './pages/welcome-page.js'; // Nouveau module pour la page d'accueil
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -28,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Détection de la page courante et initialisation spécifique
     const currentPath = window.location.pathname;
+    
+    // Page d'accueil (bienvenue)
+    if (currentPath === '/') {
+        initWelcomePage();
+    }
     
     // Page du tableau de bord
     if (currentPath === '/' || currentPath === '/dashboard') {

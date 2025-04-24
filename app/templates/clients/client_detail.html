@@ -5,7 +5,12 @@
     <h1>{{ client.name }}</h1>
     <div>
         <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="btn btn-outline-primary">
-            <i class="fas fa-edit me-1"></i>Modifier
+            <i class="fas fa-edit me-1"></i>
+            {% if current_user.is_client() %}
+                Modifier la société
+            {% else %}
+                Modifier le client
+            {% endif %}
         </a>
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteClientModal">
             <i class="fas fa-trash me-1"></i>Supprimer
@@ -94,12 +99,28 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Êtes-vous sûr de vouloir supprimer le client <strong>{{ client.name }}</strong> ?
+                Êtes-vous sûr de vouloir supprimer 
+                {% if current_user.is_client() %}
+                    la société
+                {% else %}
+                    le client
+                {% endif %}
+                <strong>{{ client.name }}</strong> ?
                 
                 {% if client.projects %}
                     <div class="alert alert-warning mt-3">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Ce client a {{ client.projects|length }} projet(s) associé(s).
-                        Vous devez d'abord supprimer tous les projets avant de pouvoir supprimer le client.
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% if current_user.is_client() %}
+                            Cette société a {{ client.projects|length }} projet(s) associé(s).
+                        {% else %}
+                            Ce client a {{ client.projects|length }} projet(s) associé(s).
+                        {% endif %}
+                        Vous devez d'abord supprimer tous les projets avant de pouvoir 
+                        {% if current_user.is_client() %}
+                            supprimer la société.
+                        {% else %}
+                            supprimer le client.
+                        {% endif %}
                     </div>
                 {% else %}
                     <p class="text-danger mt-3"><i class="fas fa-exclamation-triangle me-1"></i>Cette action est irréversible.</p>

@@ -7,9 +7,19 @@
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">
                     {% if client %}
-                        <i class="fas fa-edit me-2"></i>Modifier le client
+                        <i class="fas fa-edit me-2"></i>
+                        {% if current_user.is_client() %}
+                            Modifier la société
+                        {% else %}
+                            Modifier le client
+                        {% endif %}
                     {% else %}
-                        <i class="fas fa-plus me-2"></i>Nouveau client
+                        <i class="fas fa-plus me-2"></i>
+                        {% if current_user.is_client() %}
+                            Nouvelle société
+                        {% else %}
+                            Nouveau client
+                        {% endif %}
                     {% endif %}
                 </h4>
             </div>

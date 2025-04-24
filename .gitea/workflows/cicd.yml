@@ -53,47 +53,33 @@ jobs:
       # Installation des dépendances SSH
       - name: Installation des dépendances SSH
         run: |
-          apk add --no-cache openssh-client bash
+          apk add --no-cache openssh-client bash file
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking=no" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       # Configuration de la clé SSH (ed25519)
-      - name: Configuration de la clé SSH (avec débogage)
+      - name: Configuration de la clé SSH
         run: |
-          set -x  # Active le mode verbeux
-          mkdir -p ~/.ssh || echo "Échec mkdir"
-          echo "Répertoire créé, vérification:"
-          ls -la ~ || echo "Échec ls"
-          
-          # Écrit la clé en protégeant les sauts de ligne
-          echo "${{ secrets.PROD_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519 || echo "Échec écriture clé"
-          
-          echo "Clé écrite, vérification du fichier:"
-          ls -la ~/.ssh || echo "Échec ls .ssh"
-          
-          # Correction des permissions
-          chmod 600 ~/.ssh/id_ed25519 || echo "Échec chmod"
-          
-          # Vérification du format
-          file ~/.ssh/id_ed25519 || echo "Fichier non trouvé"
-          
-          # Ajout de l'hôte connu
-          ssh-keyscan -t ed25519 -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts || echo "Échec keyscan"
-          
-          echo "Contenu du known_hosts:"
-          cat ~/.ssh/known_hosts || echo "Fichier non trouvé"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
       # Test de connexion SSH
       - name: Test de connexion SSH
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
 
       # Déploiement sur le serveur de production
       - name: Déploiement sur le serveur de production
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
-            set -e
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+            set -ex
+            echo 'Début du déploiement'
             cd ${{ secrets.PROJECT_DIRECTORY }}
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
             docker logout forge.apacher.eu
+            echo 'Déploiement terminé avec succès'
           "

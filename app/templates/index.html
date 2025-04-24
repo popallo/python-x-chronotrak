@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/welcome-page.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -17,7 +21,7 @@
     
     <div class="row mt-5 pt-5">
         <div class="col-md-4">
-            <div class="card mb-4">
+            <div class="card mb-4 features-card">
                 <div class="card-body text-center">
                     <i class="fas fa-users fa-3x mb-3 text-primary"></i>
                     <h4 class="card-title">Gestion des clients</h4>
@@ -26,7 +30,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card mb-4">
+            <div class="card mb-4 features-card">
                 <div class="card-body text-center">
                     <i class="fas fa-project-diagram fa-3x mb-3 text-primary"></i>
                     <h4 class="card-title">Gestion des projets</h4>
@@ -35,7 +39,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card mb-4">
+            <div class="card mb-4 features-card">
                 <div class="card-body text-center">
                     <i class="fas fa-tasks fa-3x mb-3 text-primary"></i>
                     <h4 class="card-title">Gestion des tâches</h4>
@@ -44,5 +48,12 @@
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block footer_extras %}
+<!-- Dark Mode Toggle Button for Welcome Page -->
+<div class="welcome-dark-mode-toggle" id="welcomeDarkModeToggle">
+    <i class="fas fa-sun" id="darkModeIcon"></i>
 </div>
 {% endblock %}

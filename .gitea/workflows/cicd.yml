@@ -47,31 +47,34 @@ jobs:
     runs-on: docker
     container:
       image: docker:latest
+      network: "host"
     steps:
-      - name: Installation dépendances SSH
+      # Installation des dépendances SSH
+      - name: Installation des dépendances SSH
         run: |
           apk add --no-cache openssh-client bash
 
+      # Configuration de la clé SSH (ed25519)
       - name: Configuration de la clé SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts
 
+      # Test de connexion SSH
+      - name: Test de connexion SSH
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
+
+      # Déploiement sur le serveur de production
       - name: Déploiement sur le serveur de production
         run: |
-          ssh -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
-            # Se positionner dans le répertoire de l'application
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+            set -e
             cd ${{ secrets.PROJECT_DIRECTORY }}
-            
-            # Se connecter au registre Docker
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
-            
-            # Récupérer la dernière image et démarrer les conteneurs
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
-            
-            # Se déconnecter du registre Docker
             docker logout forge.apacher.eu
           "

@@ -46,13 +46,15 @@ jobs:
     needs: build-and-push
     runs-on: docker
     container:
-      image: docker:latest
-      network: "host"
+      image: alpine:latest  # Image légère
+      options: --privileged --network host
     steps:
-      # Installation des dépendances SSH
-      - name: Installation des dépendances SSH
+      # Installation de Docker et des dépendances
+      - name: Installation de Docker et des dépendances
         run: |
-          apk add --no-cache openssh-client bash
+          apk add --no-cache docker-cli docker openrc bash openssh-client
+          rc-update add docker boot
+          service docker start
 
       # Configuration de la clé SSH (ed25519)
       - name: Configuration de la clé SSH

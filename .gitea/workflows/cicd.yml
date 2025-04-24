@@ -55,6 +55,19 @@ jobs:
           apk add --no-cache docker-cli docker openrc bash openssh-client
           rc-update add docker boot
           service docker start
+          # Attendre que Docker soit prêt
+          for i in $(seq 1 10); do
+            if docker info > /dev/null 2>&1; then
+              echo "Docker est prêt."
+              break
+            fi
+            echo "Attente de Docker ($i/10)..."
+            sleep 3
+          done
+          if ! docker info > /dev/null 2>&1; then
+            echo "Erreur : Docker n'est pas prêt après 30 secondes."
+            exit 1
+          fi
 
       # Configuration de la clé SSH (ed25519)
       - name: Configuration de la clé SSH

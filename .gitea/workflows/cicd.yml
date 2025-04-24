@@ -5,55 +5,69 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # Permet de déclencher manuellement
+  workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: docker
+    container:
+      image: docker:latest
+      options: --privileged
     steps:
+      - name: Configuration du runner
+        run: |
+          apk add --no-cache git nodejs npm curl
+      
       - name: Checkout du code
         uses: actions/checkout@v4
 
       # Authentification au registre
       - name: Login au registre Docker
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.REGISTRY_REPOSITORY }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
       # Construction et push de l'image
       - name: Build et push de l'image Docker
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: forge.apacher.eu/aurelien-dazy/chronotrak:latest
-          provenance: false
+        run: |
+          docker buildx build --provenance=false --push --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest .
 
-      # Analyse de sécurité avec Trivy
-      - name: Scan de l'image avec Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'forge.apacher.eu/aurelien-dazy/chronotrak:latest'
-          format: 'table'
-          exit-code: '0'  # Ne pas échouer le build en cas de vulnérabilités (vous pouvez passer à 1 pour échouer)
-          severity: 'CRITICAL,HIGH'  # Scan seulement pour les vulnérabilités critiques et élevées
+      # Analyse de sécurité avec Trivy (installation directe)
+      - name: Installation et exécution de Trivy
+        run: |
+          apk add --no-cache curl
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL
 
   deploy:
-    needs: build-and-push  # Attend que le job build-and-push soit terminé
+    needs: build-and-push
     runs-on: docker
+    container:
+      image: docker:latest
     steps:
+      - name: Installation dépendances SSH
+        run: |
+          apk add --no-cache openssh-client bash
+
+      - name: Configuration de la clé SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts
+
       - name: Déploiement sur le serveur de production
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          port: ${{ secrets.PROD_SSH_PORT }}
-          username: ${{ secrets.PROD_SSH_USERNAME }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
+        run: |
+          ssh -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+            # Se positionner dans le répertoire de l'application
             cd ${{ secrets.PROJECT_DIRECTORY }}
+            
+            # Se connecter au registre Docker
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+            
+            # Récupérer la dernière image et démarrer les conteneurs
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
+            
+            # Se déconnecter du registre Docker
             docker logout forge.apacher.eu
+          "

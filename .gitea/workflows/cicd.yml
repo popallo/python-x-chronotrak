@@ -56,12 +56,30 @@ jobs:
           apk add --no-cache openssh-client bash
 
       # Configuration de la clé SSH (ed25519)
-      - name: Configuration de la clé SSH
+      - name: Configuration de la clé SSH (avec débogage)
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -t ed25519 -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts
+          set -x  # Active le mode verbeux
+          mkdir -p ~/.ssh || echo "Échec mkdir"
+          echo "Répertoire créé, vérification:"
+          ls -la ~ || echo "Échec ls"
+          
+          # Écrit la clé en protégeant les sauts de ligne
+          echo "${{ secrets.PROD_SSH_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519 || echo "Échec écriture clé"
+          
+          echo "Clé écrite, vérification du fichier:"
+          ls -la ~/.ssh || echo "Échec ls .ssh"
+          
+          # Correction des permissions
+          chmod 600 ~/.ssh/id_ed25519 || echo "Échec chmod"
+          
+          # Vérification du format
+          file ~/.ssh/id_ed25519 || echo "Fichier non trouvé"
+          
+          # Ajout de l'hôte connu
+          ssh-keyscan -t ed25519 -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts || echo "Échec keyscan"
+          
+          echo "Contenu du known_hosts:"
+          cat ~/.ssh/known_hosts || echo "Fichier non trouvé"
 
       # Test de connexion SSH
       - name: Test de connexion SSH

@@ -12,7 +12,8 @@ jobs:
     runs-on: docker
     container:
       image: docker:latest
-      options: --privileged --network webservices
+      network: "host"
+      options: --privileged
     steps:
       - name: Configuration du runner
         run: |

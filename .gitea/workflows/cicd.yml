@@ -22,7 +22,7 @@ jobs:
       - name: Checkout manuel du code
         run: |
           git config --global --add safe.directory /workspace
-          git clone https://gitea:3000/${GITHUB_REPOSITORY}.git .
+          git clone http://gitea:3000/${GITHUB_REPOSITORY}.git .
           git checkout ${GITHUB_SHA}
 
       # Authentification au registre

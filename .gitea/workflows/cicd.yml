@@ -46,28 +46,14 @@ jobs:
     needs: build-and-push
     runs-on: docker
     container:
-      image: alpine:latest  # Image légère
-      options: --privileged --network host
+      image: docker:latest
+      network: "host"
+      options: --privileged
     steps:
-      # Installation de Docker et des dépendances
-      - name: Installation de Docker et des dépendances
+      # Installation des dépendances SSH
+      - name: Installation des dépendances SSH
         run: |
-          apk add --no-cache docker-cli docker openrc bash openssh-client
-          rc-update add docker boot
-          service docker start
-          # Attendre que Docker soit prêt
-          for i in $(seq 1 10); do
-            if docker info > /dev/null 2>&1; then
-              echo "Docker est prêt."
-              break
-            fi
-            echo "Attente de Docker ($i/10)..."
-            sleep 3
-          done
-          if ! docker info > /dev/null 2>&1; then
-            echo "Erreur : Docker n'est pas prêt après 30 secondes."
-            exit 1
-          fi
+          apk add --no-cache openssh-client bash
 
       # Configuration de la clé SSH (ed25519)
       - name: Configuration de la clé SSH

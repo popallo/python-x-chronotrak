@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: apacher
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
 
   deploy:
     needs: build-and-push  # Attend que le job build-and-push soit terminé
-    runs-on: ubuntu-latest
+    runs-on: apacher
     steps:
       - name: Déploiement sur le serveur de production
         uses: appleboy/ssh-action@master

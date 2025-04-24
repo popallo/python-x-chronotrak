@@ -45,7 +45,13 @@
                         <a class="nav-link" href="{{ url_for('main.dashboard') }}">Tableau de bord</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('clients.list_clients') }}">Clients</a>
+                        <a class="nav-link" href="{{ url_for('clients.list_clients') }}">
+                            {% if current_user.is_client() %}
+                                Sociétés
+                            {% else %}
+                                Clients
+                            {% endif %}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('projects.list_projects') }}">Projets</a>
@@ -105,7 +111,7 @@
     <div class="color-reminder-bar">
         <div class="container">
             <div class="d-flex justify-content-center">
-                <div class="color-item bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clients"></div>
+                <div class="color-item bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{% if current_user.is_client() %}Sociétés{% else %}Clients{% endif %}"></div>
                 <div class="color-item bg-success" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Projets"></div>
                 <div class="color-item bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tâches"></div>
                 <div class="color-item bg-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Alertes"></div>

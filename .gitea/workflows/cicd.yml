@@ -18,12 +18,11 @@ jobs:
         run: |
           apk add --no-cache git nodejs npm curl
 
-      # Au lieu d'utiliser actions/checkout, utilisons git directement
-      - name: Checkout manuel du code
-        run: |
-          git config --global --add safe.directory /workspace
-          git clone http://gitea:3000/${GITHUB_REPOSITORY}.git .
-          git checkout ${GITHUB_SHA}
+      - name: Checkout du code avec actions/checkout
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.sha }}
 
       # Authentification au registre
       - name: Login au registre Docker

@@ -4,7 +4,7 @@
 
 function initCardCollapse() {
     // Sélectionner toutes les cartes du dashboard qui ont un header et un body
-    const dashboardCards = document.querySelectorAll('.card:has(.card-header):has(.card-body)');
+    const dashboardCards = document.querySelectorAll('.card:has(.card-header):has(.card-body):not(.no-collapse)');
     
     // Si aucune carte n'est trouvée, sortir
     if (!dashboardCards.length) return;

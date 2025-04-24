@@ -27,15 +27,15 @@ jobs:
 
       - name: 🔐 Login au registre Docker
         run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ FORGE_DOMAIN }} -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
       - name: 🛠️ Build et push de l'image Docker
         run: |
           docker buildx build \
             --provenance=false \
-            --cache-from=forge.apacher.eu/aurelien-dazy/chronotrak:latest \
-            --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
-            --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ github.sha }} \
+            --cache-from=${{ FORGE_REPOSITORY }} \
+            --tag ${{ FORGE_REPOSITORY }} \
+            --tag ${{ FORGE_REPOSITORY }}:${{ github.sha }} \
             --push \
             .
 
@@ -43,7 +43,7 @@ jobs:
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL --exit-code 0
+          trivy image ${{ FORGE_REPOSITORY }} --severity HIGH,CRITICAL --exit-code 0
 
   deploy:
     name: 🚀 Déploiement en production
@@ -80,7 +80,7 @@ jobs:
             cd $PROJECT_DIR
             
             # Login au registre
-            echo \"$REGISTRY_PASS\" | docker login forge.apacher.eu -u \"$REGISTRY_USER\" --password-stdin
+            echo \"$REGISTRY_PASS\" | docker login ${{ FORGE_DOMAIN }} -u \"$REGISTRY_USER\" --password-stdin
             
             # Exporter le tag spécifique pour le déploiement
             export TAG=${{ github.sha }}
@@ -91,7 +91,7 @@ jobs:
             docker compose up -d --remove-orphans
             
             # Nettoyage
-            docker logout forge.apacher.eu
+            docker logout ${{ FORGE_DOMAIN }}
             docker system prune -f --filter \"until=24h\"
             
             echo 'Déploiement terminé avec succès'

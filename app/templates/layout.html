@@ -139,8 +139,27 @@
     </main>
 
     <footer class="footer mt-auto py-3 bg-light">
-        <div class="container text-center">
-            <span class="text-muted">Chronotrak &copy; {{ now.year }}</span>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 text-start">
+                    <span class="text-muted">Chronotrak &copy; {{ now.year }}</span>
+                </div>
+                <div class="col-md-4 text-center">
+                    {% if version %}
+                        <span class="text-muted">Version {{ version }}</span>
+                        {% if build_info.env == 'development' %}
+                            <span class="badge bg-warning">Dev</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="col-md-4 text-end">
+                    {% if page_load %}
+                        <span class="text-muted small">
+                            <i class="fas fa-stopwatch me-1"></i>{{ page_load.formatted }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
             {% block footer_extras %}{% endblock %}
         </div>
     </footer>

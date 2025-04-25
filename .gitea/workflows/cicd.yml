@@ -9,96 +9,77 @@ on:
 
 jobs:
   build-and-push:
-    name: 🏗️ Construction et publication de l'image
     runs-on: docker
     container:
       image: docker:latest
-      options: --privileged --network=host
+      network: "host"
+      options: --privileged
     steps:
-      - name: 📦 Installation des dépendances
+      - name: Configuration du runner
         run: |
           apk add --no-cache git nodejs npm curl
 
-      - name: 📥 Checkout du code
+      - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.sha }}
 
-      - name: 🔐 Login au registre Docker
+      # Authentification au registre
+      - name: Login au registre Docker
         run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ FORGE_DOMAIN }} -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      - name: 🛠️ Build et push de l'image Docker
+      # Construction et push de l'image
+      - name: Build et push de l'image Docker
         run: |
-          docker buildx build \
-            --provenance=false \
-            --cache-from=${{ FORGE_REPOSITORY }} \
-            --tag ${{ FORGE_REPOSITORY }} \
-            --tag ${{ FORGE_REPOSITORY }}:${{ github.sha }} \
-            --push \
-            .
+          docker buildx build --provenance=false --push --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest .
 
-      - name: 🔍 Analyse de sécurité avec Trivy
+      # Analyse de sécurité avec Trivy
+      - name: Installation et exécution de Trivy
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy image ${{ FORGE_REPOSITORY }} --severity HIGH,CRITICAL --exit-code 0
+          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL
 
   deploy:
-    name: 🚀 Déploiement en production
     needs: build-and-push
     runs-on: docker
     container:
       image: docker:latest
-      options: --privileged --network=host
+      network: "host"
+      options: --privileged
     steps:
-      - name: 📦 Installation des dépendances SSH
+      # Installation des dépendances SSH
+      - name: Installation des dépendances SSH
         run: |
-          apk add --no-cache openssh-client bash
-
-      - name: 🔑 Configuration SSH
-        run: |
+          apk add --no-cache openssh-client bash file
           mkdir -p ~/.ssh
           echo "StrictHostKeyChecking=no" > ~/.ssh/config
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/config ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/config
 
-      - name: 🚀 Déploiement en production
-        env:
-          SSH_USER: ${{ secrets.PROD_SSH_USERNAME }}
-          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
-          SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
-          PROJECT_DIR: ${{ secrets.PROJECT_DIRECTORY }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASS: ${{ secrets.REGISTRY_PASSWORD }}
+      # Configuration de la clé SSH (ed25519)
+      - name: Configuration de la clé SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p $SSH_PORT $SSH_USER@$SSH_HOST "
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      # Test de connexion SSH
+      - name: Test de connexion SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
+
+      # Déploiement sur le serveur de production
+      - name: Déploiement sur le serveur de production
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex
-            
-            # Aller dans le répertoire du projet
-            cd $PROJECT_DIR
-            
-            # Login au registre
-            echo \"$REGISTRY_PASS\" | docker login ${{ FORGE_DOMAIN }} -u \"$REGISTRY_USER\" --password-stdin
-            
-            # Exporter le tag spécifique pour le déploiement
-            export TAG=${{ github.sha }}
-            export ENVIRONMENT=production
-            
-            # Mise à jour des conteneurs
-            docker compose pull
-            docker compose up -d --remove-orphans
-            
-            # Nettoyage
-            docker logout ${{ FORGE_DOMAIN }}
-            docker system prune -f --filter \"until=24h\"
-            
+            echo 'Début du déploiement'
+            cd ${{ secrets.PROJECT_DIRECTORY }}
+            docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+            ENVIRONMENT=production docker compose pull
+            ENVIRONMENT=production docker compose up -d
+            docker logout forge.apacher.eu
             echo 'Déploiement terminé avec succès'
           "
-
-      - name: 📢 Notification de déploiement
-        if: success()
-        run: |
-          echo "Déploiement réussi en production"
-        # Ici vous pourriez ajouter une notification Slack, Discord, etc.

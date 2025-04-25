@@ -17,13 +17,38 @@ jobs:
     steps:
       - name: Configuration du runner
         run: |
-          apk add --no-cache git nodejs npm curl
+          apk add --no-cache git nodejs npm curl bash
 
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.sha }}
+          fetch-depth: 0  # Pour récupérer l'historique des tags
+
+      # Détecter la version
+      - name: Détecter la version
+        id: version
+        run: |
+          # Essayer de récupérer le dernier tag
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          # Si aucun tag n'est trouvé, essayer à partir de la branche
+          if [ -z "$VERSION" ]; then
+            BRANCH=$(git branch --show-current)
+            if [[ "$BRANCH" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              VERSION="$BRANCH"
+            fi
+          fi
+          
+          # Si toujours aucune version, utiliser une version par défaut
+          if [ -z "$VERSION" ]; then
+            VERSION="v1.0.0-dev"
+          fi
+          
+          # Utilisation directe du tag avec le 'v'
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Version détectée: $VERSION"
 
       # Authentification au registre
       - name: Login au registre Docker
@@ -33,7 +58,11 @@ jobs:
       # Construction et push de l'image
       - name: Build et push de l'image Docker
         run: |
-          docker buildx build --provenance=false --push --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest .
+          docker buildx build --provenance=false --push \
+            --build-arg VERSION="${{ env.VERSION }}" \
+            --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
+            --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \
+            .
 
       # Analyse de sécurité avec Trivy
       - name: Installation et exécution de Trivy

@@ -8,6 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Créer un utilisateur non-root
 RUN addgroup -S chronouser && adduser -S -G chronouser chronouser
 
+# Installer Bash
+RUN apk add --no-cache bash
+
 # Créer le répertoire de l'application
 WORKDIR /app
 
@@ -22,6 +25,7 @@ RUN pip install pip-audit && \
 
 # Copier uniquement les fichiers nécessaires
 COPY app/ ./app/
+COPY scripts/update_version.sh /app/scripts/update_version.sh
 COPY migrations/ ./migrations/
 COPY config.py run.py wsgi.py ./
 
@@ -29,7 +33,8 @@ COPY config.py run.py wsgi.py ./
 RUN mkdir -p /app/instance && \
     chown -R chronouser:chronouser /app && \
     chmod -R 755 /app && \
-    chmod 777 /app/instance
+    chmod 777 /app/instance && \
+    chmod +x /app/scripts/update_version.sh
 
 # Passer à l'utilisateur non-root
 USER chronouser

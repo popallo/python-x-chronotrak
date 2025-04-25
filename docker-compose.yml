@@ -10,9 +10,10 @@ services:
     env_file:
       - ./.env.${ENVIRONMENT:-development}
     command: >
-      sh -c "mkdir -p /app/instance &&
+      sh -c "bash /app/scripts/update_version.sh &&
+             mkdir -p /app/instance &&
              if [ ! -f /app/instance/chronotrak.db ]; then
-               echo 'Initialisation de la base de données...'
+               echo 'Initialisation de la base de données...' &&
                flask db upgrade &&
                python ./scripts/create_admin.py
              else

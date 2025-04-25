@@ -145,11 +145,9 @@
                     <span class="text-muted">Chronotrak &copy; {{ now.year }}</span>
                 </div>
                 <div class="col-md-4 text-center">
-                    {% if version %}
-                        <span class="text-muted">Version {{ version }}</span>
-                        {% if build_info.env == 'development' %}
-                            <span class="badge bg-warning">Dev</span>
-                        {% endif %}
+                    <span class="text-muted">{{ version }}</span>
+                    {% if build_info.env == 'development' %}
+                        <span class="badge bg-warning">Dev</span>
                     {% endif %}
                 </div>
                 <div class="col-md-4 text-end">

@@ -13,20 +13,33 @@ VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'VERSION
 def get_version():
     """
     Récupère la version actuelle de l'application.
-    Renvoie la version depuis le fichier VERSION ou "dev" si le fichier n'existe pas.
+    Accepte les formats avec ou sans préfixe "v".
     """
     try:
         if os.path.exists(VERSION_FILE):
             with open(VERSION_FILE, 'r') as f:
                 version = f.read().strip()
-                # Valider le format de version x.y.z
-                if re.match(r'^\d+\.\d+\.\d+$', version):
-                    return version
+                
+                # Debug: Afficher la version lue pour diagnostiquer les problèmes
+                print(f"Version lue depuis le fichier: '{version}'")
+                
+                # Accepter à la fois v1.2.3 et 1.2.3 comme formats valides
+                if version:
+                    if re.match(r'^v?\d+\.\d+\.\d+$', version):
+                        return version
+                    else:
+                        print(f"Format de version non reconnu: '{version}'")
+                else:
+                    print("Fichier VERSION vide ou illisible")
     except Exception as e:
-        current_app.logger.error(f"Erreur lors de la lecture du fichier de version: {e}")
+        import traceback
+        print(f"Erreur lors de la lecture du fichier de version: {e}")
+        print(traceback.format_exc())
+        if current_app:
+            current_app.logger.error(f"Erreur lors de la lecture du fichier de version: {e}")
     
-    # Version par défaut en développement
-    return "1.0.0-dev"
+    # Version par défaut
+    return "dev"
 
 def get_build_info():
     """

@@ -43,3 +43,5 @@ yarn-error.log
 Thumbs.db
 trivy-scan-chronotrak.json
 guide_dev.md
+
+VERSION

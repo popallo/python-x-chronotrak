@@ -48,9 +48,17 @@ def create_app(config_name):
     # Contexte global pour les templates
     @app.context_processor
     def inject_globals():
+        # Importer ici à nouveau pour éviter les erreurs d'import circulaire
+        from app.utils.version import get_version, get_build_info
+        from app.utils.page_timer import get_elapsed_time
+        
+        # Obtenir la version - s'assurer qu'elle est correcte
+        version = get_version()
+        print(f"Version injectée dans le template: '{version}'")
+        
         return {
             'now': datetime.now(timezone.utc),
-            'version': get_version(),
+            'version': version,
             'build_info': get_build_info(),
             'page_load': get_elapsed_time()
         }

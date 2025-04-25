@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, g, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -30,10 +30,30 @@ def create_app(config_name):
     login_manager.init_app(app)
     bcrypt.init_app(app)
     
+    # Importer ici pour éviter les imports circulaires
+    from app.utils.page_timer import start_timer, get_elapsed_time, log_request_time
+    from app.utils.version import get_version, get_build_info
+    
+    # Middleware pour mesurer le temps de chargement
+    @app.before_request
+    def before_request():
+        start_timer()
+    
+    @app.after_request
+    def after_request(response):
+        g.response_status_code = response.status_code
+        log_request_time()
+        return response
+    
     # Contexte global pour les templates
     @app.context_processor
-    def inject_now():
-        return {'now': datetime.now(timezone.utc)}
+    def inject_globals():
+        return {
+            'now': datetime.now(timezone.utc),
+            'version': get_version(),
+            'build_info': get_build_info(),
+            'page_load': get_elapsed_time()
+        }
     
     # Filtre pour formater les nombres à la française (avec virgule)
     @app.template_filter('fr_number')

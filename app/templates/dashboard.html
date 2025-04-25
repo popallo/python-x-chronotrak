@@ -70,15 +70,6 @@
                             </small>
                         </div>
                         <p class="mb-1">{{ project.client.name }}</p>
-                        <div class="progress credit-progress mt-2">
-                            <div class="progress-bar bg-{{ 'danger' if project.remaining_credit < 1 else 'warning' }}" 
-                                 role="progressbar" 
-                                 style="width: {{ project.remaining_credit / project.initial_credit * 100 if project.initial_credit > 0 else 0 }}%" 
-                                 aria-valuenow="{{ project.remaining_credit }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ project.initial_credit }}">
-                            </div>
-                        </div>
                     </a>
                 {% endfor %}
             </div>

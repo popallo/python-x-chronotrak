@@ -124,8 +124,11 @@
                 <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
             </div>
             <div class="card-body d-flex flex-column">
-                <div class="alert alert-warning mb-4">
-                    <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : <strong>{{ task.project.remaining_credit|fr_number }}h</strong>
+                <div class="alert {% if task.project.remaining_credit < 2 %}alert-danger{% elif task.project.remaining_credit < 5 %}alert-warning{% else %}alert-success{% endif %} mb-4">
+                    <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : 
+                    <strong class="{% if task.project.remaining_credit < 2 %}text-danger{% elif task.project.remaining_credit < 5 %}text-warning{% else %}text-success{% endif %}">
+                        {{ task.project.remaining_credit|fr_number }}h
+                    </strong>
                 </div>
                 
                 <form method="POST" action="{{ url_for('tasks.log_time', task_id=task.id) }}" class="d-flex flex-column h-100">
@@ -161,8 +164,8 @@
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Gestion du temps</h5>
             </div>
             <div class="card-body">
-                {% set percent = (task.project.remaining_credit / task.project.initial_credit * 100) if task.project.initial_credit > 0 else 0 %}
-                {% set color = 'success' if percent > 50 else 'warning' if percent > 15 else 'danger' %}
+                <!-- Utilisation des mêmes seuils pour la couleur que pour les administrateurs/techniciens -->
+                {% set color = 'success' if task.project.remaining_credit >= 5 else 'warning' if task.project.remaining_credit >= 2 else 'danger' %}
                 
                 <div class="card mb-3 border-{{ color }} credit-info-card">
                     <div class="card-body py-2">

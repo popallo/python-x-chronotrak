@@ -61,22 +61,16 @@
                             <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ project.name }}</h5>
-                                    <small>{{ project.remaining_credit|fr_number }}h / {{ project.initial_credit|fr_number }}h</small>
+                                    <span>
+                                        <strong>Crédit restant :</strong> 
+                                        <span class="{% if project.remaining_credit < 2 %}text-danger fw-bold{% elif project.remaining_credit < 5 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                                            {{ project.remaining_credit|fr_number }}h
+                                        </span>
+                                    </span>
                                 </div>
                                 {% if project.description %}
                                     <p class="mb-1">{{ project.description }}</p>
                                 {% endif %}
-                                <div class="progress credit-progress mt-2">
-                                    {% set percent = (project.remaining_credit / project.initial_credit * 100) if project.initial_credit > 0 else 0 %}
-                                    {% set color = 'success' if percent > 50 else 'warning' if percent > 15 else 'danger' %}
-                                    <div class="progress-bar bg-{{ color }}" 
-                                         role="progressbar" 
-                                         style="width: {{ percent }}%" 
-                                         aria-valuenow="{{ project.remaining_credit }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="{{ project.initial_credit }}">
-                                    </div>
-                                </div>
                             </a>
                         {% endfor %}
                     </div>

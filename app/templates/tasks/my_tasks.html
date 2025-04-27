@@ -1,13 +1,145 @@
 {% extends 'layout.html' %}
 
-{% block content %}
-<h1 class="mb-4">Mes tâches</h1>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/filters.css') }}">
+{% endblock %}
 
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Mes tâches</h1>
+    <div>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Tableau de bord
+        </a>
+    </div>
+</div>
+
+<!-- Panneau de filtres -->
+<div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
+    <div id="filtersToggle" class="filters-header">
+        <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+        <button type="button" class="btn btn-sm">
+            <i id="filtersIcon" class="fas {% if filters_active %}fa-minus{% else %}fa-plus{% endif %}"></i>
+        </button>
+    </div>
+    <div id="filtersBody" class="filters-body {% if not filters_active %}hidden{% endif %}">
+        <form id="tasksFilterForm" method="GET" action="{{ url_for('tasks.my_tasks') }}" class="mt-3">
+            <div class="row">
+                <!-- Filtre par priorité -->
+                <div class="col-md-6 mb-3">
+                    <label for="priority" class="form-label">Priorité</label>
+                    <select name="priority" id="priority" class="form-select">
+                        <option value="">Toutes les priorités</option>
+                        <option value="basse" {% if request.args.get('priority') == 'basse' %}selected{% endif %}>Basse</option>
+                        <option value="normale" {% if request.args.get('priority') == 'normale' %}selected{% endif %}>Normale</option>
+                        <option value="haute" {% if request.args.get('priority') == 'haute' %}selected{% endif %}>Haute</option>
+                        <option value="urgente" {% if request.args.get('priority') == 'urgente' %}selected{% endif %}>Urgente</option>
+                    </select>
+                </div>
+                
+                <!-- Filtre par projet -->
+                <div class="col-md-6 mb-3">
+                    <label for="project_id" class="form-label">Projet</label>
+                    <select name="project_id" id="project_id" class="form-select">
+                        <option value="">Tous les projets</option>
+                        {% for project in all_projects %}
+                            <option value="{{ project.id }}" {% if request.args.get('project_id')|int == project.id %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Filtre par client -->
+                <div class="col-md-6 mb-3">
+                    <label for="client_id" class="form-label">Client</label>
+                    <select name="client_id" id="client_id" class="form-select">
+                        <option value="">Tous les clients</option>
+                        {% for client in all_clients %}
+                            <option value="{{ client.id }}" {% if request.args.get('client_id')|int == client.id %}selected{% endif %}>
+                                {{ client.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Recherche par titre -->
+                <div class="col-md-6 mb-3">
+                    <label for="search" class="form-label">Recherche par titre</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher une tâche..." value="{{ request.args.get('search', '') }}">
+                </div>
+                
+                <!-- Options de tri -->
+                <div class="col-md-6 mb-3">
+                    <label for="sort_by" class="form-label">Trier par</label>
+                    <select name="sort_by" id="sort_by" class="form-select">
+                        <option value="priority_desc" {% if request.args.get('sort_by') == 'priority_desc' %}selected{% endif %}>Priorité (décroissante)</option>
+                        <option value="priority_asc" {% if request.args.get('sort_by') == 'priority_asc' %}selected{% endif %}>Priorité (croissante)</option>
+                        <option value="date_desc" {% if request.args.get('sort_by', 'date_desc') == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
+                        <option value="date_asc" {% if request.args.get('sort_by') == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
+                        <option value="title" {% if request.args.get('sort_by') == 'title' %}selected{% endif %}>Titre</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filters-actions">
+                <button type="button" id="resetFilters" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                </button>
+                <button type="submit" class="btn btn-info">
+                    <i class="fas fa-search me-1"></i>Appliquer les filtres
+                </button>
+            </div>
+        </form>
+        
+        <!-- Filtres actifs -->
+        {% if filters_active %}
+        <div id="activeFilters" class="active-filters">
+            {% if request.args.get('priority') %}
+                <div class="filter-badge" data-type="priority" data-value="{{ request.args.get('priority') }}">
+                    Priorité: {{ request.args.get('priority')|capitalize }}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+            
+            {% if request.args.get('project_id') %}
+                {% set project = get_project_by_id(request.args.get('project_id')|int) %}
+                {% if project %}
+                <div class="filter-badge" data-type="project_id" data-value="{{ project.id }}">
+                    Projet: {{ project.name }}
+                    <span class="remove-filter">×</span>
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            {% if request.args.get('client_id') %}
+                {% set client = get_client_by_id(request.args.get('client_id')|int) %}
+                {% if client %}
+                <div class="filter-badge" data-type="client_id" data-value="{{ client.id }}">
+                    Client: {{ client.name }}
+                    <span class="remove-filter">×</span>
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            {% if request.args.get('search') %}
+                <div class="filter-badge" data-type="search" data-value="{{ request.args.get('search') }}">
+                    Recherche: {{ request.args.get('search') }}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sections de tâches -->
 <div class="row">
     <div class="col-lg-6">
         <div class="card mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-list me-2"></i>À faire</h5>
+                <span class="badge bg-light text-info">{{ tasks_todo|length }}</span>
             </div>
             <div class="card-body">
                 {% if tasks_todo %}
@@ -28,7 +160,13 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted">Vous n'avez pas de tâches à faire pour le moment.</p>
+                    <p class="text-muted">
+                        {% if filters_active %}
+                            Aucune tâche à faire ne correspond aux filtres sélectionnés.
+                        {% else %}
+                            Vous n'avez pas de tâches à faire pour le moment.
+                        {% endif %}
+                    </p>
                 {% endif %}
             </div>
         </div>
@@ -36,8 +174,9 @@
     
     <div class="col-lg-6">
         <div class="card mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-spinner me-2"></i>En cours</h5>
+                <span class="badge bg-light text-info">{{ tasks_in_progress|length }}</span>
             </div>
             <div class="card-body">
                 {% if tasks_in_progress %}
@@ -63,10 +202,59 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted">Vous n'avez pas de tâches en cours pour le moment.</p>
+                    <p class="text-muted">
+                        {% if filters_active %}
+                            Aucune tâche en cours ne correspond aux filtres sélectionnés.
+                        {% else %}
+                            Vous n'avez pas de tâches en cours pour le moment.
+                        {% endif %}
+                    </p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+{% if tasks_completed %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-check me-2"></i>Terminées récemment</h5>
+                <span class="badge bg-light text-success">{{ tasks_completed|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if tasks_completed %}
+                    <div class="list-group">
+                        {% for task in tasks_completed %}
+                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ task.title }}</h5>
+                                    <small>
+                                        {% if task.completed_at %}
+                                            <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            <i class="fas fa-calendar-check me-1"></i>Terminée
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                                {% if task.actual_time %}
+                                    <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|fr_number }}h passées</small>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune tâche terminée récemment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/task_filters.js') }}"></script>
 {% endblock %}

@@ -12,9 +12,10 @@ import { initUserEditForm } from './pages/user_edit.js';
 import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
-import { initCardCollapse } from './pages/card_collapse.js'; // Module de collapse des cartes
-import { initDashboard } from './pages/dashboard.js'; // Module du tableau de bord
-import { initWelcomePage } from './pages/welcome-page.js'; // Nouveau module pour la page d'accueil
+import { initCardCollapse } from './pages/card_collapse.js';
+import { initDashboard } from './pages/dashboard.js';
+import { initWelcomePage } from './pages/welcome-page.js';
+import { initTaskFilters } from './pages/task_filters.js';
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -68,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page des projets - liste
     if (currentPath === '/projects') {
         initProjectFilters();
+    }
+
+    // Page des tâches - liste
+    if (currentPath === '/my_tasks') {
+        initTaskFilters();
     }
 
     // Page de profil - préférences de notification

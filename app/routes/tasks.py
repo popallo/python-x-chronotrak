@@ -4,6 +4,7 @@ from datetime import datetime
 from app import db
 from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
+from app.models.client import Client
 from app.forms.task import TaskForm, TimeEntryForm, CommentForm
 from app.utils import get_utc_now
 from app.utils.decorators import client_required
@@ -231,9 +232,21 @@ def update_status():
 @tasks.route('/my_tasks')
 @login_required
 def my_tasks():
-    """Affiche les tâches assignées à l'utilisateur courant"""
-    tasks_todo = Task.query.filter_by(user_id=current_user.id, status='à faire').all()
-    tasks_in_progress = Task.query.filter_by(user_id=current_user.id, status='en cours').all()
+    """Affiche les tâches assignées à l'utilisateur courant avec filtres"""
+    # Récupération des paramètres de filtrage
+    priority = request.args.get('priority')
+    project_id = request.args.get('project_id', type=int)
+    client_id = request.args.get('client_id', type=int)
+    search = request.args.get('search')
+    sort_by = request.args.get('sort_by', 'date_desc')
+    
+    # Construction des requêtes de base pour les tâches en cours et à faire
+    query_todo = Task.query.filter_by(user_id=current_user.id, status='à faire')
+    query_in_progress = Task.query.filter_by(user_id=current_user.id, status='en cours')
+    query_completed = Task.query.filter_by(user_id=current_user.id, status='terminé')
+    
+    # Flag pour savoir si des filtres sont actifs
+    filters_active = bool(priority or project_id or client_id or search)
     
     # Si c'est un client, filtrer pour n'afficher que les tâches auxquelles il a accès
     if current_user.is_client():
@@ -241,12 +254,114 @@ def my_tasks():
         projects = Project.query.filter(Project.client_id.in_(client_ids)).all()
         project_ids = [project.id for project in projects]
         
-        tasks_todo = [t for t in tasks_todo if t.project_id in project_ids]
-        tasks_in_progress = [t for t in tasks_in_progress if t.project_id in project_ids]
+        query_todo = query_todo.filter(Task.project_id.in_(project_ids))
+        query_in_progress = query_in_progress.filter(Task.project_id.in_(project_ids))
+        query_completed = query_completed.filter(Task.project_id.in_(project_ids))
+        
+        # Si un client spécifique est demandé, vérifier qu'il est accessible
+        if client_id and client_id not in client_ids:
+            # Si le client demandé n'est pas accessible, ignorer ce filtre
+            client_id = None
+    
+    # Application des filtres
+    if priority:
+        query_todo = query_todo.filter(Task.priority == priority)
+        query_in_progress = query_in_progress.filter(Task.priority == priority)
+        query_completed = query_completed.filter(Task.priority == priority)
+    
+    if project_id:
+        query_todo = query_todo.filter(Task.project_id == project_id)
+        query_in_progress = query_in_progress.filter(Task.project_id == project_id)
+        query_completed = query_completed.filter(Task.project_id == project_id)
+    
+    if client_id:
+        # Trouver d'abord les projets liés à ce client
+        projects_for_client = Project.query.filter_by(client_id=client_id).all()
+        project_ids_for_client = [p.id for p in projects_for_client]
+        
+        query_todo = query_todo.filter(Task.project_id.in_(project_ids_for_client))
+        query_in_progress = query_in_progress.filter(Task.project_id.in_(project_ids_for_client))
+        query_completed = query_completed.filter(Task.project_id.in_(project_ids_for_client))
+    
+    if search:
+        search_term = f"%{search}%"
+        query_todo = query_todo.filter(Task.title.ilike(search_term))
+        query_in_progress = query_in_progress.filter(Task.title.ilike(search_term))
+        query_completed = query_completed.filter(Task.title.ilike(search_term))
+    
+    # Application du tri
+    if sort_by == 'priority_desc':
+        # Tri par priorité (les "urgentes" en premier)
+        priority_order = case(
+            (Task.priority == 'urgente', 1),
+            (Task.priority == 'haute', 2),
+            (Task.priority == 'normale', 3),
+            (Task.priority == 'basse', 4),
+            else_=5
+        )
+        query_todo = query_todo.order_by(priority_order)
+        query_in_progress = query_in_progress.order_by(priority_order)
+        query_completed = query_completed.order_by(priority_order)
+    elif sort_by == 'priority_asc':
+        # Tri par priorité (les "basses" en premier)
+        priority_order = case(
+            (Task.priority == 'basse', 1),
+            (Task.priority == 'normale', 2),
+            (Task.priority == 'haute', 3),
+            (Task.priority == 'urgente', 4),
+            else_=5
+        )
+        query_todo = query_todo.order_by(priority_order)
+        query_in_progress = query_in_progress.order_by(priority_order)
+        query_completed = query_completed.order_by(priority_order)
+    elif sort_by == 'date_asc':
+        query_todo = query_todo.order_by(Task.created_at.asc())
+        query_in_progress = query_in_progress.order_by(Task.created_at.asc())
+        query_completed = query_completed.order_by(Task.created_at.asc())
+    elif sort_by == 'date_desc':
+        query_todo = query_todo.order_by(Task.created_at.desc())
+        query_in_progress = query_in_progress.order_by(Task.created_at.desc())
+        query_completed = query_completed.order_by(Task.completed_at.desc())
+    elif sort_by == 'title':
+        query_todo = query_todo.order_by(Task.title.asc())
+        query_in_progress = query_in_progress.order_by(Task.title.asc())
+        query_completed = query_completed.order_by(Task.title.asc())
+    
+    # Exécution des requêtes
+    tasks_todo = query_todo.all()
+    tasks_in_progress = query_in_progress.all()
+    # Limiter les tâches terminées aux 5 plus récentes
+    tasks_completed = query_completed.limit(5).all()
+    
+    # Récupérer tous les projets pour le filtre
+    all_projects = []
+    all_clients = []
+    
+    if current_user.is_admin() or current_user.is_technician():
+        all_projects = Project.query.order_by(Project.name).all()
+        all_clients = Client.query.order_by(Client.name).all()
+    else:
+        # Pour les clients, n'afficher que les projets auxquels ils ont accès
+        client_ids = [client.id for client in current_user.clients]
+        all_clients = current_user.clients
+        all_projects = Project.query.filter(Project.client_id.in_(client_ids)).order_by(Project.name).all()
+    
+    # Helper functions pour le template
+    def get_project_by_id(project_id):
+        return Project.query.get(project_id)
+        
+    def get_client_by_id(client_id):
+        return Client.query.get(client_id)
     
     return render_template('tasks/my_tasks.html', 
                           tasks_todo=tasks_todo,
                           tasks_in_progress=tasks_in_progress,
+                          tasks_completed=tasks_completed,
+                          all_projects=all_projects,
+                          all_clients=all_clients,
+                          filters_active=filters_active,
+                          get_project_by_id=get_project_by_id,
+                          get_client_by_id=get_client_by_id,
                           title='Mes tâches')
 
 @tasks.route('/tasks/<int:task_id>/add_comment', methods=['POST'])

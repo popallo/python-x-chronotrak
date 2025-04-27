@@ -1,0 +1,320 @@
+/* 
+ * COMPOSANTS OPTIMISÉS
+ * Ce fichier consolide plusieurs fichiers de composants :
+ * - components/cards.css
+ * - components/forms.css
+ * - components/kanban.css
+ * - components/card_collapse.css
+ * - components/navbar.css
+ * - components/status.css
+ */
+
+/* ===== CARTES ===== */
+.card-header {
+    font-weight: 500;
+    position: relative;
+  }
+  
+  .card-header .badge {
+    margin-right: 20px; /* Espace pour le bouton de collapse */
+  }
+  
+  /* Système de collapse pour les cartes */
+  .card-collapse-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: inherit;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 4px;
+    z-index: 5;
+  }
+  
+  .card-collapse-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .card-collapse-btn:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+  
+  .card-header:hover .card-collapse-btn {
+    opacity: 1;
+  }
+  
+  .card-collapse-btn i {
+    transition: transform 0.3s ease;
+  }
+  
+  /* État réduit de la carte */
+  .card-body {
+    max-height: 1000px; /* Valeur suffisamment grande */
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .card-body.collapsed {
+    max-height: 70px; /* Hauteur suffisante pour montrer un aperçu */
+    padding-top: 10px;
+    padding-bottom: 10px;
+    overflow: hidden;
+    display: block;
+    position: relative;
+  }
+  
+  /* Effet de dégradé pour indiquer qu'il y a plus de contenu */
+  .card-body.collapsed::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+  }
+  
+  /* Adapter le dégradé au mode sombre */
+  html.dark-mode body .card-body.collapsed::after {
+    background: linear-gradient(to bottom, rgba(30, 30, 30, 0), rgba(30, 30, 30, 0.9));
+  }
+  
+  /* Carte d'info-crédit */
+  .credit-info-card {
+    transition: all 0.3s ease;
+  }
+  
+  .credit-info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .credit-info-card.border-danger {
+    animation: pulse 2s infinite;
+  }
+  
+  .credit-info-card.border-danger:hover {
+    animation: none;
+  }
+  
+  /* ===== FORMULAIRES ===== */
+  /* Formulaire d'enregistrement du temps */
+  .time-entry-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+  
+  /* Style pour le mode sombre */
+  html.dark-mode body .time-entry-form {
+    background-color: #2c2c2c;
+  }
+  
+  /* Commentaires */
+  .comment-item {
+    border-left: 3px solid #007bff;
+    padding-left: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .comment-author {
+    font-weight: 500;
+    color: #007bff;
+  }
+  
+  .comment-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+  
+  .comment-content {
+    white-space: pre-line;
+  }
+  
+  .edit-comment-form {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .edit-timer {
+    font-size: 0.7rem;
+    vertical-align: middle;
+  }
+  
+  /* ===== SYSTÈME KANBAN ===== */
+  .kanban-container {
+    overflow-x: auto;
+    min-height: 400px;
+  }
+  
+  .kanban-board {
+    display: flex;
+    gap: 15px;
+    min-width: 900px;
+  }
+  
+  .kanban-column {
+    flex: 1;
+    min-width: 280px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 400px;
+  }
+  
+  .kanban-title {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .todo-column .kanban-title {
+    background-color: #e9ecef;
+  }
+  
+  .progress-column .kanban-title {
+    background-color: #fff3cd;
+  }
+  
+  .done-column .kanban-title {
+    background-color: #d1e7dd;
+  }
+  
+  .kanban-task {
+    background: white;
+    border-radius: 3px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+  }
+  
+  .kanban-task:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .task-title {
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  
+  .task-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-top: 5px;
+  }
+  
+  /* Styles spécifiques pour le drag & drop */
+  .kanban-task.dragging {
+    opacity: 0.5;
+  }
+  
+  .kanban-column.drag-over {
+    background-color: rgba(0, 123, 255, 0.1);
+    border: 2px dashed #007bff;
+  }
+  
+  /* ===== STYLE DES STATUTS ===== */
+  .status-toggle .btn-group {
+    display: inline-flex;
+    box-shadow: none;
+    border: 1px solid #dee2e6;
+  }
+  
+  .status-toggle .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    border-right: 1px solid #dee2e6;
+    border-radius: 0;
+    flex: 1;
+    min-width: 80px;
+  }
+  
+  .status-toggle .btn:last-child {
+    border-right: none;
+  }
+  
+  /* États actifs des boutons */
+  .status-toggle .btn.btn-info {
+    background-color: rgba(13, 202, 240, 0.15);
+    color: #0dcaf0;
+    border-bottom: 2px solid #0dcaf0;
+  }
+  
+  .status-toggle .btn.btn-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #856404;
+    border-bottom: 2px solid #ffc107;
+  }
+  
+  .status-toggle .btn.btn-success {
+    background-color: rgba(25, 135, 84, 0.15);
+    color: #198754;
+    border-bottom: 2px solid #198754;
+  }
+  
+  /* États inactifs */
+  .status-toggle .btn.btn-outline-info,
+  .status-toggle .btn.btn-outline-warning,
+  .status-toggle .btn.btn-outline-success {
+    background-color: transparent;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .status-toggle .btn:hover {
+    background-color: #f8f9fa;
+  }
+  
+  /* Style des statuts en mode sombre */
+  html.dark-mode body .status-toggle .btn:hover {
+    background-color: #3c3c3c;
+  }
+  
+  .status-update-msg {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.5rem;
+    background-color: #f8f9fa;
+    border-left: 3px solid #198754;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  html.dark-mode body .status-update-msg {
+    background-color: #2c2c2c;
+  }
+  
+  /* Conteneurs d'historique */
+  .credit-history-container {
+    max-height: 300px;
+    overflow-y: auto;
+  }

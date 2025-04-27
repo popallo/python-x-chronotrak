@@ -1,77 +1,166 @@
-/* Styles de base pour l'ensemble de l'application */
-body {
+/* 
+ * STYLES DE BASE OPTIMISÉS
+ * Ce fichier remplace le contenu de base.css et consolide
+ * les styles communs utilisés dans toute l'application
+ */
+
+/* Variables pour les couleurs principales */
+:root {
+    --color-primary: #007bff;
+    --color-primary-dark: #0056b3;
+    --color-success: #28a745;
+    --color-success-dark: #1e7e34;
+    --color-info: #17a2b8;
+    --color-info-dark: #0f6674;
+    --color-warning: #ffc107;
+    --color-warning-dark: #d39e00;
+    --color-danger: #dc3545;
+    --color-danger-dark: #a71d2a;
+    --color-secondary: #6c757d;
+    --color-secondary-dark: #5a6268;
+    --color-reports: #6f42c1;
+    --color-reports-dark: #4527a0;
+  }
+  
+  /* Styles de base */
+  body {
     background-color: #f8f9fa;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-main {
+  }
+  
+  main {
     flex: 1;
-}
-
-/* Card styling - Base */
-.card {
+  }
+  
+  /* ===== COMPOSANTS DE BASE ===== */
+  
+  /* Cards - Base */
+  .card {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-}
-
-.card:hover {
+  }
+  
+  .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.bg-info {
-    background: linear-gradient(135deg, #17a2b8, #0f6674) !important;
-}
-
-.bg-danger {
-    background: linear-gradient(135deg, #dc3545, #a71d2a) !important;
-}
-
-.bg-success {
-    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-}
-
-.bg-primary {
-    background: linear-gradient(135deg, #007bff, #0056b3) !important;
-}
-
-.bg-secondary {
-    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
-}
-
-.bg-warning {
-    background: linear-gradient(135deg, #ffc107, #d39e00) !important;
-}
-
-.bg-reports {
-    background: linear-gradient(135deg, #6f42c1, #4527a0) !important;
-}
-
-/* Form styling - Base */
-.form-label {
+  }
+  
+  /* Formulaires - Base */
+  .form-label {
     font-weight: 500;
-}
-
-/* Priority colors */
-.priority-basse {
-    color: #17a2b8;
-}
-
-.priority-normale {
-    color: #28a745;
-}
-
-.priority-haute {
-    color: #ffc107;
-}
-
-.priority-urgente {
-    color: #dc3545;
-}
-
-/* Footer */
-.footer {
+  }
+  
+  /* ===== ARRIÈRE-PLANS ET DÉGRADÉS ===== */
+  
+  /* Dégradés de couleurs pour les headers */
+  .bg-info {
+    background: linear-gradient(135deg, var(--color-info), var(--color-info-dark)) !important;
+  }
+  
+  .bg-danger {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark)) !important;
+  }
+  
+  .bg-success {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark)) !important;
+  }
+  
+  .bg-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+  }
+  
+  .bg-secondary {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark)) !important;
+  }
+  
+  .bg-warning {
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark)) !important;
+  }
+  
+  .bg-reports {
+    background: linear-gradient(135deg, var(--color-reports), var(--color-reports-dark)) !important;
+  }
+  
+  /* ===== COULEURS DE PRIORITÉ ===== */
+  .priority-basse {
+    color: var(--color-info);
+  }
+  
+  .priority-normale {
+    color: var(--color-success);
+  }
+  
+  .priority-haute {
+    color: var(--color-warning);
+  }
+  
+  .priority-urgente {
+    color: var(--color-danger);
+  }
+  
+  /* ===== UTILITAIRES ===== */
+  
+  /* Barre de priorité */
+  .priority-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  
+  /* Animation de pulsation pour les éléments importants */
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
+  
+  /* Animation d'apparition */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* ===== STYLES SPÉCIFIQUES ===== */
+  
+  /* Dashboard stats */
+  .stats-card {
+    text-align: center;
+    padding: 5px;
+    border-radius: 10px;
+  }
+  
+  .stats-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  
+  .stats-card .stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+  
+  /* Barre de rappel des couleurs */
+  .color-reminder-bar {
+    height: 5px;
+    background: #fff !important;
+    margin-bottom: 1px;
+  }
+  
+  .color-item {
+    width: 16.66%;
+    height: 5px;
+    transition: height 0.3s ease;
+  }
+  
+  .color-reminder-bar:hover .color-item {
+    height: 10px;
+  }
+  
+  /* Footer */
+  .footer {
     background-color: #f8f9fa;
-}
+  }

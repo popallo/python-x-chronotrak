@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/welcome-page.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-5 col-md-7">
@@ -50,4 +54,21 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block footer_extras %}
+<!-- Ajout du bouton bascule mode sombre/clair -->
+<div class="welcome-dark-mode-toggle" id="welcomeDarkModeToggle">
+    <i class="fas fa-sun" id="darkModeIcon"></i>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { initWelcomeDarkMode } from "{{ url_for('static', filename='js/pages/welcome-page.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initWelcomeDarkMode();
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,127 @@
+/* 
+ * FILTRES ET PAGINATION OPTIMISÉS
+ * Ce fichier optimise components/filters.css
+ */
+
+/* ===== PANNEAU DE FILTRES ===== */
+.filters-panel {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+  }
+  
+  .filters-panel.collapsed {
+    padding: 0.5rem 1rem;
+  }
+  
+  .filters-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .filters-header h5 {
+    margin-bottom: 0;
+  }
+  
+  .filters-body {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  
+  .filters-body.hidden {
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  
+  .filters-panel .form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  
+  .filters-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  /* ===== FILTRES ACTIFS ===== */
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+  }
+  
+  .filter-badge {
+    background-color: #e9ecef;
+    border-radius: 50rem;
+    padding: 0.25em 0.75em;
+    font-size: 0.85em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .filter-badge .remove-filter {
+    cursor: pointer;
+    font-size: 0.8em;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #ced4da;
+    color: #495057;
+  }
+  
+  .filter-badge .remove-filter:hover {
+    background-color: #adb5bd;
+    color: #fff;
+  }
+  
+  /* ===== PAGINATION ===== */
+  .pagination {
+    margin-top: 2rem;
+  }
+  
+  .page-item.active .page-link {
+    background-color: #28a745;
+    border-color: #28a745;
+  }
+  
+  .page-link {
+    color: #28a745;
+  }
+  
+  .page-link:hover {
+    color: #1e7e34;
+  }
+  
+  /* ===== PLACEHOLDERS ===== */
+  ::placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+  }
+  
+  :-ms-input-placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+  }
+  
+  ::-ms-input-placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+  }

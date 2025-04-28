@@ -10,7 +10,7 @@
                 </h4>
             </div>
             <div class="card-body">
-                <div class="alert alert-info mb-4">
+                <div class="alert alert-warning mb-4">
                     <i class="fas fa-info-circle me-2"></i>Crédit actuel du projet <strong>{{ project.name }}</strong>: 
                     <span class="fw-bold">{{ project.remaining_credit|format_time }}</span>
                 </div>
@@ -20,15 +20,16 @@
                     <div class="mb-3">
                         {{ form.amount.label(class="form-label") }}
                         {% if form.amount.errors %}
-                            {{ form.amount(class="form-control is-invalid", step="0.1") }}
+                            {{ form.amount(class="form-select is-invalid") }}
                             <div class="invalid-feedback">
                                 {% for error in form.amount.errors %}
                                     {{ error }}
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ form.amount(class="form-control", step="0.1") }}
+                            {{ form.amount(class="form-select") }}
                         {% endif %}
+                        <div class="form-text">Sélectionnez le temps à ajouter au crédit</div>
                     </div>
                     <div class="mb-3">
                         {{ form.note.label(class="form-label") }}

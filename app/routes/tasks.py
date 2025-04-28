@@ -178,11 +178,12 @@ def log_time(task_id):
         # Envoyer une notification par email
         send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
         
-        flash(f'{form.hours.data}h enregistrées sur la tâche!', 'success')
+        from app.utils.time_format import format_time
+        flash(f'{format_time(form.hours.data)} enregistrées sur la tâche!', 'success')
         
         # Si le crédit devient faible, afficher une alerte
         if task.project.remaining_credit < 2:
-            flash(f'Attention: le crédit du projet est très bas ({task.project.remaining_credit}h)!', 'warning')
+            flash(f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!', 'warning')
             
     return redirect(url_for('tasks.task_details', task_id=task.id))
 

@@ -66,7 +66,7 @@
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ project.name }}</h5>
                             <small class="{% if project.remaining_credit < 1 %}text-danger{% else %}text-warning{% endif %}">
-                                {{ project.remaining_credit|fr_number }}h restante{{ 's' if project.remaining_credit != 1 else '' }}
+                                Crédit restant : {{ project.remaining_credit|format_time }} 
                             </small>
                         </div>
                         <p class="mb-1">{{ project.client.name }}</p>
@@ -170,7 +170,12 @@
                 {% for entry in recent_time_entries[:5] %}
                     <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ entry.hours|fr_number }}h sur "{{ entry.task.title }}"</h5>
+                            <h5 class="mb-1">
+                                <span class="text-danger">
+                                    <i class="fas fa-minus-circle me-1"></i>{{ entry.hours|format_time }}
+                                </span> 
+                                utilisée{% if entry.hours >= 2 or (entry.hours < 1 and entry.hours*60 > 1) %}s{% endif %} sur "{{ entry.task.title }}"
+                            </h5>
                             <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                         </div>
                         <p class="mb-1">Par {{ entry.user.name }} - {{ entry.task.project.name }}</p>

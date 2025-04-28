@@ -64,7 +64,7 @@
                                     <span>
                                         <strong>Crédit restant :</strong> 
                                         <span class="{% if project.remaining_credit < 2 %}text-danger fw-bold{% elif project.remaining_credit < 5 %}text-warning fw-bold{% else %}text-success{% endif %}">
-                                            {{ project.remaining_credit|fr_number }}h
+                                            {{ project.remaining_credit|format_time }}
                                         </span>
                                     </span>
                                 </div>

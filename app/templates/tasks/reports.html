@@ -23,7 +23,7 @@
                                 {% for project_name, total_hours in project_times %}
                                     <tr>
                                         <td>{{ project_name }}</td>
-                                        <td class="text-end">{{ total_hours }}</td>
+                                        <td class="text-end">{{ total_hours|format_time }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -55,7 +55,7 @@
                                 {% for user_name, total_hours in user_times %}
                                     <tr>
                                         <td>{{ user_name }}</td>
-                                        <td class="text-end">{{ total_hours }}</td>
+                                        <td class="text-end">{{ total_hours|format_time }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -89,7 +89,7 @@
                                 {% for month, total_hours in monthly_times %}
                                     <tr>
                                         <td>{{ month }}</td>
-                                        <td class="text-end">{{ total_hours }}</td>
+                                        <td class="text-end">{{ total_hours|format_time }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

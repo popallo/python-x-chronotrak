@@ -12,7 +12,7 @@
             <div class="card-body">
                 <div class="alert alert-info mb-4">
                     <i class="fas fa-info-circle me-2"></i>Crédit actuel du projet <strong>{{ project.name }}</strong>: 
-                    <span class="fw-bold">{{ project.remaining_credit|fr_number }}h</span>
+                    <span class="fw-bold">{{ project.remaining_credit|format_time }}</span>
                 </div>
                 
                 <form method="POST" action="">

@@ -71,6 +71,13 @@ def create_app(config_name):
             return ""
         return str(value).replace('.', ',')
     
+    # Filtre pour formater les temps en heures et minutes
+    from app.utils.time_format import format_time
+    @app.template_filter('format_time')
+    def format_time_filter(value):
+        """Filtre Jinja pour formater le temps"""
+        return format_time(value)
+    
     # Gestion du background du header
     @app.template_filter('nav_bg_color')
     def nav_bg_color_filter(current_path):

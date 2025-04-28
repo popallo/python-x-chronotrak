@@ -239,7 +239,8 @@ def add_credit(project_id):
     if form.validate_on_submit():
         project.add_credit(form.amount.data, form.note.data)
         db.session.commit()
-        flash(f'{form.amount.data}h ajoutées au crédit du projet {project.name}!', 'success')
+        from app.utils.time_format import format_time
+        flash(f'{format_time(form.amount.data)} ajoutées au crédit du projet {project.name}!', 'success')
         return redirect(url_for('projects.project_details', project_id=project.id))
         
     return render_template('projects/add_credit.html', form=form, project=project, title='Ajouter du crédit')

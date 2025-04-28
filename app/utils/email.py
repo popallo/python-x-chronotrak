@@ -54,17 +54,6 @@ def send_task_notification(task, event_type, user=None, additional_data=None):
     :param user: L'utilisateur qui a effectué l'action
     :param additional_data: Données supplémentaires (commentaire, temps, etc.)
     """
-    pass
-
-def send_task_notification(task, event_type, user=None, additional_data=None):
-    """
-    Envoie une notification concernant une tâche
-    
-    :param task: La tâche concernée
-    :param event_type: Type d'événement ('status_change', 'comment_added', 'time_logged')
-    :param user: L'utilisateur qui a effectué l'action
-    :param additional_data: Données supplémentaires (commentaire, temps, etc.)
-    """
     # Déterminer les destinataires
     recipients = []
     

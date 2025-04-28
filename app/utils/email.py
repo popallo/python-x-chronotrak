@@ -16,6 +16,26 @@ def send_email(subject, recipients, text_body, html_body, sender=None):
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
         return
     
+    # Rediriger tous les emails vers l'admin en environnement de développement
+    original_recipients = recipients.copy() if isinstance(recipients, list) else [recipients]
+    env = current_app.config.get('ENV') or current_app.config.get('FLASK_ENV', 'production')
+    
+    if env == 'development':
+        admin_email = current_app.config.get('ADMIN_EMAIL')
+        if admin_email:
+            # Ajouter l'information sur les destinataires d'origine dans le corps du message
+            text_body = f"[DEV] Email destiné à: {', '.join(original_recipients)}\n\n{text_body}"
+            html_body = f"<div style='background-color: #ffeb3b; padding: 10px; margin-bottom: 10px;'><strong>[ENVIRONNEMENT DE DÉVELOPPEMENT]</strong><br>Email initialement destiné à: {', '.join(original_recipients)}</div>{html_body}"
+            
+            # Remplacer les destinataires par l'admin
+            recipients = [admin_email]
+            
+            # Modifier le sujet pour indiquer qu'il s'agit d'un email de développement
+            subject = f"[DEV] {subject}"
+            
+            # Log pour traçabilité
+            current_app.logger.info(f"[DEV] Email redirigé vers {admin_email} au lieu de {original_recipients}")
+    
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
     msg.body = text_body

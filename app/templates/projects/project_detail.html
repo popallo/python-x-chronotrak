@@ -47,7 +47,7 @@
                 <p>
                     <strong>Crédit restant :</strong> 
                     <span class="{% if project.remaining_credit < 2 %}text-danger fw-bold{% elif project.remaining_credit < 5 %}text-warning fw-bold{% else %}text-success{% endif %}" style="font-size: 1.2em;">
-                        {{ project.remaining_credit|fr_number }}h
+                        {{ project.remaining_credit|format_time }}
                     </span>
                 </p>
             </div>
@@ -87,7 +87,9 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.estimated_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time|fr_number }}h
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
+                                            </span>
                                         {% endif %}
                                     </span>
                                     <span>
@@ -119,7 +121,9 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.estimated_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.estimated_time|fr_number }}h
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
+                                            </span>
                                         {% endif %}
                                     </span>
                                     <span>
@@ -151,7 +155,15 @@
                                 <div class="task-info">
                                     <span>
                                         {% if task.actual_time %}
-                                            <i class="fas fa-clock me-1"></i>{{ task.actual_time|fr_number }}h
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }}
+                                            </span>
+                                        {% else %}
+                                            {% if task.estimated_time %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
+                                                </span>
+                                            {% endif %}
                                         {% endif %}
                                     </span>
                                     <span>
@@ -187,9 +199,9 @@
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">
                                     {% if log.amount > 0 %}
-                                        <span class="text-success">+{{ log.amount|fr_number }}h</span>
+                                        <span class="text-success">+{{ log.amount|format_time }}</span>
                                     {% else %}
-                                        <span class="text-danger">{{ log.amount|fr_number }}h</span>
+                                        <span class="text-danger">-{{ (log.amount|abs)|format_time }}</span>
                                     {% endif %}
                                 </h6>
                                 <small class="text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</small>

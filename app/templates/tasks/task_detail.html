@@ -83,7 +83,7 @@
                         <p>
                             <strong>Temps estimé :</strong> 
                             {% if task.estimated_time %}
-                                {{ task.estimated_time|fr_number }}h
+                                {{ task.estimated_time|format_time }}
                             {% else %}
                                 <span class="text-muted">Non défini</span>
                             {% endif %}
@@ -91,9 +91,9 @@
                         <p>
                             <strong>Temps passé :</strong> 
                             {% if task.actual_time %}
-                                {{ task.actual_time|fr_number }}h
+                                {{ task.actual_time|format_time }}
                             {% else %}
-                                <span class="text-muted">0h</span>
+                                <span class="text-muted">0 min</span>
                             {% endif %}
                         </p>
                         <p>
@@ -125,10 +125,12 @@
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="alert {% if task.project.remaining_credit < 2 %}alert-danger{% elif task.project.remaining_credit < 5 %}alert-warning{% else %}alert-success{% endif %} mb-4">
-                    <i class="fas fa-info-circle me-2"></i>Crédit restant sur le projet : 
-                    <strong class="{% if task.project.remaining_credit < 2 %}text-danger{% elif task.project.remaining_credit < 5 %}text-warning{% else %}text-success{% endif %}">
-                        {{ task.project.remaining_credit|fr_number }}h
-                    </strong>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-info-circle me-2"></i>Crédit du projet:</span>
+                        <strong class="{% if task.project.remaining_credit < 2 %}text-danger{% elif task.project.remaining_credit < 5 %}text-warning{% else %}text-success{% endif %} ms-2">
+                            {{ task.project.remaining_credit|format_time }}
+                        </strong>
+                    </div>
                 </div>
                 
                 <form method="POST" action="{{ url_for('tasks.log_time', task_id=task.id) }}" class="d-flex flex-column h-100">
@@ -295,7 +297,7 @@
                 {% for entry in time_entries %}
                     <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ entry.hours|fr_number }}h</h6>
+                            <h6 class="mb-1">{{ entry.hours|format_time }}</h6>
                             <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                         </div>
                         <p class="mb-1">

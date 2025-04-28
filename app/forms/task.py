@@ -80,9 +80,35 @@ class TimeEntryForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(TimeEntryForm, self).__init__(*args, **kwargs)
-        # Créer des options par tranches de 15 minutes (0,25h) jusqu'à 8 heures
-        # Format: (valeur, étiquette) où l'étiquette utilise une virgule
-        hours_options = [(round(i * 0.25, 2), str(round(i * 0.25, 2)).replace('.', ',')) for i in range(1, 33)]
+        # Créer des options par tranches de 5 minutes jusqu'à 8 heures
+        # Format: (valeur décimale pour DB, étiquette en minutes/heures pour affichage)
+        hours_options = []
+        
+        # Ajouter les options de 5 minutes à 1 heure par incréments de 5 minutes
+        for i in range(1, 13):  # De 5 à 60 minutes par pas de 5
+            minutes = i * 5
+            decimal_value = round(minutes / 60, 2)
+            
+            if minutes < 60:
+                label = f"{minutes} min"
+            else:
+                label = "1h"
+            
+            hours_options.append((decimal_value, label))
+        
+        # Ajouter les options de 1h15 à 8h par incréments de 15 minutes
+        for i in range(5, 32):  # De 1h15 à 8h par pas de 15 minutes
+            hour = i // 4
+            minute = (i % 4) * 15
+            decimal_value = round(hour + minute / 60, 2)
+            
+            if minute > 0:
+                label = f"{hour}h {minute}min"
+            else:
+                label = f"{hour}h"
+            
+            hours_options.append((decimal_value, label))
+        
         self.hours.choices = hours_options
 
 class CommentForm(FlaskForm):

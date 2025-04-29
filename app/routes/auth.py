@@ -1,12 +1,16 @@
+
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
+from datetime import datetime
 from app import db
 from app.models.user import User
 from app.models.client import Client
 from app.models.notification import NotificationPreference
 from app.models.task import Task, TimeEntry, Comment
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm
+from app.models.token import PasswordResetToken
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm
+from app.utils.email import send_password_reset_email
+from app.utils import get_utc_now
 
 
 auth = Blueprint('auth', __name__)
@@ -21,6 +25,10 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
+            # Mise à jour de la date de dernière connexion
+            user.last_login = get_utc_now()
+            db.session.commit()
+            
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('main.dashboard'))
         else:
@@ -216,3 +224,73 @@ def edit_user(user_id):
             form.clients.data = [client.id for client in user.clients]
     
     return render_template('auth/edit_user.html', form=form, user=user, title='Modifier utilisateur')
+
+@auth.route('/users/<int:user_id>/send_access', methods=['POST'])
+@login_required
+def send_user_access(user_id):
+    """Envoie un mail avec lien de définition/réinitialisation de mot de passe"""
+    # Vérifier les droits administrateur
+    if not current_user.is_admin():
+        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Déterminer s'il s'agit d'un nouveau compte (n'a jamais défini de mot de passe)
+    # On vérifie si l'utilisateur s'est déjà connecté au moins une fois
+    is_new_account = user.last_login is None
+    
+    # Envoyer l'email
+    if send_password_reset_email(user, is_new_account):
+        flash(f'Informations d\'accès envoyées à {user.email}', 'success')
+    else:
+        flash(f'Erreur lors de l\'envoi des informations d\'accès', 'danger')
+    
+    # Rediriger vers la page d'édition de l'utilisateur
+    return redirect(url_for('auth.edit_user', user_id=user.id))
+
+@auth.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Page de réinitialisation de mot de passe avec un jeton"""
+    # Vérifier si l'utilisateur est déjà connecté
+    if current_user.is_authenticated:
+        flash('Vous êtes déjà connecté.', 'info')
+        return redirect(url_for('main.dashboard'))
+    
+    # Vérifier la validité du jeton
+    token_record = PasswordResetToken.get_valid_token(token)
+    
+    token_expired = False
+    is_new_account = False
+    
+    if token_record:
+        # Récupérer l'utilisateur associé au jeton
+        user = User.query.get(token_record.user_id)
+        
+        # Vérifier si c'est un nouveau compte (jamais connecté)
+        is_new_account = user.last_login is None
+        
+        form = PasswordResetForm()
+        
+        if form.validate_on_submit():
+            user.set_password(form.password.data)
+            token_record.mark_as_used()
+            db.session.commit()
+            
+            # Rediriger vers la page de confirmation
+            return redirect(url_for('auth.reset_success', is_new=is_new_account))
+            
+        return render_template('auth/reset_password.html', 
+                              form=form, 
+                              token_valid=True,
+                              token_expired=False,
+                              is_new_account=is_new_account)
+    else:
+        # Vérifier si le jeton existe mais est expiré
+        expired_token = PasswordResetToken.query.filter_by(token=token).first()
+        token_expired = expired_token is not None
+        
+        return render_template('auth/reset_password.html', 
+                              token_valid=False,
+                              token_expired=token_expired,
+                              is_new_account=False)

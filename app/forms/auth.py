@@ -75,3 +75,14 @@ class NotificationPreferenceForm(FlaskForm):
     task_time_logged = BooleanField('Enregistrement de temps', default=True)
     project_credit_low = BooleanField('Alerte de crédit faible', default=True)
     submit = SubmitField('Enregistrer les préférences')
+
+class PasswordResetForm(FlaskForm):
+    password = PasswordField('Nouveau mot de passe', validators=[
+        DataRequired(), 
+        Length(min=8, message="Le mot de passe doit contenir au moins 8 caractères")
+    ])
+    confirm_password = PasswordField('Confirmer le mot de passe', validators=[
+        DataRequired(), 
+        EqualTo('password', message="Les mots de passe doivent correspondre")
+    ])
+    submit = SubmitField('Définir le mot de passe')

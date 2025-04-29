@@ -1,0 +1,68 @@
+{% extends 'layout.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/welcome-page.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5 col-md-7">
+        <div class="card shadow no-collapse">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    {% if is_new_account %}
+                        Compte activé
+                    {% else %}
+                        Mot de passe réinitialisé
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                
+                <h5 class="mb-3">
+                    {% if is_new_account %}
+                        Votre compte a été activé avec succès !
+                    {% else %}
+                        Votre mot de passe a été réinitialisé avec succès !
+                    {% endif %}
+                </h5>
+                
+                <p class="mb-4">
+                    {% if is_new_account %}
+                        Vous pouvez maintenant vous connecter à la plateforme et accéder à vos projets.
+                    {% else %}
+                        Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                    {% endif %}
+                </p>
+                
+                <div class="d-grid">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer_extras %}
+<!-- Bouton de basculement mode sombre/clair -->
+<div class="welcome-dark-mode-toggle" id="welcomeDarkModeToggle">
+    <i class="fas fa-sun" id="darkModeIcon"></i>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { initWelcomeDarkMode } from "{{ url_for('static', filename='js/pages/welcome-page.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initWelcomeDarkMode();
+    });
+</script>
+{% endblock %}

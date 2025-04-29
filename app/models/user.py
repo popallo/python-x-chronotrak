@@ -1,6 +1,7 @@
 from app import db, bcrypt, login_manager
 from flask_login import UserMixin
 from datetime import datetime
+from app.utils import get_utc_now
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -18,7 +19,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='technicien')  # admin, technicien ou client
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_utc_now)
+    last_login = db.Column(db.DateTime, nullable=True)
     
     # Relations
     assigned_tasks = db.relationship('Task', backref='assigned_to', lazy=True)

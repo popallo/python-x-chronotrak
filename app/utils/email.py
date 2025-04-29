@@ -16,26 +16,6 @@ def send_email(subject, recipients, text_body, html_body, sender=None):
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
         return
     
-    # Rediriger tous les emails vers l'admin en environnement de développement
-    original_recipients = recipients.copy() if isinstance(recipients, list) else [recipients]
-    env = current_app.config.get('ENV') or current_app.config.get('FLASK_ENV', 'production')
-    
-    if env == 'development':
-        admin_email = current_app.config.get('ADMIN_EMAIL')
-        if admin_email:
-            # Ajouter l'information sur les destinataires d'origine dans le corps du message
-            text_body = f"[DEV] Email destiné à: {', '.join(original_recipients)}\n\n{text_body}"
-            html_body = f"<div style='background-color: #ffeb3b; padding: 10px; margin-bottom: 10px;'><strong>[ENVIRONNEMENT DE DÉVELOPPEMENT]</strong><br>Email initialement destiné à: {', '.join(original_recipients)}</div>{html_body}"
-            
-            # Remplacer les destinataires par l'admin
-            recipients = [admin_email]
-            
-            # Modifier le sujet pour indiquer qu'il s'agit d'un email de développement
-            subject = f"[DEV] {subject}"
-            
-            # Log pour traçabilité
-            current_app.logger.info(f"[DEV] Email redirigé vers {admin_email} au lieu de {original_recipients}")
-    
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
     msg.body = text_body
@@ -246,3 +226,109 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
     
     # Envoyer l'email
     send_email(subject, recipients, text, html)
+    
+def send_password_reset_email(user, is_new_account=False):
+    """
+    Envoie un email de réinitialisation de mot de passe à l'utilisateur
+    
+    :param user: L'utilisateur auquel envoyer l'email
+    :param is_new_account: True si c'est un nouveau compte, False pour une réinitialisation
+    :return: True si l'email a été envoyé avec succès, False sinon
+    """
+    # Import ici pour éviter l'importation circulaire
+    from app.models.token import PasswordResetToken
+    
+    # Vérifier si l'utilisateur existe
+    if not user:
+        current_app.logger.error("Tentative d'envoi d'email à un utilisateur inexistant")
+        return False
+    
+    # Vérifier si l'utilisateur a un email
+    if not user.email:
+        current_app.logger.error(f"L'utilisateur {user.id} n'a pas d'email")
+        return False
+    
+    # Créer un jeton de réinitialisation
+    token = PasswordResetToken.generate_for_user(user.id)
+    
+    # Construire l'URL avec le jeton
+    reset_url = url_for('auth.reset_password', token=token.token, _external=True)
+    
+    # Préparer le contenu de l'email
+    if is_new_account:
+        subject = f"[ChronoTrak] Activation de votre compte"
+    else:
+        subject = f"[ChronoTrak] Réinitialisation de votre mot de passe"
+    
+    template = 'emails/password_reset.html'
+    html = render_template(template, 
+                          user=user,
+                          reset_url=reset_url,
+                          is_new_account=is_new_account)
+    
+    if is_new_account:
+        text = f"""
+Bonjour {user.name},
+
+Un compte a été créé pour vous sur la plateforme ChronoTrak de gestion de crédit-temps.
+
+Voici vos informations de connexion :
+- Email : {user.email}
+- Rôle : {user.role}
+
+Pour définir votre mot de passe, veuillez cliquer sur le lien suivant :
+{reset_url}
+
+Important : Ce lien est valable pendant 24 heures.
+
+Une fois votre mot de passe défini, vous pourrez vous connecter à la plateforme et accéder à vos projets et au suivi des temps.
+
+Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.
+
+Ceci est un message automatique envoyé par ChronoTrak.
+Pour toute question, veuillez contacter votre administrateur.
+        """
+    else:
+        text = f"""
+Bonjour {user.name},
+
+Une demande de réinitialisation de mot de passe a été effectuée pour votre compte sur la plateforme ChronoTrak.
+
+Voici vos informations de connexion :
+- Email : {user.email}
+- Rôle : {user.role}
+
+Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien suivant :
+{reset_url}
+
+Important : Ce lien est valable pendant 24 heures.
+
+Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.
+
+Ceci est un message automatique envoyé par ChronoTrak.
+Pour toute question, veuillez contacter votre administrateur.
+        """
+    
+    try:
+        # Déterminer les destinataires
+        if current_app.config.get('FLASK_ENV') == 'development':
+            # En développement, rediriger tous les emails vers l'admin
+            admin_email = current_app.config.get('ADMIN_EMAIL')
+            if admin_email:
+                # Ajouter des infos pour identifier le destinataire initial
+                subject = f"[DEV] {subject} (pour {user.email})"
+                recipients = [admin_email]
+            else:
+                # Utiliser l'email de l'utilisateur en absence d'admin configuré
+                recipients = [user.email]
+        else:
+            # En production, envoyer à l'utilisateur concerné
+            recipients = [user.email]
+        
+        # Envoyer l'email
+        send_email(subject, recipients, text, html)
+        current_app.logger.info(f"Email de réinitialisation envoyé à {recipients}")
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de l'envoi de l'email de réinitialisation: {e}")
+        return False

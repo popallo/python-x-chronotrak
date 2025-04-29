@@ -11,15 +11,16 @@ services:
       - ./.env.${ENVIRONMENT:-development}
     command: >
       sh -c "bash /app/scripts/update_version.sh &&
-             mkdir -p /app/instance &&
-             if [ ! -f /app/instance/chronotrak.db ]; then
-               echo 'Initialisation de la base de données...' &&
-               flask db upgrade &&
-               python ./scripts/create_admin.py
-             else
-               echo 'Base de données existante détectée'
-             fi &&
-             gunicorn --bind 0.0.0.0:5000 wsgi:app"
+        mkdir -p /app/instance &&
+        echo 'Application des migrations de base de données...' &&
+        flask db upgrade &&
+        if [ ! -f /app/instance/chronotrak.db ] || [ ! -s /app/instance/chronotrak.db ]; then
+          echo 'Base de données vide, création du compte administrateur...' &&
+          python ./scripts/create_admin.py
+        else
+          echo 'Base de données existante détectée'
+        fi &&
+        gunicorn --bind 0.0.0.0:5000 wsgi:app"
 
 volumes:
   chronotrak_data:

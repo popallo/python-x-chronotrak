@@ -305,3 +305,8 @@ html:not(.theme-loaded) body {
   html.dark-mode body .welcome-dark-mode-toggle i {
     color: var(--dm-text);
   }
+
+  /* Barre de rappel des couleurs */
+  html.dark-mode body .color-reminder-bar {
+    background: transparent !important;
+  }

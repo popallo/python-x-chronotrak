@@ -3,6 +3,7 @@ from wtforms import StringField, TextAreaField, SelectField, FloatField, SubmitF
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from app.models.user import User
 from app.models.client import Client
+from app.utils.time_format import generate_hour_options
 
 class TaskForm(FlaskForm):
     title = StringField('Titre', validators=[DataRequired(), Length(min=2, max=100)])
@@ -30,40 +31,10 @@ class TaskForm(FlaskForm):
         # Appeler le constructeur parent
         super(TaskForm, self).__init__(*args, **kwargs)
         
-        # Créer des options par tranches de 5 minutes jusqu'à 8 heures
-        hours_options = []
-        
-        # Ajouter les options de 5 minutes à 1 heure par incréments de 5 minutes
-        for i in range(1, 13):  # De 5 à 60 minutes par pas de 5
-            minutes = i * 5
-            decimal_value = round(minutes / 60, 2)
-            
-            if minutes < 60:
-                label = f"{minutes} min"
-            else:
-                label = "1h"
-            
-            hours_options.append((decimal_value, label))
-        
-        # Ajouter les options de 1h15 à 8h par incréments de 15 minutes
-        for i in range(5, 32):  # De 1h15 à 8h par pas de 15 minutes
-            hour = i // 4
-            minute = (i % 4) * 15
-            decimal_value = round(hour + minute / 60, 2)
-            
-            if minute > 0:
-                label = f"{hour}h {minute}min"
-            else:
-                label = f"{hour}h"
-            
-            hours_options.append((decimal_value, label))
-            
-        # Ajouter des options pour des blocs de temps plus grands
-        additional_options = [(10.0, "10h"), (15.0, "15h"), (20.0, "20h"), (40.0, "40h")]
-        hours_options.extend(additional_options)
-
-        # Ajouter l'option "Non défini" au début de la liste, avec une valeur numérique (0) au lieu de None
-        self.estimated_time.choices = [(0.0, '-- Non défini --')] + hours_options
+        self.estimated_time.choices = generate_hour_options(
+            extra_blocks=[(10.0, "10h"), (15.0, "15h"), (20.0, "20h"), (40.0, "40h")],
+            include_undefined=True
+        )
         
         # Logique pour filtrer les utilisateurs (reste inchangée)
         if current_user and current_user.is_client():
@@ -107,36 +78,7 @@ class TimeEntryForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(TimeEntryForm, self).__init__(*args, **kwargs)
-        # Créer des options par tranches de 5 minutes jusqu'à 8 heures
-        # Format: (valeur décimale pour DB, étiquette en minutes/heures pour affichage)
-        hours_options = []
-        
-        # Ajouter les options de 5 minutes à 1 heure par incréments de 5 minutes
-        for i in range(1, 13):  # De 5 à 60 minutes par pas de 5
-            minutes = i * 5
-            decimal_value = round(minutes / 60, 2)
-            
-            if minutes < 60:
-                label = f"{minutes} min"
-            else:
-                label = "1h"
-            
-            hours_options.append((decimal_value, label))
-        
-        # Ajouter les options de 1h15 à 8h par incréments de 15 minutes
-        for i in range(5, 32):  # De 1h15 à 8h par pas de 15 minutes
-            hour = i // 4
-            minute = (i % 4) * 15
-            decimal_value = round(hour + minute / 60, 2)
-            
-            if minute > 0:
-                label = f"{hour}h {minute}min"
-            else:
-                label = f"{hour}h"
-            
-            hours_options.append((decimal_value, label))
-        
-        self.hours.choices = hours_options
+        self.hours.choices = generate_hour_options()
 
 class CommentForm(FlaskForm):
     content = TextAreaField('Commentaire', validators=[DataRequired()])

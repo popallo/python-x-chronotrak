@@ -114,10 +114,10 @@ jobs:
             BACKUP_DATE=\$(date +'%Y%m%d_%H%M%S')
             
             # Extraire la base de données du volume Docker
-            docker run --rm -v chronotrak_data:/data -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
+            docker run --rm -v docker-chronotrak_chronotrak_data:/app/instance -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
               # Vérifier si la base de données existe
-              if [ -f /data/chronotrak.db ]; then
-                cp /data/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
+              if [ -f /app/instance/chronotrak.db ]; then
+                cp /app/instance/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
                 echo 'Sauvegarde effectuée avec succès'
               else
                 echo 'Base de données non trouvée dans le volume'

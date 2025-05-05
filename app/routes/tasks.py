@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import case
 from datetime import datetime
 from app import db
 from app.models.task import Task, TimeEntry, Comment

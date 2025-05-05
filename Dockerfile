@@ -8,6 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
+# Installer bash
+RUN apk add --no-cache bash
+
 # Créer un utilisateur non-root
 RUN addgroup -S chronouser && adduser -S -G chronouser chronouser
 

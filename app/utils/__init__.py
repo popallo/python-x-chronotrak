@@ -9,3 +9,9 @@ def get_utc_now():
 def get_client_choices():
     """Retourne la liste des clients pour un SelectField."""
     return [(client.id, client.name) for client in Client.query.order_by(Client.name).all()]
+
+def get_accessible_clients(user):
+    """Retourne la liste des clients accessibles pour un utilisateur donné."""
+    if user.is_admin() or user.is_technician():
+        return Client.query.order_by(Client.name).all()
+    return user.clients

@@ -1,4 +1,3 @@
-
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -10,7 +9,7 @@ from app.models.task import Task, TimeEntry, Comment
 from app.models.token import PasswordResetToken
 from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm, RequestResetForm
 from app.utils.email import send_password_reset_email
-from app.utils import get_utc_now
+from app.utils import get_utc_now, flash_admin_required, flash_already_logged_in, flash_cannot_delete_self
 
 
 auth = Blueprint('auth', __name__)
@@ -46,7 +45,7 @@ def logout():
 def register():
     # Seuls les administrateurs peuvent créer de nouveaux comptes
     if not current_user.is_admin():
-        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        flash_admin_required()
         return redirect(url_for('main.dashboard'))
         
     form = RegistrationForm()
@@ -77,7 +76,7 @@ def register():
 def users():
     # Seuls les administrateurs peuvent voir la liste des utilisateurs
     if not current_user.is_admin():
-        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        flash_admin_required()
         return redirect(url_for('main.dashboard'))
         
     users = User.query.all()
@@ -146,12 +145,12 @@ def notification_preferences():
 def delete_user(user_id):
     # Vérifier les droits administrateur
     if not current_user.is_admin():
-        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        flash_admin_required()
         return redirect(url_for('main.dashboard'))
     
     # Empêcher l'admin de supprimer son propre compte
     if current_user.id == user_id:
-        flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+        flash_cannot_delete_self()
         return redirect(url_for('auth.users'))
     
     user = User.query.get_or_404(user_id)
@@ -185,7 +184,7 @@ def delete_user(user_id):
 def edit_user(user_id):
     # Vérifier les droits administrateur
     if not current_user.is_admin():
-        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        flash_admin_required()
         return redirect(url_for('main.dashboard'))
     
     user = User.query.get_or_404(user_id)
@@ -231,7 +230,7 @@ def send_user_access(user_id):
     """Envoie un mail avec lien de définition/réinitialisation de mot de passe"""
     # Vérifier les droits administrateur
     if not current_user.is_admin():
-        flash('Accès refusé. Droits administrateur requis.', 'danger')
+        flash_admin_required()
         return redirect(url_for('main.dashboard'))
     
     user = User.query.get_or_404(user_id)
@@ -254,7 +253,7 @@ def reset_password(token):
     """Page de réinitialisation de mot de passe avec un jeton"""
     # Vérifier si l'utilisateur est déjà connecté
     if current_user.is_authenticated:
-        flash('Vous êtes déjà connecté.', 'info')
+        flash_already_logged_in()
         return redirect(url_for('main.dashboard'))
     
     # Vérifier la validité du jeton
@@ -306,7 +305,7 @@ def reset_request():
     """Page de demande de réinitialisation du mot de passe"""
     # Vérifier si l'utilisateur est déjà connecté
     if current_user.is_authenticated:
-        flash('Vous êtes déjà connecté.', 'info')
+        flash_already_logged_in()
         return redirect(url_for('main.dashboard'))
     
     form = RequestResetForm()

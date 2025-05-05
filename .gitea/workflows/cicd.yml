@@ -99,6 +99,39 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
 
+      # Sauvegarde de la base de données
+      - name: Sauvegarde de la base de données
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+            set -ex
+            echo 'Création du répertoire de sauvegarde'
+            mkdir -p ${{ secrets.PROJECT_DIRECTORY }}/backups
+            
+            echo 'Sauvegarde de la base de données'
+            cd ${{ secrets.PROJECT_DIRECTORY }}
+            
+            # Date de la sauvegarde avec timestamp
+            BACKUP_DATE=\$(date +'%Y%m%d_%H%M%S')
+            
+            # Extraire la base de données du volume Docker
+            docker run --rm -v chronotrak_data:/data -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
+              # Vérifier si la base de données existe
+              if [ -f /data/chronotrak.db ]; then
+                cp /data/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
+                echo 'Sauvegarde effectuée avec succès'
+              else
+                echo 'Base de données non trouvée dans le volume'
+                touch /backup/chronotrak_\${BACKUP_DATE}_empty.txt
+              fi
+            \"
+            
+            # Conserver uniquement les 10 dernières sauvegardes
+            cd ${{ secrets.PROJECT_DIRECTORY }}/backups
+            ls -t chronotrak_*.db | tail -n +11 | xargs -r rm
+            
+            echo 'Sauvegarde terminée'
+          "
+      
       # Déploiement sur le serveur de production
       - name: Déploiement sur le serveur de production
         run: |

@@ -51,7 +51,16 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form.estimated_time.label(class="form-label") }}
-                                {{ form.estimated_time(class="form-control", step="0.1") }}
+                                {% if form.estimated_time.errors %}
+                                    {{ form.estimated_time(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.estimated_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.estimated_time(class="form-select") }}
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">

@@ -30,7 +30,9 @@ class PasswordResetToken(db.Model):
     
     def is_valid(self):
         """Vérifie si le jeton est valide (non expiré et non utilisé)"""
-        return not self.is_used and self.expires_at > get_utc_now()
+        # Retirer le fuseau horaire de get_utc_now()
+        now = get_utc_now().replace(tzinfo=None)
+        return not self.is_used and self.expires_at > now
         
     def mark_as_used(self):
         """Marque le jeton comme utilisé"""

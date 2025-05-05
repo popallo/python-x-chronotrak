@@ -21,12 +21,15 @@ def new_task(project_id):
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None
         
+        # Convertir 0.0 (valeur pour "Non défini") à None
+        estimated_time = None if form.estimated_time.data == 0.0 else form.estimated_time.data
+        
         task = Task(
             title=form.title.data,
             description=form.description.data,
             status=form.status.data,
             priority=form.priority.data,
-            estimated_time=form.estimated_time.data,
+            estimated_time=estimated_time,  # Utilise None si "Non défini"
             project_id=project.id,
             user_id=user_id
         )

@@ -18,7 +18,8 @@ class TaskForm(FlaskForm):
         ('haute', 'Haute'),
         ('urgente', 'Urgente')
     ], default='normale')
-    estimated_time = FloatField('Temps estimé (heures)', validators=[Optional(), NumberRange(min=0.1)])
+    # Utiliser une valeur vide comme chaîne au lieu de None
+    estimated_time = SelectField('Temps estimé (heures)', validators=[Optional()], coerce=float)
     user_id = SelectField('Assigné à', validators=[Optional()], coerce=int)
     submit = SubmitField('Enregistrer')
     
@@ -29,29 +30,58 @@ class TaskForm(FlaskForm):
         # Appeler le constructeur parent
         super(TaskForm, self).__init__(*args, **kwargs)
         
-        # Logique pour filtrer les utilisateurs
+        # Créer des options par tranches de 5 minutes jusqu'à 8 heures
+        hours_options = []
+        
+        # Ajouter les options de 5 minutes à 1 heure par incréments de 5 minutes
+        for i in range(1, 13):  # De 5 à 60 minutes par pas de 5
+            minutes = i * 5
+            decimal_value = round(minutes / 60, 2)
+            
+            if minutes < 60:
+                label = f"{minutes} min"
+            else:
+                label = "1h"
+            
+            hours_options.append((decimal_value, label))
+        
+        # Ajouter les options de 1h15 à 8h par incréments de 15 minutes
+        for i in range(5, 32):  # De 1h15 à 8h par pas de 15 minutes
+            hour = i // 4
+            minute = (i % 4) * 15
+            decimal_value = round(hour + minute / 60, 2)
+            
+            if minute > 0:
+                label = f"{hour}h {minute}min"
+            else:
+                label = f"{hour}h"
+            
+            hours_options.append((decimal_value, label))
+            
+        # Ajouter des options pour des blocs de temps plus grands
+        additional_options = [(10.0, "10h"), (15.0, "15h"), (20.0, "20h"), (40.0, "40h")]
+        hours_options.extend(additional_options)
+
+        # Ajouter l'option "Non défini" au début de la liste, avec une valeur numérique (0) au lieu de None
+        self.estimated_time.choices = [(0.0, '-- Non défini --')] + hours_options
+        
+        # Logique pour filtrer les utilisateurs (reste inchangée)
         if current_user and current_user.is_client():
-            # Récupérer les IDs des clients auxquels l'utilisateur est rattaché
             client_ids = [client.id for client in current_user.clients]
             
-            # Récupérer tous les utilisateurs clients qui sont rattachés aux mêmes clients
             client_users = User.query.filter(
                 User.role == 'client',
                 User.clients.any(Client.id.in_(client_ids))
             ).all()
             
-            # Récupérer les IDs de ces utilisateurs
             client_user_ids = [user.id for user in client_users]
             
-            # Récupérer tous les admins et techniciens
             other_users = User.query.filter(
                 (User.role == 'admin') | (User.role == 'technicien')
             ).all()
             
-            # Combiner les listes
             all_visible_users = client_users + other_users
             
-            # Supprimer les doublons éventuels
             unique_users = []
             seen_ids = set()
             for user in all_visible_users:
@@ -59,15 +89,12 @@ class TaskForm(FlaskForm):
                     unique_users.append(user)
                     seen_ids.add(user.id)
             
-            # Trier par nom
             unique_users.sort(key=lambda x: x.name)
             
-            # Définir les choix
             self.user_id.choices = [(0, '-- Non assigné --')] + [
                 (user.id, user.name) for user in unique_users
             ]
         else:
-            # Pour les admins et techniciens, montrer tous les utilisateurs
             self.user_id.choices = [(0, '-- Non assigné --')] + [
                 (user.id, user.name) for user in User.query.order_by(User.name).all()
             ]

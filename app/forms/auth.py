@@ -3,6 +3,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, Selec
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional
 from app.models.user import User
 from app.models.client import Client
+from app.utils import get_client_choices
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -31,8 +32,7 @@ class RegistrationForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(RegistrationForm, self).__init__(*args, **kwargs)
-        # Dynamiquement charger la liste des clients
-        self.clients.choices = [(client.id, client.name) for client in Client.query.order_by(Client.name).all()]
+        self.clients.choices = get_client_choices()
 
 class ProfileForm(FlaskForm):
     name = StringField('Nom', validators=[DataRequired(), Length(min=2, max=100)])
@@ -59,8 +59,7 @@ class UserEditForm(FlaskForm):
     def __init__(self, *args, original_email=None, **kwargs):
         super(UserEditForm, self).__init__(*args, **kwargs)
         self.original_email = original_email
-        # Charger dynamiquement la liste des clients
-        self.clients.choices = [(client.id, client.name) for client in Client.query.order_by(Client.name).all()]
+        self.clients.choices = get_client_choices()
     
     def validate_email(self, email):
         if email.data != self.original_email:

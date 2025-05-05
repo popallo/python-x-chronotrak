@@ -72,15 +72,15 @@ def new_project(client_id):
     return render_template('projects/project_form.html', form=form, client=client, title='Nouveau projet')
 
 @projects.route('/projects/<int:project_id>')
-@login_required
 @login_and_client_required
 def project_details(project_id):
     project = get_project_by_id(project_id)
     
     # Récupérer les tâches par statut
-    tasks_todo = Task.query.filter_by(project_id=project.id, status='à faire').all()
-    tasks_in_progress = Task.query.filter_by(project_id=project.id, status='en cours').all()
-    tasks_done = Task.query.filter_by(project_id=project.id, status='terminé').all()
+    tasks_query = Task.query.filter_by(project_id=project.id)
+    tasks_todo = tasks_query.filter_by(status='à faire').all()
+    tasks_in_progress = tasks_query.filter_by(status='en cours').all()
+    tasks_done = tasks_query.filter_by(status='terminé').all()
     
     return render_template('projects/project_detail.html', 
                          project=project,

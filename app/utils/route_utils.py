@@ -12,7 +12,11 @@ def get_client_by_id(client_id):
     return Client.query.get_or_404(client_id)
 
 def get_project_by_id(project_id):
-    return Project.query.get_or_404(project_id)
+    project = Project.query.get_or_404(project_id)
+    if current_user.is_client() and not current_user.has_access_to_client(project.client_id):
+        from flask import abort
+        abort(403)
+    return project
 
 def get_task_by_id(task_id):
     return Task.query.get_or_404(task_id)

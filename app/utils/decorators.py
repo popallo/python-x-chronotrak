@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import abort, redirect, url_for, flash
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 def client_required(f):
     """Vérifie si l'utilisateur est un administrateur, un technicien ou un client avec accès"""
@@ -47,5 +47,23 @@ def admin_required(f):
         if not current_user.is_admin():
             flash("Accès refusé. Vous devez être administrateur pour accéder à cette page.", "danger")
             return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def login_and_client_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin() and not current_user.is_technician():
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def login_and_admin_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin():
+            abort(403)
         return f(*args, **kwargs)
     return decorated_function

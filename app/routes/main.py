@@ -6,27 +6,24 @@ from app.models.task import Task, TimeEntry
 from app.models.user import User
 from sqlalchemy import func
 from app import db
+from app.utils.route_utils import (
+    get_accessible_clients,
+    get_accessible_projects,
+    get_task_by_id,
+    get_project_by_id
+)
 
 main = Blueprint('main', __name__)
 
-@main.route('/')
-def index():
-    """Page d'accueil pour les utilisateurs non connectés"""
-    if current_user.is_authenticated:
-        return redirect(url_for('main.dashboard'))
-    return render_template('index.html', title='Bienvenue')
-
-@main.route('/dashboard')
-@login_required
-def dashboard():
-    """Tableau de bord principal"""
-    
-    # Pour les clients, montrer uniquement les données de leurs clients associés
+def get_dashboard_stats():
+    """Récupère les statistiques du tableau de bord"""
     if current_user.is_client():
-        client_ids = [client.id for client in current_user.clients]
+        # Pour les clients, montrer uniquement les données de leurs clients associés
+        clients_query = get_accessible_clients()
+        client_ids = [client.id for client in clients_query.all()]
         
         # Statistiques clients
-        total_clients = len(current_user.clients)
+        total_clients = clients_query.count()
         
         # Récupérer les projets liés aux clients de l'utilisateur
         projects = Project.query.filter(Project.client_id.in_(client_ids)).all()
@@ -59,13 +56,9 @@ def dashboard():
         
         # Temps enregistré récemment
         recent_time_entries = TimeEntry.query.join(Task).filter(Task.project_id.in_(project_ids)).order_by(TimeEntry.created_at.desc()).limit(10).all()
-    
-    # Pour les admins et techniciens, montrer toutes les données
     else:
-        # Statistiques clients
+        # Pour les admins et techniciens, montrer toutes les données
         total_clients = Client.query.count()
-        
-        # Statistiques projets
         total_projects = Project.query.count()
         
         projects_low_credit = Project.query.filter(Project.remaining_credit < current_app.config['CREDIT_THRESHOLD']).count()
@@ -75,39 +68,47 @@ def dashboard():
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         
-        # Statistiques tâches
         total_tasks = Task.query.count()
         tasks_todo = Task.query.filter_by(status='à faire').count()
         tasks_in_progress = Task.query.filter_by(status='en cours').count()
         tasks_done = Task.query.filter_by(status='terminé').count()
         
-        # Tâches urgentes
         urgent_tasks = Task.query.filter_by(priority='urgente', status='à faire').all()
-        
-        # Mes tâches en cours (pour l'utilisateur connecté)
         my_tasks = Task.query.filter_by(user_id=current_user.id, status='en cours').all()
-        
-        # Temps enregistré récemment
         recent_time_entries = TimeEntry.query.order_by(TimeEntry.created_at.desc()).limit(10).all()
     
-    return render_template('dashboard.html',
-                          total_clients=total_clients,
-                          total_projects=total_projects,
-                          projects_low_credit=projects_low_credit,
-                          low_credit_projects=low_credit_projects,
-                          total_tasks=total_tasks,
-                          tasks_todo=tasks_todo,
-                          tasks_in_progress=tasks_in_progress,
-                          tasks_done=tasks_done,
-                          urgent_tasks=urgent_tasks,
-                          my_tasks=my_tasks,
-                          recent_time_entries=recent_time_entries,
-                          title='Tableau de bord')
+    return {
+        'total_clients': total_clients,
+        'total_projects': total_projects,
+        'projects_low_credit': projects_low_credit,
+        'low_credit_projects': low_credit_projects,
+        'total_tasks': total_tasks,
+        'tasks_todo': tasks_todo,
+        'tasks_in_progress': tasks_in_progress,
+        'tasks_done': tasks_done,
+        'urgent_tasks': urgent_tasks,
+        'my_tasks': my_tasks,
+        'recent_time_entries': recent_time_entries
+    }
+
+@main.route('/')
+def index():
+    """Page d'accueil pour les utilisateurs non connectés"""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    return render_template('index.html', title='Bienvenue')
+
+@main.route('/dashboard')
+@login_required
+def dashboard():
+    """Tableau de bord principal"""
+    stats = get_dashboard_stats()
+    return render_template('dashboard.html', **stats, title='Tableau de bord')
 
 @main.route('/reports')
 @login_required
 def reports():
-    """Page de rapports"""
+    """Page des rapports"""
     # Temps total enregistré par projet
     project_times = db.session.query(
         Project.name, 
@@ -133,7 +134,7 @@ def reports():
     ).group_by('month').order_by('month').all()
     
     return render_template('reports.html',
-                          project_times=project_times,
-                          user_times=user_times,
-                          monthly_times=monthly_times,
-                          title='Rapports')
+                         project_times=project_times,
+                         user_times=user_times,
+                         monthly_times=monthly_times,
+                         title='Rapports')

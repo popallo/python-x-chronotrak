@@ -8,15 +8,22 @@ from app.models.project import Project
 from app.models.client import Client
 from app.forms.task import TaskForm, TimeEntryForm, CommentForm
 from app.utils import get_utc_now
-from app.utils.decorators import client_required
+from app.utils.decorators import login_and_client_required
+from app.utils.route_utils import (
+    get_project_by_id, 
+    get_task_by_id, 
+    save_to_db, 
+    delete_from_db,
+    apply_filters,
+    apply_sorting
+)
 
 tasks = Blueprint('tasks', __name__)
 
 @tasks.route('/projects/<int:project_id>/tasks/new', methods=['GET', 'POST'])
-@login_required
-@client_required
+@login_and_client_required
 def new_task(project_id):
-    project = Project.query.get_or_404(project_id)
+    project = get_project_by_id(project_id)
     form = TaskForm(current_user=current_user)
     
     if form.validate_on_submit():
@@ -34,8 +41,7 @@ def new_task(project_id):
             project_id=project.id,
             user_id=user_id
         )
-        db.session.add(task)
-        db.session.commit()
+        save_to_db(task)
         
         flash(f'Tâche "{form.title.data}" créée avec succès!', 'success')
         return redirect(url_for('projects.project_details', project_id=project.id))
@@ -45,7 +51,7 @@ def new_task(project_id):
 @tasks.route('/tasks/<int:task_id>')
 @login_required
 def task_details(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
@@ -74,9 +80,9 @@ def task_details(task_id):
                            title=task.title)
 
 @tasks.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
-@login_required
+@login_and_client_required
 def edit_task(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
@@ -103,7 +109,7 @@ def edit_task(task_id):
         elif task.status != 'terminé':
             task.completed_at = None
             
-        db.session.commit()
+        save_to_db(task)
         flash(f'Tâche "{task.title}" mise à jour!', 'success')
         return redirect(url_for('tasks.task_details', task_id=task.id))
         
@@ -118,9 +124,9 @@ def edit_task(task_id):
     return render_template('tasks/task_form.html', form=form, task=task, title='Modifier tâche')
 
 @tasks.route('/tasks/<int:task_id>/delete', methods=['POST'])
-@login_required
+@login_and_client_required
 def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     project_id = task.project_id
     
     # Vérifier si le client a accès à ce projet et interdire la suppression pour les clients
@@ -133,8 +139,7 @@ def delete_task(task_id):
         flash(f'Impossible de supprimer cette tâche car du temps y a été enregistré.', 'danger')
         return redirect(url_for('tasks.task_details', task_id=task.id))
         
-    db.session.delete(task)
-    db.session.commit()
+    delete_from_db(task)
     flash(f'Tâche "{task.title}" supprimée!', 'success')
     return redirect(url_for('projects.project_details', project_id=project_id))
 
@@ -143,7 +148,7 @@ def delete_task(task_id):
 def log_time(task_id):
     from app.utils.email import send_task_notification
     
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     
     # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
     if current_user.is_client():
@@ -203,7 +208,7 @@ def update_status():
     if not task_id or not new_status:
         return jsonify({'success': False, 'error': 'Données manquantes'}), 400
         
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
@@ -239,19 +244,17 @@ def update_status():
 def my_tasks():
     """Affiche les tâches assignées à l'utilisateur courant avec filtres"""
     # Récupération des paramètres de filtrage
-    priority = request.args.get('priority')
-    project_id = request.args.get('project_id', type=int)
-    client_id = request.args.get('client_id', type=int)
-    search = request.args.get('search')
-    sort_by = request.args.get('sort_by', 'date_desc')
+    filters = {
+        'priority': request.args.get('priority'),
+        'project_id': request.args.get('project_id', type=int),
+        'client_id': request.args.get('client_id', type=int),
+        'search': request.args.get('search')
+    }
     
     # Construction des requêtes de base pour les tâches en cours et à faire
     query_todo = Task.query.filter_by(user_id=current_user.id, status='à faire')
     query_in_progress = Task.query.filter_by(user_id=current_user.id, status='en cours')
     query_completed = Task.query.filter_by(user_id=current_user.id, status='terminé')
-    
-    # Flag pour savoir si des filtres sont actifs
-    filters_active = bool(priority or project_id or client_id or search)
     
     # Si c'est un client, filtrer pour n'afficher que les tâches auxquelles il a accès
     if current_user.is_client():
@@ -264,37 +267,16 @@ def my_tasks():
         query_completed = query_completed.filter(Task.project_id.in_(project_ids))
         
         # Si un client spécifique est demandé, vérifier qu'il est accessible
-        if client_id and client_id not in client_ids:
-            # Si le client demandé n'est pas accessible, ignorer ce filtre
-            client_id = None
+        if filters['client_id'] and filters['client_id'] not in client_ids:
+            filters['client_id'] = None
     
     # Application des filtres
-    if priority:
-        query_todo = query_todo.filter(Task.priority == priority)
-        query_in_progress = query_in_progress.filter(Task.priority == priority)
-        query_completed = query_completed.filter(Task.priority == priority)
-    
-    if project_id:
-        query_todo = query_todo.filter(Task.project_id == project_id)
-        query_in_progress = query_in_progress.filter(Task.project_id == project_id)
-        query_completed = query_completed.filter(Task.project_id == project_id)
-    
-    if client_id:
-        # Trouver d'abord les projets liés à ce client
-        projects_for_client = Project.query.filter_by(client_id=client_id).all()
-        project_ids_for_client = [p.id for p in projects_for_client]
-        
-        query_todo = query_todo.filter(Task.project_id.in_(project_ids_for_client))
-        query_in_progress = query_in_progress.filter(Task.project_id.in_(project_ids_for_client))
-        query_completed = query_completed.filter(Task.project_id.in_(project_ids_for_client))
-    
-    if search:
-        search_term = f"%{search}%"
-        query_todo = query_todo.filter(Task.title.ilike(search_term))
-        query_in_progress = query_in_progress.filter(Task.title.ilike(search_term))
-        query_completed = query_completed.filter(Task.title.ilike(search_term))
+    query_todo, filters_active = apply_filters(query_todo, Task, filters)
+    query_in_progress, _ = apply_filters(query_in_progress, Task, filters)
+    query_completed, _ = apply_filters(query_completed, Task, filters)
     
     # Application du tri
+    sort_by = request.args.get('sort_by', 'date_desc')
     if sort_by == 'priority_desc':
         # Tri par priorité (les "urgentes" en premier)
         priority_order = case(
@@ -319,18 +301,11 @@ def my_tasks():
         query_todo = query_todo.order_by(priority_order)
         query_in_progress = query_in_progress.order_by(priority_order)
         query_completed = query_completed.order_by(priority_order)
-    elif sort_by == 'date_asc':
-        query_todo = query_todo.order_by(Task.created_at.asc())
-        query_in_progress = query_in_progress.order_by(Task.created_at.asc())
-        query_completed = query_completed.order_by(Task.created_at.asc())
-    elif sort_by == 'date_desc':
-        query_todo = query_todo.order_by(Task.created_at.desc())
-        query_in_progress = query_in_progress.order_by(Task.created_at.desc())
-        query_completed = query_completed.order_by(Task.completed_at.desc())
-    elif sort_by == 'title':
-        query_todo = query_todo.order_by(Task.title.asc())
-        query_in_progress = query_in_progress.order_by(Task.title.asc())
-        query_completed = query_completed.order_by(Task.title.asc())
+    else:
+        # Utiliser la fonction apply_sorting pour les autres cas
+        query_todo = apply_sorting(query_todo, Task, sort_by.replace('_desc', ''), 'desc' if '_desc' in sort_by else 'asc')
+        query_in_progress = apply_sorting(query_in_progress, Task, sort_by.replace('_desc', ''), 'desc' if '_desc' in sort_by else 'asc')
+        query_completed = apply_sorting(query_completed, Task, sort_by.replace('_desc', ''), 'desc' if '_desc' in sort_by else 'asc')
     
     # Exécution des requêtes
     tasks_todo = query_todo.all()
@@ -347,16 +322,8 @@ def my_tasks():
         all_clients = Client.query.order_by(Client.name).all()
     else:
         # Pour les clients, n'afficher que les projets auxquels ils ont accès
-        client_ids = [client.id for client in current_user.clients]
         all_clients = current_user.clients
-        all_projects = Project.query.filter(Project.client_id.in_(client_ids)).order_by(Project.name).all()
-    
-    # Helper functions pour le template
-    def get_project_by_id(project_id):
-        return Project.query.get(project_id)
-        
-    def get_client_by_id(client_id):
-        return Client.query.get(client_id)
+        all_projects = Project.query.filter(Project.client_id.in_([c.id for c in current_user.clients])).order_by(Project.name).all()
     
     return render_template('tasks/my_tasks.html', 
                           tasks_todo=tasks_todo,
@@ -365,8 +332,6 @@ def my_tasks():
                           all_projects=all_projects,
                           all_clients=all_clients,
                           filters_active=filters_active,
-                          get_project_by_id=get_project_by_id,
-                          get_client_by_id=get_client_by_id,
                           title='Mes tâches')
 
 @tasks.route('/tasks/<int:task_id>/add_comment', methods=['POST'])
@@ -374,7 +339,7 @@ def my_tasks():
 def add_comment(task_id):
     from app.utils.email import send_task_notification
     
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
     
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
@@ -405,6 +370,7 @@ def add_comment(task_id):
 @login_required
 def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
+    delete_from_db(comment)
     task_id = comment.task_id
     
     # Vérifier que l'utilisateur est l'auteur du commentaire ou un administrateur
@@ -412,8 +378,6 @@ def delete_comment(comment_id):
         flash('Vous n\'êtes pas autorisé à supprimer ce commentaire.', 'danger')
         return redirect(url_for('tasks.task_details', task_id=task_id))
     
-    db.session.delete(comment)
-    db.session.commit()
     flash('Commentaire supprimé avec succès!', 'success')
     return redirect(url_for('tasks.task_details', task_id=task_id))
 

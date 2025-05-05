@@ -12,8 +12,13 @@ services:
     command: >
       sh -c "bash /app/scripts/update_version.sh &&
         mkdir -p /app/instance &&
-        echo 'Application des migrations de base de données...' &&
-        flask db upgrade &&
+        echo 'Début de l'application des migrations...' &&
+        if flask db upgrade; then
+          echo 'Migrations appliquées avec succès.'
+        else
+          echo 'Erreur lors de l'application des migrations.' >&2
+          exit 1
+        fi &&
         if [ ! -f /app/instance/chronotrak.db ] || [ ! -s /app/instance/chronotrak.db ]; then
           echo 'Base de données vide, création du compte administrateur...' &&
           python ./scripts/create_admin.py

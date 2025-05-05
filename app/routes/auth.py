@@ -294,3 +294,9 @@ def reset_password(token):
                               token_valid=False,
                               token_expired=token_expired,
                               is_new_account=False)
+    
+@auth.route('/reset_success')
+def reset_success():
+    """Page de confirmation après réinitialisation réussie"""
+    is_new = request.args.get('is_new', 'false').lower() == 'true'
+    return render_template('auth/reset_success.html', is_new_account=is_new)

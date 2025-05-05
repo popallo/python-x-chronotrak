@@ -41,11 +41,8 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('clients.list_clients') }}">
-                            {% if current_user.is_client() %}
-                                Sociétés
-                            {% else %}
-                                Clients
-                            {% endif %}
+                            {% set entity_type = 'Sociétés' if current_user.is_client() else 'Clients' %}
+                            {{ entity_type }}
                         </a>
                     </li>
                     <li class="nav-item">

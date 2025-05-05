@@ -19,7 +19,10 @@
             <div class="card-body">
                 <i class="fas fa-users"></i>
                 <div class="stats-number">{{ total_clients }}</div>
-                <div class="stats-title">Client{{ 's' if total_clients != 1 else '' }}</div>
+                <div class="stats-title">
+                    {% set entity_type = 'Société' if current_user.is_client() else 'Client' %}
+                    {{ entity_type }}{{ 's' if total_clients != 1 else '' }}
+                </div>
             </div>
         </div>
     </div>

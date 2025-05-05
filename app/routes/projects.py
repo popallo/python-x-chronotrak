@@ -7,6 +7,7 @@ from app.forms.project import ProjectForm, AddCreditForm
 from app.utils.decorators import client_required
 from datetime import datetime
 from sqlalchemy import or_, and_, func
+from app.utils import get_accessible_clients
 
 projects = Blueprint('projects', __name__)
 
@@ -98,11 +99,7 @@ def list_projects():
             project.credit_percent = 0
     
     # Récupérer tous les clients pour le filtre
-    all_clients = []
-    if current_user.is_admin() or current_user.is_technician():
-        all_clients = Client.query.order_by(Client.name).all()
-    else:
-        all_clients = current_user.clients
+    all_clients = get_accessible_clients(current_user)
     
     # Helper function pour le template
     def get_client_by_id(client_id):

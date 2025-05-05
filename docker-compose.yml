@@ -10,8 +10,7 @@ services:
     env_file:
       - ./.env.${ENVIRONMENT:-development}
     command: >
-      sh -c "bash /app/scripts/update_version.sh &&
-        mkdir -p /app/instance &&
+      sh -c "mkdir -p /app/instance &&
         echo 'Début de l'application des migrations...' &&
         if flask db upgrade; then
           echo 'Migrations appliquées avec succès.'

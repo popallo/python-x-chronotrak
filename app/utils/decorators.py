@@ -38,3 +38,14 @@ def client_required(f):
         # Pour tout autre cas (par exemple, pas de client_id ni project_id dans l'URL)
         abort(403)
     return decorated_function
+
+# app/utils/decorators.py (ajout)
+def admin_required(f):
+    """Vérifie si l'utilisateur est un administrateur"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin():
+            flash("Accès refusé. Vous devez être administrateur pour accéder à cette page.", "danger")
+            return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function

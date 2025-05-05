@@ -1,0 +1,106 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Détail de la communication</h1>
+    <a href="{{ url_for('communications.list_communications') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+    </a>
+</div>
+
+<div class="row">
+    <!-- Informations générales -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Date d'envoi :</strong> {{ comm.sent_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                <p>
+                    <strong>Type :</strong> 
+                    <span class="badge bg-secondary">{{ comm.type|replace('_', ' ')|capitalize }}</span>
+                </p>
+                <p>
+                    <strong>Statut :</strong> 
+                    {% if comm.status == 'sent' %}
+                    <span class="badge bg-success">Envoyé</span>
+                    {% else %}
+                    <span class="badge bg-danger">Échec</span>
+                    {% endif %}
+                </p>
+                <p><strong>Destinataire :</strong> {{ comm.recipient }}</p>
+                <p><strong>Sujet :</strong> {{ comm.subject }}</p>
+                
+                {% if triggered_by %}
+                <p><strong>Envoyé par :</strong> {{ triggered_by.name }}</p>
+                {% endif %}
+                
+                {% if user %}
+                <p><strong>Utilisateur concerné :</strong> 
+                    <a href="{{ url_for('auth.edit_user', user_id=user.id) }}">{{ user.name }}</a>
+                </p>
+                {% endif %}
+                
+                {% if project %}
+                <p><strong>Projet lié :</strong> 
+                    <a href="{{ url_for('projects.project_details', project_id=project.id) }}">{{ project.name }}</a>
+                </p>
+                {% endif %}
+                
+                {% if task %}
+                <p><strong>Tâche liée :</strong> 
+                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}">{{ task.title }}</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aperçu du contenu -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-envelope-open-text me-2"></i>Aperçu du contenu</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="contentTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-content" 
+                                type="button" role="tab" aria-controls="html-content" aria-selected="true">
+                            HTML
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" 
+                                type="button" role="tab" aria-controls="text-content" aria-selected="false">
+                            Texte brut
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content pt-3" id="contentTabsContent">
+                    <div class="tab-pane fade show active" id="html-content" role="tabpanel" aria-labelledby="html-tab">
+                        {% if comm.content_html %}
+                            <div class="border p-3 rounded bg-light">
+                                <iframe id="email-preview" srcdoc="{{ comm.content_html }}" 
+                                        style="width: 100%; height: 500px; border: none;"></iframe>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">Aucun contenu HTML disponible.</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="text-content" role="tabpanel" aria-labelledby="text-tab">
+                        {% if comm.content_text %}
+                            <div class="border p-3 rounded bg-light">
+                                <pre style="white-space: pre-wrap; font-family: monospace;">{{ comm.content_text }}</pre>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">Aucun contenu texte disponible.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

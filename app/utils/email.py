@@ -2,28 +2,66 @@ from flask import render_template, current_app, url_for
 from flask_mail import Message
 from app import mail
 from threading import Thread
+from app import db
 from app.models.notification import NotificationPreference
 from app.models.user import User
+from app.models.communication import Communication
 
 def send_async_email(app, msg):
     """Envoie un email de façon asynchrone"""
     with app.app_context():
         mail.send(msg)
 
-def send_email(subject, recipients, text_body, html_body, sender=None):
-    """Envoie un email aux destinataires spécifiés"""
+# Dans app/utils/email.py, modifions la fonction send_email
+
+def send_email(subject, recipients, text_body, html_body, sender=None, email_type=None, 
+               user_id=None, task_id=None, project_id=None, triggered_by_id=None):
+    """Envoie un email aux destinataires spécifiés et l'enregistre dans la base de données"""
     if not current_app.config.get('MAIL_SERVER'):
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
-        return
+        return False
     
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
     msg.body = text_body
     msg.html = html_body
     
-    # Envoyer de façon asynchrone pour ne pas bloquer l'application
-    Thread(target=send_async_email, 
-           args=(current_app._get_current_object(), msg)).start()
+    success = True
+    
+    try:
+        # Envoyer de façon asynchrone pour ne pas bloquer l'application
+        Thread(target=send_async_email, 
+               args=(current_app._get_current_object(), msg)).start()
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de l'envoi de l'email: {e}")
+        success = False
+    
+    # Enregistrer la communication dans la base de données
+    # Importer Communication ici pour éviter les imports circulaires
+    from app.models.communication import Communication
+    
+    try:
+        for recipient in recipients:
+            comm = Communication(
+                recipient=recipient,
+                subject=subject,
+                content_html=html_body,
+                content_text=text_body,
+                type=email_type or 'general',
+                status='sent' if success else 'failed',
+                user_id=user_id,
+                task_id=task_id,
+                project_id=project_id,
+                triggered_by_id=triggered_by_id
+            )
+            db.session.add(comm)
+        
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de l'enregistrement de la communication: {e}")
+        db.session.rollback()
+    
+    return success
 
 def send_task_notification(task, event_type, user=None, additional_data=None):
     """
@@ -168,7 +206,11 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
         return
     
     # Envoyer l'email
-    send_email(subject, recipients, text, html)
+    send_email(subject, recipients, text, html, 
+               email_type=f'task_{event_type}',
+               task_id=task.id, 
+               project_id=task.project_id,
+               triggered_by_id=user.id if user else None)
 
 def send_low_credit_notification(project):
     """
@@ -225,7 +267,9 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
     """
     
     # Envoyer l'email
-    send_email(subject, recipients, text, html)
+    send_email(subject, recipients, text, html,
+               email_type='project_low_credit',
+               project_id=project.id)
     
 def send_password_reset_email(user, is_new_account=False):
     """
@@ -326,7 +370,9 @@ Pour toute question, veuillez contacter votre administrateur.
             recipients = [user.email]
         
         # Envoyer l'email
-        send_email(subject, recipients, text, html)
+        send_email(subject, recipients, text, html,
+               email_type='password_reset',
+               user_id=user.id)
         current_app.logger.info(f"Email de réinitialisation envoyé à {recipients}")
         return True
     except Exception as e:

@@ -86,3 +86,7 @@ class PasswordResetForm(FlaskForm):
         EqualTo('password', message="Les mots de passe doivent correspondre")
     ])
     submit = SubmitField('Définir le mot de passe')
+
+class RequestResetForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Demander la réinitialisation')

@@ -8,7 +8,7 @@ from app.models.client import Client
 from app.models.notification import NotificationPreference
 from app.models.task import Task, TimeEntry, Comment
 from app.models.token import PasswordResetToken
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm, RequestResetForm
 from app.utils.email import send_password_reset_email
 from app.utils import get_utc_now
 
@@ -300,3 +300,31 @@ def reset_success():
     """Page de confirmation après réinitialisation réussie"""
     is_new = request.args.get('is_new', 'false').lower() == 'true'
     return render_template('auth/reset_success.html', is_new_account=is_new)
+
+@auth.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_request():
+    """Page de demande de réinitialisation du mot de passe"""
+    # Vérifier si l'utilisateur est déjà connecté
+    if current_user.is_authenticated:
+        flash('Vous êtes déjà connecté.', 'info')
+        return redirect(url_for('main.dashboard'))
+    
+    form = RequestResetForm()
+    
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        
+        # Même si l'utilisateur n'existe pas, nous ne le signalons pas
+        # Cela évite de révéler quels emails sont enregistrés
+        if user:
+            send_password_reset_email(user)
+        
+        # Rediriger vers la page de confirmation (même si l'email n'existe pas)
+        return redirect(url_for('auth.reset_request_sent'))
+        
+    return render_template('auth/request_reset.html', form=form, title='Mot de passe oublié')
+
+@auth.route('/reset_request_sent')
+def reset_request_sent():
+    """Page de confirmation d'envoi de demande de réinitialisation"""
+    return render_template('auth/reset_request_sent.html', title='Email envoyé')

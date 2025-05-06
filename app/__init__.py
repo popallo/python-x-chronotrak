@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from config import config
 from datetime import datetime, timezone
 from flask_mail import Mail
+from werkzeug.exceptions import HTTPException
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -33,6 +34,7 @@ def create_app(config_name):
     # Importer ici pour éviter les imports circulaires
     from app.utils.page_timer import start_timer, get_elapsed_time, log_request_time
     from app.utils.version import get_version, get_build_info
+    from app.utils.error_handler import send_error_email
     
     # Middleware pour mesurer le temps de chargement
     @app.before_request
@@ -44,6 +46,43 @@ def create_app(config_name):
         g.response_status_code = response.status_code
         log_request_time()
         return response
+
+    # Gestionnaires d'erreur
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template('errors/error.html', 
+                             error_message="La page que vous recherchez n'existe pas."), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        # Envoyer l'email d'erreur en production
+        if not app.debug:
+            request_info = {
+                'url': request.url,
+                'method': request.method,
+                'ip': request.remote_addr,
+                'user_agent': request.user_agent.string
+            }
+            send_error_email(error, request_info)
+        return render_template('errors/error.html'), 500
+
+    @app.errorhandler(Exception)
+    def handle_exception(error):
+        # Gérer les erreurs HTTP
+        if isinstance(error, HTTPException):
+            return render_template('errors/error.html',
+                                 error_message=error.description), error.code
+
+        # Envoyer l'email d'erreur en production
+        if not app.debug:
+            request_info = {
+                'url': request.url,
+                'method': request.method,
+                'ip': request.remote_addr,
+                'user_agent': request.user_agent.string
+            }
+            send_error_email(error, request_info)
+        return render_template('errors/error.html'), 500
     
     # Contexte global pour les templates
     @app.context_processor

@@ -23,8 +23,11 @@ class Project(db.Model):
 
     def add_credit(self, amount, note=None):
         """Ajoute du crédit au projet et crée une entrée dans l'historique"""
-        # Met à jour le crédit restant
-        self.remaining_credit += amount
+        # Arrondir le montant à 2 décimales pour éviter les erreurs de calcul
+        amount = round(amount, 2)
+        
+        # Met à jour le crédit restant et arrondir le résultat
+        self.remaining_credit = round(self.remaining_credit + amount, 2)
         
         # Réinitialiser l'état d'alerte si le crédit est suffisant
         threshold = 2  # Même seuil que dans deduct_credit
@@ -46,8 +49,11 @@ class Project(db.Model):
     # app/models/project.py (modifiez la méthode deduct_credit)
     def deduct_credit(self, amount, task_id=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
-        # Déduire le crédit
-        self.remaining_credit -= amount
+        # Arrondir le montant à 2 décimales pour éviter les erreurs de calcul
+        amount = round(amount, 2)
+        
+        # Déduire le crédit et arrondir le résultat
+        self.remaining_credit = round(self.remaining_credit - amount, 2)
         
         # Créer l'entrée dans l'historique
         log = CreditLog(

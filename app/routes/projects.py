@@ -80,7 +80,7 @@ def project_details(project_id):
     tasks_query = Task.query.filter_by(project_id=project.id)
     tasks_todo = tasks_query.filter_by(status='à faire').all()
     tasks_in_progress = tasks_query.filter_by(status='en cours').all()
-    tasks_done = tasks_query.filter_by(status='terminé').all()
+    tasks_done = tasks_query.filter_by(status='terminé').order_by(Task.completed_at.desc()).all()
     
     return render_template('projects/project_detail.html', 
                          project=project,

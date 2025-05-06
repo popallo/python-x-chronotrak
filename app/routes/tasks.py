@@ -311,7 +311,7 @@ def my_tasks():
     tasks_todo = query_todo.all()
     tasks_in_progress = query_in_progress.all()
     # Limiter les tâches terminées aux 5 plus récentes
-    tasks_completed = query_completed.limit(5).all()
+    tasks_completed = query_completed.order_by(Task.completed_at.desc()).limit(5).all()
     
     # Récupérer tous les projets pour le filtre
     all_projects = []

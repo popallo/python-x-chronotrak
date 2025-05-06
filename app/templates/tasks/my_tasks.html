@@ -154,7 +154,7 @@
                                 </div>
                                 <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                 {% if task.estimated_time %}
-                                    <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
+                                    <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
                                 {% endif %}
                             </a>
                         {% endfor %}
@@ -192,10 +192,10 @@
                                 <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                 <div class="d-flex justify-content-between align-items-center">
                                     {% if task.estimated_time %}
-                                        <small><i class="fas fa-clock me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
+                                        <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
                                     {% endif %}
                                     {% if task.actual_time %}
-                                        <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|fr_number }}h passées</small>
+                                        <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
                                     {% endif %}
                                 </div>
                             </a>
@@ -240,7 +240,7 @@
                                 </div>
                                 <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                 {% if task.actual_time %}
-                                    <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|fr_number }}h passées</small>
+                                    <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
                                 {% endif %}
                             </a>
                         {% endfor %}

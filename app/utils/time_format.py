@@ -3,8 +3,8 @@ def format_time(value):
     if value is None:
         return ""
     
-    # Convertir en minutes totales
-    total_minutes = int(value * 60)
+    # Convertir en minutes totales et arrondir
+    total_minutes = round(value * 60)
     
     # Calculer les heures et minutes
     hours = total_minutes // 60

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import case
-from datetime import datetime
+from datetime import datetime, timezone
 from app import db
 from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
@@ -394,7 +394,7 @@ def edit_comment(comment_id):
         return redirect(url_for('tasks.task_details', task_id=task_id))
     
     # Vérifier que le commentaire a moins de 10 minutes
-    delta = datetime.now(datetime.timezone.utc) - comment.created_at
+    delta = datetime.now(timezone.utc) - comment.created_at
     if delta.total_seconds() > 600:  # 10 minutes = 600 secondes
         flash('Ce commentaire ne peut plus être modifié (délai de 10 minutes dépassé).', 'warning')
         return redirect(url_for('tasks.task_details', task_id=task_id))

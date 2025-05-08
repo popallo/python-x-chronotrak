@@ -21,6 +21,14 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
         return False
     
+    # En développement, rediriger tous les emails vers l'admin
+    if current_app.config.get('FLASK_ENV') == 'development':
+        admin_email = current_app.config.get('ADMIN_EMAIL')
+        if admin_email:
+            # Ajouter des infos pour identifier les destinataires initiaux
+            subject = f"[DEV] {subject} (pour {', '.join(recipients)})"
+            recipients = [admin_email]
+    
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
     msg.body = text_body

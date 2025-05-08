@@ -24,7 +24,7 @@
                 <li><strong>Enregistré par:</strong> {{ user.name }}</li>
             </ul>
             <div class="time-details">
-                <p><strong>Temps:</strong> {{ time_entry.hours }} heures</p>
+                <p><strong>Temps:</strong> {{ time_entry.hours|format_time }}</p>
                 {% if time_entry.description %}
                     <p><strong>Description:</strong> {{ time_entry.description }}</p>
                 {% endif %}

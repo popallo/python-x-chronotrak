@@ -246,8 +246,8 @@
                                     
                                     {% if comment.user_id == current_user.id or current_user.is_admin() %}
                                         <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline ms-1">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire?');" title="Supprimer">
+                                            {{ form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -343,7 +343,8 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 {% if not current_user.is_client() and not time_entries %}
                     <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST">
-                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                        {{ form.hidden_tag() }}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')">Supprimer</button>
                     </form>
                 {% endif %}
             </div>

@@ -5,6 +5,10 @@ from app.models.user import User
 from app.models.client import Client
 from app.utils import get_client_choices
 
+class UserForm(FlaskForm):
+    """Formulaire utilisé uniquement pour le CSRF token dans la page des utilisateurs"""
+    pass
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Mot de passe', validators=[DataRequired()])

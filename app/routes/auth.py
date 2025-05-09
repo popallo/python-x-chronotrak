@@ -7,7 +7,7 @@ from app.models.client import Client
 from app.models.notification import NotificationPreference
 from app.models.task import Task, TimeEntry, Comment
 from app.models.token import PasswordResetToken
-from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm, RequestResetForm
+from app.forms.auth import LoginForm, RegistrationForm, ProfileForm, UserEditForm, NotificationPreferenceForm, PasswordResetForm, RequestResetForm, UserForm
 from app.utils.email import send_password_reset_email
 from app.utils import get_utc_now, flash_admin_required, flash_already_logged_in, flash_cannot_delete_self
 
@@ -80,7 +80,8 @@ def users():
         return redirect(url_for('main.dashboard'))
         
     users = User.query.all()
-    return render_template('auth/users.html', users=users, title='Utilisateurs')
+    form = UserForm()
+    return render_template('auth/users.html', users=users, form=form, title='Utilisateurs')
 
 @auth.route('/profile', methods=['GET', 'POST'])
 @login_required

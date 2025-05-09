@@ -82,4 +82,8 @@ class TimeEntryForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     content = TextAreaField('Commentaire', validators=[DataRequired()])
-    submit = SubmitField('Ajouter un commentaire')
+    submit = SubmitField('Ajouter')
+
+class EditCommentForm(FlaskForm):
+    content = TextAreaField('Commentaire', validators=[DataRequired()])
+    submit = SubmitField('Enregistrer')

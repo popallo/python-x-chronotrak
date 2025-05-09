@@ -6,7 +6,7 @@ from app import db
 from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
 from app.models.client import Client
-from app.forms.task import TaskForm, TimeEntryForm, CommentForm
+from app.forms.task import TaskForm, TimeEntryForm, CommentForm, EditCommentForm
 from app.utils import get_utc_now
 from app.utils.decorators import login_and_client_required
 from app.utils.route_utils import (
@@ -399,16 +399,15 @@ def edit_comment(comment_id):
         flash('Ce commentaire ne peut plus être modifié (délai de 10 minutes dépassé).', 'warning')
         return redirect(url_for('tasks.task_details', task_id=task_id))
     
-    # Récupérer le nouveau contenu
-    new_content = request.form.get('content')
-    if not new_content or new_content.strip() == '':
-        flash('Le commentaire ne peut pas être vide.', 'danger')
-        return redirect(url_for('tasks.task_details', task_id=task_id))
+    form = EditCommentForm()
+    if form.validate_on_submit():
+        # Mettre à jour le commentaire
+        comment.content = form.content.data
+        # Pas de mise à jour de created_at pour garder l'horodatage d'origine
+        db.session.commit()
+        
+        flash('Commentaire modifié avec succès !', 'success')
+    else:
+        flash('Erreur lors de la modification du commentaire.', 'danger')
     
-    # Mettre à jour le commentaire
-    comment.content = new_content
-    # Pas de mise à jour de created_at pour garder l'horodatage d'origine
-    db.session.commit()
-    
-    flash('Commentaire modifié avec succès !', 'success')
     return redirect(url_for('tasks.task_details', task_id=task_id))

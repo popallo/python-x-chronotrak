@@ -81,6 +81,9 @@ def edit_client(client_id):
         flash(f'Client "{client.name}" mis à jour!', 'success')
         return redirect(url_for('clients.client_details', client_id=client.id))
     
+    # Utiliser la valeur déchiffrée pour l'email
+    form.email.data = client.safe_email
+    
     return render_template('clients/client_form.html', form=form, client=client, title='Modifier le client')
 
 @clients.route('/clients/<int:client_id>/delete', methods=['POST'])

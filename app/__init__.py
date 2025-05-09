@@ -133,6 +133,29 @@ def create_app(config_name):
             # Page par défaut (dashboard)
             return 'bg-secondary'
     
+    # Filtre pour la couleur des badges de statut
+    @app.template_filter('status_color')
+    def status_color_filter(status):
+        """Détermine la couleur du badge en fonction du statut de la tâche"""
+        status_colors = {
+            'à faire': 'info',
+            'en cours': 'warning',
+            'terminé': 'success'
+        }
+        return status_colors.get(status, 'secondary')
+    
+    # Filtre pour la couleur des badges de priorité
+    @app.template_filter('priority_color')
+    def priority_color_filter(priority):
+        """Détermine la couleur du badge en fonction de la priorité de la tâche"""
+        priority_colors = {
+            'basse': 'secondary',
+            'normale': 'primary',
+            'haute': 'warning',
+            'urgente': 'danger'
+        }
+        return priority_colors.get(priority, 'secondary')
+    
     # Enregistrement des blueprints
     from app.routes.auth import auth
     from app.routes.clients import clients

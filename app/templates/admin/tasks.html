@@ -2,6 +2,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tasks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/filters.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -11,9 +12,15 @@
             <h1 class="h2 mb-4">Gestion des tâches</h1>
             
             <!-- Filtres -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="GET" class="row g-3">
+            <div id="filtersPanel" class="filters-panel">
+                <div id="filtersToggle" class="filters-header">
+                    <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+                    <button type="button" class="btn btn-sm">
+                        <i id="filtersIcon" class="fas fa-minus"></i>
+                    </button>
+                </div>
+                <div id="filtersBody" class="filters-body">
+                    <form method="GET" class="row g-3 mt-3">
                         <div class="col-md-3">
                             <label for="status" class="form-label">Statut</label>
                             <div class="select-container">
@@ -61,12 +68,14 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-1"></i>Filtrer
-                            </button>
-                            <a href="{{ url_for('admin.list_tasks') }}" class="btn btn-secondary">
-                                <i class="fas fa-times me-1"></i>Réinitialiser
-                            </a>
+                            <div class="filters-actions">
+                                <a href="{{ url_for('admin.list_tasks') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>Appliquer les filtres
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -203,4 +212,11 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin/tasks.js') }}"></script>
+<script type="module">
+    import { initCardCollapse } from "{{ url_for('static', filename='js/pages/card_collapse.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initCardCollapse();
+    });
+</script>
 {% endblock %} 

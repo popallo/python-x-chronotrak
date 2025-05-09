@@ -35,39 +35,55 @@ def send_test_email(recipient):
 @admin.route('/tasks')
 @login_and_admin_required
 def list_tasks():
-    # Récupération des paramètres de filtrage
-    statuses = request.args.getlist('status')  # Récupère la liste des statuts sélectionnés
-    priority = request.args.get('priority')
-    project_id = request.args.get('project_id', type=int)
-    user_id = request.args.get('user_id', type=int)
-    page = request.args.get('page', 1, type=int)
-    per_page = 20  # Nombre de tâches par page
+    try:
+        # Récupération des paramètres de filtrage
+        statuses = request.args.getlist('status')  # Récupère la liste des statuts sélectionnés
+        priority = request.args.get('priority')
+        project_id = request.args.get('project_id', type=int)
+        user_id = request.args.get('user_id', type=int)
+        page = request.args.get('page', 1, type=int)
+        per_page = 10  # Nombre de tâches par page
 
-    # Construction de la requête de base
-    query = Task.query.order_by(Task.created_at.desc())
+        # Construction de la requête de base
+        query = Task.query.order_by(Task.created_at.desc())
 
-    # Application des filtres
-    if statuses:  # Si des statuts sont sélectionnés
-        query = query.filter(Task.status.in_(statuses))
-    if priority:
-        query = query.filter(Task.priority == priority)
-    if project_id:
-        query = query.filter(Task.project_id == project_id)
-    if user_id:
-        query = query.filter(Task.user_id == user_id)
+        # Application des filtres
+        if statuses:  # Si des statuts sont sélectionnés
+            query = query.filter(Task.status.in_(statuses))
+        if priority:
+            query = query.filter(Task.priority == priority)
+        if project_id:
+            query = query.filter(Task.project_id == project_id)
+        if user_id:
+            query = query.filter(Task.user_id == user_id)
 
-    # Pagination
-    tasks = query.paginate(page=page, per_page=per_page, error_out=False)
+        # Pagination
+        tasks = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Récupération des projets et utilisateurs pour les filtres
-    projects = Project.query.order_by(Project.name).all()
-    users = User.query.filter(User.role != 'client').order_by(User.name).all()
+        # Récupération des projets et utilisateurs pour les filtres
+        projects = Project.query.order_by(Project.name).all()
+        users = User.query.filter(User.role != 'client').order_by(User.name).all()
 
-    return render_template('admin/tasks.html',
-                         tasks=tasks,
-                         projects=projects,
-                         users=users,
-                         title='Gestion des tâches')
+        # Préparation des paramètres de requête pour la pagination
+        query_params = {}
+        if statuses:
+            query_params['status'] = statuses
+        if priority:
+            query_params['priority'] = priority
+        if project_id:
+            query_params['project_id'] = project_id
+        if user_id:
+            query_params['user_id'] = user_id
+
+        return render_template('admin/tasks.html',
+                             tasks=tasks,
+                             projects=projects,
+                             users=users,
+                             query_params=query_params,
+                             title='Gestion des tâches')
+    except Exception as e:
+        flash(f'Une erreur est survenue : {str(e)}', 'danger')
+        return redirect(url_for('admin.list_tasks'))
 
 @admin.route('/test-email', methods=['GET', 'POST'])
 @login_and_admin_required

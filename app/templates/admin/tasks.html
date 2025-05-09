@@ -164,7 +164,7 @@
                         <ul class="pagination justify-content-center">
                             {% if tasks.has_prev %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.prev_num, **request.args) }}">
+                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.prev_num, **query_params) }}">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -173,7 +173,7 @@
                             {% for page_num in tasks.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                                 {% if page_num %}
                                     <li class="page-item {% if page_num == tasks.page %}active{% endif %}">
-                                        <a class="page-link" href="{{ url_for('admin.list_tasks', page=page_num, **request.args) }}">
+                                        <a class="page-link" href="{{ url_for('admin.list_tasks', page=page_num, **query_params) }}">
                                             {{ page_num }}
                                         </a>
                                     </li>
@@ -186,7 +186,7 @@
 
                             {% if tasks.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.next_num, **request.args) }}">
+                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.next_num, **query_params) }}">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>

@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Transfert de temps entre projets</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.time_transfer') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.source_project_id.label(class="form-label") }}
+                            {{ form.source_project_id(class="form-select") }}
+                            {% if form.source_project_id.errors %}
+                                {% for error in form.source_project_id.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.target_project_id.label(class="form-label") }}
+                            {{ form.target_project_id(class="form-select") }}
+                            {% if form.target_project_id.errors %}
+                                {% for error in form.target_project_id.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.amount.label(class="form-label") }}
+                            {{ form.amount(class="form-control", type="number", step="0.1") }}
+                            {% if form.amount.errors %}
+                                {% for error in form.amount.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="form-group">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Le transfert de temps créera automatiquement des tâches "Transfert de temps" et "Réception de temps" 
+                            sur les projets source et destination respectivement. Ces tâches seront marquées comme terminées.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

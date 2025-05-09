@@ -16,12 +16,17 @@
                     <form method="GET" class="row g-3">
                         <div class="col-md-3">
                             <label for="status" class="form-label">Statut</label>
-                            <select class="form-select" id="status" name="status" multiple size="3">
-                                <option value="à faire" {% if 'à faire' in request.args.getlist('status') %}selected{% endif %}>À faire</option>
-                                <option value="en cours" {% if 'en cours' in request.args.getlist('status') %}selected{% endif %}>En cours</option>
-                                <option value="terminé" {% if 'terminé' in request.args.getlist('status') %}selected{% endif %}>Terminé</option>
-                            </select>
-                            <div class="form-text">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs statuts</div>
+                            <div class="select-container">
+                                <select class="form-select" id="status" name="status" multiple size="3">
+                                    <option value="à faire" {% if 'à faire' in request.args.getlist('status') %}selected{% endif %}>À faire</option>
+                                    <option value="en cours" {% if 'en cours' in request.args.getlist('status') %}selected{% endif %}>En cours</option>
+                                    <option value="terminé" {% if 'terminé' in request.args.getlist('status') %}selected{% endif %}>Terminé</option>
+                                </select>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs statuts
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label for="priority" class="form-label">Priorité</label>

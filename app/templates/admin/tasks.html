@@ -1,0 +1,201 @@
+{% extends "layout.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tasks.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-4">Gestion des tâches</h1>
+            
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Statut</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Tous</option>
+                                <option value="à faire" {% if request.args.get('status') == 'à faire' %}selected{% endif %}>À faire</option>
+                                <option value="en cours" {% if request.args.get('status') == 'en cours' %}selected{% endif %}>En cours</option>
+                                <option value="terminé" {% if request.args.get('status') == 'terminé' %}selected{% endif %}>Terminé</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="priority" class="form-label">Priorité</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="">Toutes</option>
+                                <option value="basse" {% if request.args.get('priority') == 'basse' %}selected{% endif %}>Basse</option>
+                                <option value="normale" {% if request.args.get('priority') == 'normale' %}selected{% endif %}>Normale</option>
+                                <option value="haute" {% if request.args.get('priority') == 'haute' %}selected{% endif %}>Haute</option>
+                                <option value="urgente" {% if request.args.get('priority') == 'urgente' %}selected{% endif %}>Urgente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="project" class="form-label">Projet</label>
+                            <select class="form-select" id="project" name="project_id">
+                                <option value="">Tous</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}" {% if request.args.get('project_id')|int == project.id %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="user" class="form-label">Assigné à</label>
+                            <select class="form-select" id="user" name="user_id">
+                                <option value="">Tous</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.args.get('user_id')|int == user.id %}selected{% endif %}>
+                                    {{ user.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Filtrer
+                            </button>
+                            <a href="{{ url_for('admin.list_tasks') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Réinitialiser
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des tâches -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Projet</th>
+                                    <th>Statut</th>
+                                    <th>Priorité</th>
+                                    <th>Assigné à</th>
+                                    <th>Créée le</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks.items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="text-decoration-none">
+                                            {{ task.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('projects.project_details', project_id=task.project.id) }}" class="text-decoration-none">
+                                            {{ task.project.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ task.status|status_color }}">
+                                            {{ task.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ task.priority|priority_color }}">
+                                            {{ task.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if task.assigned_to %}
+                                        {{ task.assigned_to.name }}
+                                        {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ task.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteTaskModal{{ task.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Modal de confirmation de suppression -->
+                                        <div class="modal fade" id="deleteTaskModal{{ task.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Êtes-vous sûr de vouloir supprimer la tâche "{{ task.title }}" ?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                        <form action="{{ url_for('tasks.delete_task', task_id=task.id) }}" method="POST" class="d-inline">
+                                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if tasks.pages > 1 %}
+                    <nav aria-label="Pagination des tâches" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if tasks.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.prev_num, **request.args) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for page_num in tasks.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == tasks.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('admin.list_tasks', page=page_num, **request.args) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tasks.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.list_tasks', page=tasks.next_num, **request.args) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin/tasks.js') }}"></script>
+{% endblock %} 

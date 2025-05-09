@@ -1,10 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
-from app import mail
+from app import mail, db
 from flask_mail import Message
 from app.forms.admin import TestEmailForm
 from app.utils.decorators import login_and_admin_required
 from app.utils.route_utils import save_to_db
+from app.models.task import Task
+from app.models.project import Project
+from app.models.user import User
+from sqlalchemy import or_
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -27,6 +31,43 @@ def send_test_email(recipient):
         return True, None
     except Exception as e:
         return False, str(e)
+
+@admin.route('/tasks')
+@login_and_admin_required
+def list_tasks():
+    # Récupération des paramètres de filtrage
+    status = request.args.get('status')
+    priority = request.args.get('priority')
+    project_id = request.args.get('project_id', type=int)
+    user_id = request.args.get('user_id', type=int)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20  # Nombre de tâches par page
+
+    # Construction de la requête de base
+    query = Task.query.order_by(Task.created_at.desc())
+
+    # Application des filtres
+    if status:
+        query = query.filter(Task.status == status)
+    if priority:
+        query = query.filter(Task.priority == priority)
+    if project_id:
+        query = query.filter(Task.project_id == project_id)
+    if user_id:
+        query = query.filter(Task.user_id == user_id)
+
+    # Pagination
+    tasks = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Récupération des projets et utilisateurs pour les filtres
+    projects = Project.query.order_by(Project.name).all()
+    users = User.query.filter(User.role != 'client').order_by(User.name).all()
+
+    return render_template('admin/tasks.html',
+                         tasks=tasks,
+                         projects=projects,
+                         users=users,
+                         title='Gestion des tâches')
 
 @admin.route('/test-email', methods=['GET', 'POST'])
 @login_and_admin_required

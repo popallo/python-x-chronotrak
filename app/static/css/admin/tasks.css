@@ -1,0 +1,79 @@
+/* Styles pour la page de gestion des tâches */
+.table th {
+    background-color: var(--bs-light);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Styles pour les badges de statut */
+.badge.bg-à-faire {
+    background-color: var(--bs-info) !important;
+}
+
+.badge.bg-en-cours {
+    background-color: var(--bs-warning) !important;
+}
+
+.badge.bg-terminé {
+    background-color: var(--bs-success) !important;
+}
+
+/* Styles pour les badges de priorité */
+.badge.bg-basse {
+    background-color: var(--bs-secondary) !important;
+}
+
+.badge.bg-normale {
+    background-color: var(--bs-primary) !important;
+}
+
+.badge.bg-haute {
+    background-color: var(--bs-warning) !important;
+}
+
+.badge.bg-urgente {
+    background-color: var(--bs-danger) !important;
+}
+
+/* Styles pour les boutons d'action */
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+/* Styles pour la pagination */
+.pagination {
+    margin-bottom: 0;
+}
+
+/* Styles pour les filtres */
+.card .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Styles pour les liens dans le tableau */
+.table a {
+    color: var(--bs-primary);
+}
+
+.table a:hover {
+    color: var(--bs-primary-dark);
+}
+
+/* Styles pour le mode sombre */
+[data-bs-theme="dark"] .table th {
+    background-color: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] .table a {
+    color: var(--bs-primary-light);
+}
+
+[data-bs-theme="dark"] .table a:hover {
+    color: var(--bs-primary);
+} 

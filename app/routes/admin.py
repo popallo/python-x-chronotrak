@@ -36,7 +36,7 @@ def send_test_email(recipient):
 @login_and_admin_required
 def list_tasks():
     # Récupération des paramètres de filtrage
-    status = request.args.get('status')
+    statuses = request.args.getlist('status')  # Récupère la liste des statuts sélectionnés
     priority = request.args.get('priority')
     project_id = request.args.get('project_id', type=int)
     user_id = request.args.get('user_id', type=int)
@@ -47,8 +47,8 @@ def list_tasks():
     query = Task.query.order_by(Task.created_at.desc())
 
     # Application des filtres
-    if status:
-        query = query.filter(Task.status == status)
+    if statuses:  # Si des statuts sont sélectionnés
+        query = query.filter(Task.status.in_(statuses))
     if priority:
         query = query.filter(Task.priority == priority)
     if project_id:

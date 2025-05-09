@@ -55,15 +55,14 @@ def create_app(config_name):
 
     @app.errorhandler(500)
     def internal_error(error):
-        # Envoyer l'email d'erreur en production
-        if not app.debug:
-            request_info = {
-                'url': request.url,
-                'method': request.method,
-                'ip': request.remote_addr,
-                'user_agent': request.user_agent.string
-            }
-            send_error_email(error, request_info)
+        # Envoyer l'email d'erreur dans tous les cas
+        request_info = {
+            'url': request.url,
+            'method': request.method,
+            'ip': request.remote_addr,
+            'user_agent': request.user_agent.string
+        }
+        send_error_email(error, request_info)
         return render_template('errors/error.html'), 500
 
     @app.errorhandler(Exception)
@@ -73,15 +72,14 @@ def create_app(config_name):
             return render_template('errors/error.html',
                                  error_message=error.description), error.code
 
-        # Envoyer l'email d'erreur en production
-        if not app.debug:
-            request_info = {
-                'url': request.url,
-                'method': request.method,
-                'ip': request.remote_addr,
-                'user_agent': request.user_agent.string
-            }
-            send_error_email(error, request_info)
+        # Envoyer l'email d'erreur dans tous les cas
+        request_info = {
+            'url': request.url,
+            'method': request.method,
+            'ip': request.remote_addr,
+            'user_agent': request.user_agent.string
+        }
+        send_error_email(error, request_info)
         return render_template('errors/error.html'), 500
     
     # Contexte global pour les templates

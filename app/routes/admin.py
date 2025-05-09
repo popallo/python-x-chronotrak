@@ -2,13 +2,14 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import mail, db
 from flask_mail import Message
-from app.forms.admin import TestEmailForm
+from app.forms.admin import TestEmailForm, TimeTransferForm
 from app.utils.decorators import login_and_admin_required
 from app.utils.route_utils import save_to_db
 from app.models.task import Task
 from app.models.project import Project
 from app.models.user import User
 from sqlalchemy import or_
+from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -112,3 +113,67 @@ def test_email():
                          form=form, 
                          config=smtp_config, 
                          title='Test SMTP')
+
+@admin.route('/time-transfer', methods=['GET', 'POST'])
+@login_and_admin_required
+def time_transfer():
+    form = TimeTransferForm()
+    
+    # Récupérer tous les projets pour les listes déroulantes
+    projects = Project.query.order_by(Project.name).all()
+    form.source_project_id.choices = [(p.id, f"{p.name} ({p.client.name})") for p in projects]
+    form.target_project_id.choices = [(p.id, f"{p.name} ({p.client.name})") for p in projects]
+    
+    if form.validate_on_submit():
+        source_project = Project.query.get(form.source_project_id.data)
+        target_project = Project.query.get(form.target_project_id.data)
+        
+        # Vérifier que les projets appartiennent au même client
+        if source_project.client_id != target_project.client_id:
+            flash('Les projets doivent appartenir au même client.', 'danger')
+            return render_template('admin/time_transfer.html', form=form, title='Transfert de temps')
+        
+        # Vérifier qu'il y a assez de crédit
+        if source_project.remaining_credit < form.amount.data:
+            flash('Le projet source n\'a pas assez de crédit disponible.', 'danger')
+            return render_template('admin/time_transfer.html', form=form, title='Transfert de temps')
+        
+        try:
+            # Créer une tâche pour le projet source
+            source_task = Task(
+                title=f"Transfert de {form.amount.data}h vers {target_project.name}",
+                description=form.description.data or f"Transfert de {form.amount.data}h vers le projet {target_project.name}",
+                project_id=source_project.id,
+                user_id=current_user.id,
+                status='terminé',
+                priority='normale'
+            )
+            db.session.add(source_task)
+            
+            # Créer une tâche pour le projet destination
+            target_task = Task(
+                title=f"Réception de {form.amount.data}h depuis {source_project.name}",
+                description=form.description.data or f"Réception de {form.amount.data}h depuis le projet {source_project.name}",
+                project_id=target_project.id,
+                user_id=current_user.id,
+                status='terminé',
+                priority='normale'
+            )
+            db.session.add(target_task)
+            
+            # Déduire le crédit du projet source
+            source_project.deduct_credit(form.amount.data, f"Transfert vers {target_project.name}")
+            
+            # Ajouter le crédit au projet destination
+            target_project.add_credit(form.amount.data, f"Transfert depuis {source_project.name}")
+            
+            db.session.commit()
+            flash('Transfert de temps effectué avec succès!', 'success')
+            return redirect(url_for('admin.time_transfer'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Une erreur est survenue lors du transfert : {str(e)}', 'danger')
+            return render_template('admin/time_transfer.html', form=form, title='Transfert de temps')
+    
+    return render_template('admin/time_transfer.html', form=form, title='Transfert de temps')

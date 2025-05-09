@@ -17,6 +17,7 @@ from app.utils.route_utils import (
     apply_filters,
     apply_sorting
 )
+from flask_wtf import FlaskForm
 
 tasks = Blueprint('tasks', __name__)
 
@@ -71,12 +72,16 @@ def task_details(task_id):
     # Formulaire pour ajouter un commentaire
     comment_form = CommentForm()
     
+    # Formulaire CSRF pour la suppression
+    delete_form = FlaskForm()
+    
     return render_template('tasks/task_detail.html', 
                            task=task, 
                            time_entries=time_entries,
                            comments=comments, 
                            time_form=time_form,
                            comment_form=comment_form,
+                           form=delete_form,
                            title=task.title)
 
 @tasks.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])

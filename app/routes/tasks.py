@@ -128,6 +128,26 @@ def edit_task(task_id):
         
     return render_template('tasks/task_form.html', form=form, task=task, title='Modifier tâche')
 
+@tasks.route('/tasks/<int:task_id>/clone', methods=['POST'])
+@login_and_client_required
+def clone_task(task_id):
+    """Clone une tâche existante"""
+    task = get_task_by_id(task_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            flash("Vous n'avez pas accès à cette tâche.", "danger")
+            return redirect(url_for('main.dashboard'))
+    
+    # Créer une copie de la tâche
+    cloned_task = task.clone()
+    save_to_db(cloned_task)
+    
+    flash(f'Tâche "{cloned_task.title}" créée avec succès!', 'success')
+    return redirect(url_for('tasks.task_details', task_id=cloned_task.id))
+
 @tasks.route('/tasks/<int:task_id>/delete', methods=['POST'])
 @login_and_client_required
 def delete_task(task_id):

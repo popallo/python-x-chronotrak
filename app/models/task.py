@@ -27,6 +27,18 @@ class Task(db.Model):
     def __repr__(self):
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}')"
         
+    def clone(self):
+        """Crée une copie de la tâche sans les commentaires et le temps passé"""
+        return Task(
+            title=f"Copie de {self.title}",
+            description=self.description,
+            status='à faire',  # Nouvelle tâche commence toujours à "à faire"
+            priority=self.priority,
+            estimated_time=self.estimated_time,
+            project_id=self.project_id,
+            user_id=self.user_id
+        )
+        
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""
         entry = TimeEntry(

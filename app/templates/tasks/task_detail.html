@@ -112,6 +112,14 @@
                         <p>{{ task.description }}</p>
                     </div>
                 {% endif %}
+                
+                <div class="mt-3">
+                    <form action="{{ url_for('tasks.clone_task', task_id=task.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-copy me-1"></i>Cloner la tâche
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

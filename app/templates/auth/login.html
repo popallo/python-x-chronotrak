@@ -47,6 +47,11 @@
                         {{ form.remember.label(class="form-check-label") }}
                         <a href="{{ url_for('auth.reset_request') }}" class="float-end">Mot de passe oublié?</a>
                     </div>
+                    {% if config.TURNSTILE_ENABLED %}
+                    <div class="mb-3">
+                        <div class="turnstile-container" data-site-key="{{ config.TURNSTILE_SITE_KEY }}" style="display: none;"></div>
+                    </div>
+                    {% endif %}
                     <div class="d-grid">
                         {{ form.submit(class="btn btn-primary btn-block") }}
                     </div>
@@ -65,11 +70,20 @@
 {% endblock %}
 
 {% block scripts %}
+{% if config.TURNSTILE_ENABLED %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 <script type="module">
     import { initDarkMode } from "{{ url_for('static', filename='js/lib/dark-mode.js') }}";
+    {% if config.TURNSTILE_ENABLED %}
+    import { initTurnstile } from "{{ url_for('static', filename='js/lib/turnstile.js') }}";
+    {% endif %}
     
     document.addEventListener('DOMContentLoaded', function() {
         initDarkMode();
+        {% if config.TURNSTILE_ENABLED %}
+        initTurnstile();
+        {% endif %}
     });
 </script>
 {% endblock %}

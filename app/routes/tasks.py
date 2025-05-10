@@ -96,7 +96,8 @@ def edit_task(task_id):
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
-        form = TaskForm(current_user=current_user)
+    # Initialiser le formulaire pour tous les utilisateurs
+    form = TaskForm(current_user=current_user)
     
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None

@@ -35,33 +35,48 @@ Elle permet le suivi des heures allouées aux projets clients et une organisatio
 - Création et modification des fiches clients
 - Chiffrement des données sensibles (email, téléphone, adresse)
 - Vue d'ensemble des projets par client
+- Filtrage par nom, statut et date de création
 
 ### 📊 Gestion des projets
 - Attribution d'un crédit d'heures initial par projet
 - Suivi du solde d'heures restant
 - Ajout de crédits supplémentaires
 - Alertes lorsque le crédit devient faible
+- Filtrage et tri des projets (nom, date, crédit)
+- Correction manuelle du temps des tâches avec ajustement automatique du crédit
 
 ### 📝 Gestion des tâches
 - Organisation des tâches en tableaux kanban (À faire, En cours, Terminé)
 - Assignation des tâches aux utilisateurs
 - Système de priorités (basse, normale, haute, urgente)
 - Ajout de commentaires sur les tâches
+- Modification des commentaires récents (délai de 10 minutes)
+- Filtrage par statut, priorité, assignation et date
+- Suivi automatique des dates de complétion
+- Notifications par email lors des changements de statut
 
 ### ⏱️ Suivi du temps
 - Enregistrement du temps passé sur chaque tâche
 - Décompte automatique du crédit du projet
 - Historique des temps passés
+- Vue détaillée des temps récemment enregistrés
+- Export des rapports de temps
 
 ### 🔐 Administration et sécurité
 - Gestion des utilisateurs et des rôles (admin, technicien, client)
 - Contrôle d'accès par client
 - Notifications par email des événements importants
+- Envoi automatique des informations d'accès aux nouveaux utilisateurs
+- Système de réinitialisation de mot de passe sécurisé
+- Chiffrement des données sensibles (clients et commentaires)
 
 ### 🎨 Interface utilisateur
 - Design responsive adapté aux mobiles et ordinateurs
 - Mode clair/sombre
 - Tableau de bord avec indicateurs clés
+- Système de cartes réduisables avec mémorisation des préférences
+- Filtres dynamiques avec interface intuitive
+- Notifications visuelles des actions réussies
 
 ## 🚀 Installation
 
@@ -123,7 +138,17 @@ ChronoTrak peut être configuré via plusieurs variables d'environnement :
 | `ADMIN_PASSWORD`    | Mot de passe administrateur initial                    | changeme                  |
 | `MAIL_SERVER`       | Serveur SMTP pour les notifications                    | localhost                 |
 | `MAIL_PORT`         | Port du serveur SMTP                                   | 587                       |
+| `MAIL_USERNAME`     | Nom d'utilisateur SMTP                                 | -                         |
+| `MAIL_PASSWORD`     | Mot de passe SMTP                                      | -                         |
+| `MAIL_USE_TLS`      | Utiliser TLS pour les emails                          | True                      |
+| `MAIL_USE_SSL`      | Utiliser SSL pour les emails                          | False                     |
+| `MAIL_DEFAULT_SENDER`| Adresse d'envoi par défaut                           | noreply@example.com       |
 | `CREDIT_THRESHOLD`  | Seuil d'alerte pour le crédit bas (en heures)          | 2                         |
+| `SESSION_LIFETIME`  | Durée de vie des sessions (en minutes)                | 120                       |
+| `MAX_LOGIN_ATTEMPTS`| Nombre maximum de tentatives de connexion             | 5                         |
+| `LOGIN_BLOCK_TIME`  | Durée de blocage après trop de tentatives (minutes)   | 15                        |
+| `DEBUG`             | Mode debug (True/False)                               | False                     |
+| `TESTING`           | Mode test (True/False)                                | False                     |
 
 ## 🔒 Sécurité
 

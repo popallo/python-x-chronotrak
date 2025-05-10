@@ -19,6 +19,11 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     
+    # Cloudflare Turnstile
+    TURNSTILE_SITE_KEY = os.environ.get('TURNSTILE_SITE_KEY')
+    TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY')
+    TURNSTILE_ENABLED = os.environ.get('FLASK_ENV') == 'production'
+    
     # Clé de chiffrement pour les données sensibles
     # Si non définie dans les variables d'environnement, une clé temporaire sera générée
     # ATTENTION: Si la clé change, les données existantes ne pourront plus être déchiffrées

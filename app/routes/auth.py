@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
+import requests
 from app import db
 from app.models.user import User
 from app.models.client import Client
@@ -14,6 +15,22 @@ from app.utils import get_utc_now, flash_admin_required, flash_already_logged_in
 
 auth = Blueprint('auth', __name__)
 
+def verify_turnstile_token(token):
+    """Vérifie le token Turnstile avec l'API Cloudflare"""
+    if not current_app.config['TURNSTILE_ENABLED']:
+        return True
+        
+    if not token:
+        return False
+        
+    response = requests.post('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        'secret': current_app.config['TURNSTILE_SECRET_KEY'],
+        'response': token
+    })
+    
+    result = response.json()
+    return result.get('success', False)
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -21,6 +38,13 @@ def login():
         
     form = LoginForm()
     if form.validate_on_submit():
+        # Vérifier le token Turnstile si activé
+        if current_app.config['TURNSTILE_ENABLED']:
+            token = request.form.get('cf-turnstile-response')
+            if not verify_turnstile_token(token):
+                flash('Veuillez compléter la vérification Turnstile.', 'danger')
+                return render_template('auth/login.html', form=form, title='Connexion')
+        
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)

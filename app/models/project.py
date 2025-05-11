@@ -49,11 +49,11 @@ class Project(db.Model):
     # app/models/project.py (modifiez la méthode deduct_credit)
     def deduct_credit(self, amount, task_id=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
-        # Arrondir le montant à 2 décimales pour éviter les erreurs de calcul
-        amount = round(amount, 2)
+        # Arrondir le montant à 4 décimales pour éviter les erreurs de précision
+        amount = round(float(amount), 4)
         
-        # Déduire le crédit et arrondir le résultat
-        self.remaining_credit = round(self.remaining_credit - amount, 2)
+        # Déduire le crédit et arrondir le résultat à 4 décimales
+        self.remaining_credit = round(self.remaining_credit - amount, 4)
         
         # Créer l'entrée dans l'historique
         log = CreditLog(

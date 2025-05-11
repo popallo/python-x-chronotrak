@@ -3,6 +3,9 @@ def format_time(value):
     if value is None:
         return ""
     
+    # S'assurer que la valeur est un flottant et l'arrondir à 4 décimales pour éviter les erreurs de précision
+    value = round(float(value), 4)
+    
     # Convertir en minutes totales et arrondir
     total_minutes = round(value * 60)
     

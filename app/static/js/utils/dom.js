@@ -3,7 +3,7 @@
  */
 
 // Ferme automatiquement les alertes après un délai
-function autoCloseAlerts(delay = 5000, excludeClasses = ['alert-warning', 'alert-danger']) {
+function autoCloseAlerts(delay = 5000, excludeClasses = ['alert-warning', 'alert-danger', 'no-auto-close']) {
     setTimeout(function() {
         const alerts = document.querySelectorAll('.alert');
         alerts.forEach(function(alert) {

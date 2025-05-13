@@ -7,9 +7,25 @@ from app.models.communication import Communication
 from app import db
 from sqlalchemy import or_, and_, func
 from datetime import datetime
+from flask import abort
 
 def get_client_by_id(client_id):
     return Client.query.get_or_404(client_id)
+
+def get_client_by_slug_or_id(slug_or_id):
+    # Si c'est un entier, recherche par ID
+    try:
+        client_id = int(slug_or_id)
+        client = Client.query.get(client_id)
+        if client:
+            return client
+    except (ValueError, TypeError):
+        pass
+    # Sinon, recherche par slug
+    client = Client.query.filter_by(slug=slug_or_id).first()
+    if not client:
+        abort(404)
+    return client
 
 def get_project_by_id(project_id):
     project = Project.query.get_or_404(project_id)
@@ -18,8 +34,46 @@ def get_project_by_id(project_id):
         abort(403)
     return project
 
+def get_project_by_slug_or_id(slug_or_id):
+    # Si c'est un entier, recherche par ID
+    try:
+        project_id = int(slug_or_id)
+        project = Project.query.get(project_id)
+        if project:
+            if current_user.is_client() and not current_user.has_access_to_client(project.client_id):
+                abort(403)
+            return project
+    except (ValueError, TypeError):
+        pass
+    # Sinon, recherche par slug
+    project = Project.query.filter_by(slug=slug_or_id).first()
+    if not project:
+        abort(404)
+    if current_user.is_client() and not current_user.has_access_to_client(project.client_id):
+        abort(403)
+    return project
+
 def get_task_by_id(task_id):
     return Task.query.get_or_404(task_id)
+
+def get_task_by_slug_or_id(slug_or_id):
+    # Si c'est un entier, recherche par ID
+    try:
+        task_id = int(slug_or_id)
+        task = Task.query.get(task_id)
+        if task:
+            if current_user.is_client() and not current_user.has_access_to_client(task.project.client_id):
+                abort(403)
+            return task
+    except (ValueError, TypeError):
+        pass
+    # Sinon, recherche par slug
+    task = Task.query.filter_by(slug=slug_or_id).first()
+    if not task:
+        abort(404)
+    if current_user.is_client() and not current_user.has_access_to_client(task.project.client_id):
+        abort(403)
+    return task
 
 def get_accessible_clients():
     """Récupère les clients accessibles à l'utilisateur"""

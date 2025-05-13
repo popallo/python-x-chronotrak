@@ -1,9 +1,11 @@
 from app import db
 from datetime import datetime
+from app.utils.slug_utils import update_slug
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
     initial_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
     remaining_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
@@ -18,6 +20,18 @@ class Project(db.Model):
     
     def __repr__(self):
         return f"Project('{self.name}', Client: '{self.client.name}', Credit: {self.remaining_credit}h)"
+    
+    def __init__(self, **kwargs):
+        super(Project, self).__init__(**kwargs)
+        if self.name and not self.slug:
+            update_slug(self)
+    
+    def save(self):
+        """Sauvegarde l'instance et met à jour le slug si nécessaire"""
+        if self.name and (not self.slug or self.name != self.slug):
+            update_slug(self)
+        db.session.add(self)
+        db.session.commit()
         
     credit_alert_sent = db.Column(db.Boolean, default=False)
 
@@ -105,6 +119,9 @@ class CreditLog(db.Model):
     amount = db.Column(db.Float, nullable=False)  # Peut être positif (ajout) ou négatif (déduction)
     note = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relations
+    task = db.relationship('Task', backref='credit_logs', lazy=True)
     
     def __repr__(self):
         return f"CreditLog(Project: {self.project_id}, Amount: {self.amount}h, Date: {self.created_at})"

@@ -121,13 +121,17 @@ def send_task_notification(task, event_type, user=None, additional_data=None):
         old_status = additional_data.get('old_status', 'inconnu')
         new_status = additional_data.get('new_status', task.status)
         
-        template = 'emails/task_status_changed.html'
-        html = render_template(template, 
-                              task=task, 
-                              user=user,
-                              old_status=old_status,
-                              new_status=new_status,
-                              url=url_for('tasks.task_details', task_id=task.id, _external=True))
+        # Construire l'URL de la tâche
+        task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
+        
+        # Préparer le contenu HTML
+        html_content = render_template('emails/task_notification.html',
+                                     task=task,
+                                     user=user,
+                                     notification_type=event_type,
+                                     old_status=old_status,
+                                     new_status=new_status,
+                                     url=task_url)
         
         text = f"""
 Bonjour,
@@ -140,7 +144,7 @@ La tâche "{task.title}" a changé de statut:
 - Nouveau statut: {new_status}
 - Modifié par: {user.name if user else 'Système'}
 
-Voir la tâche: {url_for('tasks.task_details', task_id=task.id, _external=True)}
+Voir la tâche: {task_url}
 
 Ceci est un message automatique envoyé par ChronoTrak.
 Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
@@ -153,12 +157,16 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
             
         subject = f"[ChronoTrak] Nouveau commentaire sur: {task.title}"
         
-        template = 'emails/task_comment_added.html'
-        html = render_template(template, 
-                              task=task, 
-                              user=user,
-                              comment=comment,
-                              url=url_for('tasks.task_details', task_id=task.id, _external=True))
+        # Construire l'URL de la tâche
+        task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
+        
+        # Préparer le contenu HTML
+        html_content = render_template('emails/task_notification.html',
+                                     task=task,
+                                     user=user,
+                                     notification_type=event_type,
+                                     comment=comment,
+                                     url=task_url)
         
         text = f"""
 Bonjour,
@@ -171,7 +179,7 @@ Un nouveau commentaire a été ajouté sur la tâche "{task.title}":
 
 {comment.safe_content}
 
-Voir la tâche: {url_for('tasks.task_details', task_id=task.id, _external=True)}
+Voir la tâche: {task_url}
 
 Ceci est un message automatique envoyé par ChronoTrak.
 Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
@@ -184,12 +192,16 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
             
         subject = f"[ChronoTrak] Temps enregistré sur: {task.title}"
         
-        template = 'emails/task_time_logged.html'
-        html = render_template(template, 
-                              task=task, 
-                              user=user,
-                              time_entry=time_entry,
-                              url=url_for('tasks.task_details', task_id=task.id, _external=True))
+        # Construire l'URL de la tâche
+        task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
+        
+        # Préparer le contenu HTML
+        html_content = render_template('emails/task_notification.html',
+                                     task=task,
+                                     user=user,
+                                     notification_type=event_type,
+                                     time_entry=time_entry,
+                                     url=task_url)
         
         text = f"""
 Bonjour,
@@ -202,7 +214,7 @@ Du temps a été enregistré sur la tâche "{task.title}":
 - Enregistré par: {user.name if user else 'Système'}
 - Description: {time_entry.description if time_entry.description else 'N/A'}
 
-Voir la tâche: {url_for('tasks.task_details', task_id=task.id, _external=True)}
+Voir la tâche: {task_url}
 
 Ceci est un message automatique envoyé par ChronoTrak.
 Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
@@ -214,7 +226,7 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
         return
     
     # Envoyer l'email
-    send_email(subject, recipients, text, html, 
+    send_email(subject, recipients, text, html_content, 
                email_type=f'task_{event_type}',
                task_id=task.id, 
                project_id=task.project_id,

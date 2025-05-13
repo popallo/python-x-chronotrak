@@ -65,7 +65,7 @@
         {% if low_credit_projects %}
             <div class="list-group">
                 {% for project in low_credit_projects %}
-                    <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ project.name }}</h5>
                             <small class="{% if project.remaining_credit < 1 %}text-danger{% else %}text-warning{% endif %}">
@@ -99,7 +99,7 @@
         {% if urgent_tasks %}
             <div class="list-group">
                 {% for task in urgent_tasks[:5] %}
-                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ task.title }}</h5>
                             <small>
@@ -137,7 +137,7 @@
         {% if my_tasks %}
             <div class="list-group">
                 {% for task in my_tasks[:5] %}
-                    <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ task.title }}</h5>
                             <small class="priority-{{ task.priority }}">

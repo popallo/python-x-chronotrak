@@ -10,7 +10,8 @@ from app.utils.route_utils import (
     save_to_db,
     delete_from_db,
     apply_filters,
-    apply_sorting
+    apply_sorting,
+    get_client_by_slug_or_id
 )
 
 clients = Blueprint('clients', __name__)
@@ -63,10 +64,10 @@ def new_client():
         
     return render_template('clients/client_form.html', form=form, title='Nouveau client')
 
-@clients.route('/clients/<int:client_id>/edit', methods=['GET', 'POST'])
+@clients.route('/clients/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_admin_required
-def edit_client(client_id):
-    client = get_client_by_id(client_id)
+def edit_client(slug_or_id):
+    client = get_client_by_slug_or_id(slug_or_id)
     form = ClientForm(obj=client)
     
     if form.validate_on_submit():
@@ -79,24 +80,24 @@ def edit_client(client_id):
         save_to_db(client)
         
         flash(f'Client "{client.name}" mis à jour!', 'success')
-        return redirect(url_for('clients.client_details', client_id=client.id))
+        return redirect(url_for('clients.client_details', slug_or_id=client.slug))
     
     # Utiliser la valeur déchiffrée pour l'email
     form.email.data = client.safe_email
     
     return render_template('clients/client_form.html', form=form, client=client, title='Modifier le client')
 
-@clients.route('/clients/<int:client_id>/delete', methods=['POST'])
+@clients.route('/clients/<slug_or_id>/delete', methods=['POST'])
 @login_and_admin_required
-def delete_client(client_id):
-    client = get_client_by_id(client_id)
+def delete_client(slug_or_id):
+    client = get_client_by_slug_or_id(slug_or_id)
     delete_from_db(client)
     flash(f'Client "{client.name}" supprimé!', 'success')
     return redirect(url_for('clients.list_clients'))
 
-@clients.route('/clients/<int:client_id>')
+@clients.route('/clients/<slug_or_id>')
 @login_required
 @login_and_client_required
-def client_details(client_id):
-    client = get_client_by_id(client_id)
+def client_details(slug_or_id):
+    client = get_client_by_slug_or_id(slug_or_id)
     return render_template('clients/client_detail.html', client=client)

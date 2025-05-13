@@ -3,10 +3,12 @@ from datetime import datetime
 from app.utils.encryption import EncryptedType
 from cryptography.fernet import Fernet
 from flask import current_app
+from app.utils.slug_utils import update_slug
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
     contact_name = db.Column(db.String(100), nullable=True)
     email = db.Column(EncryptedType, nullable=True)  # Chiffré
     phone = db.Column(EncryptedType, nullable=True)  # Chiffré
@@ -19,6 +21,18 @@ class Client(db.Model):
     
     def __repr__(self):
         return f"Client('{self.name}', '{self.email}')"
+    
+    def __init__(self, **kwargs):
+        super(Client, self).__init__(**kwargs)
+        if self.name and not self.slug:
+            update_slug(self)
+    
+    def save(self):
+        """Sauvegarde l'instance et met à jour le slug si nécessaire"""
+        if self.name and (not self.slug or self.name != self.slug):
+            update_slug(self)
+        db.session.add(self)
+        db.session.commit()
     
     # Méthode de secours pour déchiffrer manuellement si nécessaire
     def decrypt_data(self, encrypted_value):

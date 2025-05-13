@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ client.name }}</h1>
     <div>
-        <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="btn btn-outline-primary">
+        <a href="{{ url_for('clients.edit_client', slug_or_id=client.slug) }}" class="btn btn-outline-primary">
             <i class="fas fa-edit me-1"></i>
             {% if current_user.is_client() %}
                 Modifier la société
@@ -58,7 +58,7 @@
                 {% if client.projects %}
                     <div class="list-group">
                         {% for project in client.projects %}
-                            <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ project.name }}</h5>
                                     <span>
@@ -125,7 +125,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 {% if not client.projects %}
-                    <form action="{{ url_for('clients.delete_client', client_id=client.id) }}" method="POST">
+                    <form action="{{ url_for('clients.delete_client', slug_or_id=client.slug) }}" method="POST">
                         {{ form.hidden_tag() }}
                         <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">Supprimer</button>
                     </form>

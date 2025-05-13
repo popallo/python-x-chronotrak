@@ -164,11 +164,11 @@
                         {% endif %}
                     </div>
                     <div class="card-footer d-flex justify-content-between">
-                        <a href="{{ url_for('projects.project_details', project_id=project.id) }}" class="btn btn-outline-success">
+                        <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success">
                             <i class="fas fa-eye me-1"></i>Détails
                         </a>
                         {% if not current_user.is_client() %}
-                        <a href="{{ url_for('projects.add_credit', project_id=project.id) }}" class="btn btn-outline-secondary">
+                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-plus me-1"></i>Ajouter du crédit
                         </a>
                         {% endif %}

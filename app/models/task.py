@@ -3,10 +3,12 @@ from datetime import datetime
 from app.utils.encryption import EncryptedType
 from flask import current_app
 from cryptography.fernet import Fernet
+from app.utils.slug_utils import update_slug
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='à faire')  # à faire, en cours, terminé
     priority = db.Column(db.String(20), nullable=False, default='normale')  # basse, normale, haute, urgente
@@ -26,6 +28,18 @@ class Task(db.Model):
     
     def __repr__(self):
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}')"
+    
+    def __init__(self, **kwargs):
+        super(Task, self).__init__(**kwargs)
+        if self.title and not self.slug:
+            update_slug(self)
+    
+    def save(self):
+        """Sauvegarde l'instance et met à jour le slug si nécessaire"""
+        if self.title and (not self.slug or self.title != self.slug):
+            update_slug(self)
+        db.session.add(self)
+        db.session.commit()
         
     def clone(self):
         """Crée une copie de la tâche sans les commentaires et le temps passé"""

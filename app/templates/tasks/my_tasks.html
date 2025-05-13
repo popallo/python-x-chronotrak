@@ -145,7 +145,7 @@
                 {% if tasks_todo %}
                     <div class="list-group">
                         {% for task in tasks_todo %}
-                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ task.title }}</h5>
                                     <small class="priority-{{ task.priority }}">
@@ -182,7 +182,7 @@
                 {% if tasks_in_progress %}
                     <div class="list-group">
                         {% for task in tasks_in_progress %}
-                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ task.title }}</h5>
                                     <small class="priority-{{ task.priority }}">
@@ -227,7 +227,7 @@
                 {% if tasks_completed %}
                     <div class="list-group">
                         {% for task in tasks_completed %}
-                            <a href="{{ url_for('tasks.task_details', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1">{{ task.title }}</h5>
                                     <small>

@@ -342,8 +342,13 @@ def my_tasks():
     # Tri par défaut : date de création décroissante
     query = query.order_by(Task.created_at.desc())
 
-    # Pagination
-    tasks = query.paginate(page=page, per_page=per_page, error_out=False)
+    # Récupération de toutes les tâches (sans pagination pour le tri par statut)
+    all_tasks = query.all()
+
+    # Tri des tâches par statut
+    tasks_todo = [task for task in all_tasks if task.status == 'à faire']
+    tasks_in_progress = [task for task in all_tasks if task.status == 'en cours']
+    tasks_completed = [task for task in all_tasks if task.status == 'terminé']
 
     # Récupération des données pour les filtres
     projects = Project.query.all()
@@ -351,10 +356,16 @@ def my_tasks():
     # Préparation des paramètres de requête pour la pagination
     query_params = {k: v for k, v in request.args.items() if k != 'page'}
 
+    # Déterminer si des filtres sont actifs
+    filters_active = bool(status or priority or project_id or search)
+
     return render_template('tasks/my_tasks.html',
-                         tasks=tasks,
+                         tasks_todo=tasks_todo,
+                         tasks_in_progress=tasks_in_progress,
+                         tasks_completed=tasks_completed,
                          projects=projects,
-                         query_params=query_params)
+                         query_params=query_params,
+                         filters_active=filters_active)
 
 @tasks.route('/tasks/<slug_or_id>/add_comment', methods=['POST'])
 @login_required

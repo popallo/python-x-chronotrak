@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, SubmitField, SelectField
+from wtforms import StringField, TextAreaField, FloatField, SubmitField, SelectField, HiddenField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from app.utils.time_format import generate_hour_options
 
@@ -19,3 +19,6 @@ class AddCreditForm(FlaskForm):
         self.amount.choices = generate_hour_options(
             extra_blocks=[(10.0, "10h"), (20.0, "20h"), (50.0, "50h"), (100.0, "100h")]
         )
+
+class DeleteProjectForm(FlaskForm):
+    submit = SubmitField('Supprimer')

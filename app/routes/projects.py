@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models.project import Project, CreditLog
 from app.models.client import Client
-from app.forms.project import ProjectForm, AddCreditForm
+from app.forms.project import ProjectForm, AddCreditForm, DeleteProjectForm
 from app.utils.decorators import login_and_client_required, login_and_admin_required
 from app.utils.route_utils import (
     get_project_by_id,
@@ -81,6 +81,7 @@ def new_project(client_id):
 def project_details(slug_or_id):
     project = get_project_by_slug_or_id(slug_or_id)
     tasks = project.tasks
+    form = DeleteProjectForm()
     
     # Trier les tâches par statut
     tasks_todo = [task for task in tasks if task.status == 'à faire']
@@ -93,6 +94,7 @@ def project_details(slug_or_id):
                          tasks_in_progress=tasks_in_progress,
                          tasks_done=tasks_done,
                          credit_logs=project.credit_logs,
+                         form=form,
                          title=project.name)
 
 @projects.route('/projects/<slug_or_id>/edit', methods=['GET', 'POST'])

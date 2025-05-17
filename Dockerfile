@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Installer bash
+# Installer bash et les dépendances système
 RUN apk add --no-cache bash
 
 # Créer un utilisateur non-root
@@ -17,16 +17,17 @@ RUN addgroup -S chronouser && adduser -S -G chronouser chronouser
 # Créer le répertoire de l'application
 WORKDIR /app
 
-# Copier et installer les dépendances d'abord
+# Copier uniquement les fichiers de dépendances d'abord
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    python -m pip install gunicorn
 
-RUN pip install pip-audit && \
+# Installer les dépendances Python dans une couche séparée
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python -m pip install gunicorn && \
+    pip install pip-audit && \
     pip-audit && \
     pip install --upgrade setuptools>=70.0.0
 
-# Copier uniquement les fichiers nécessaires
+# Copier les fichiers de l'application
 COPY app/ ./app/
 COPY migrations/ ./migrations/
 COPY config.py run.py wsgi.py ./

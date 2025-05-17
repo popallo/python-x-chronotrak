@@ -26,6 +26,15 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0  # Pour récupérer l'historique des tags
 
+      # Configuration du cache Docker
+      - name: Configuration du cache Docker
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       # Détecter la version
       - name: Détecter la version
         id: version
@@ -58,11 +67,20 @@ jobs:
       # Construction et push de l'image
       - name: Build et push de l'image Docker
         run: |
+          docker buildx create --use
           docker buildx build --provenance=false --push \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-to=type=local,dest=/tmp/.buildx-cache-new \
             --build-arg VERSION="${{ env.VERSION }}" \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \
             .
+
+      # Déplacer le cache
+      - name: Déplacer le cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       # Analyse de sécurité avec Trivy
       - name: Installation et exécution de Trivy

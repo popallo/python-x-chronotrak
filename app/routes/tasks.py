@@ -73,7 +73,7 @@ def list_tasks():
 @login_and_client_required
 def new_task(slug_or_id):
     project = get_project_by_slug_or_id(slug_or_id)
-    form = TaskForm(current_user=current_user)
+    form = TaskForm(current_user=current_user, project=project)
     
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None
@@ -145,7 +145,7 @@ def edit_task(slug_or_id):
             return redirect(url_for('main.dashboard'))
     
     # Initialiser le formulaire pour tous les utilisateurs
-    form = TaskForm(current_user=current_user)
+    form = TaskForm(current_user=current_user, project=task.project)
     
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None

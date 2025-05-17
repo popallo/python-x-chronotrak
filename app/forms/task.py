@@ -23,22 +23,38 @@ class TaskForm(FlaskForm):
     user_id = SelectField('Assigné à', coerce=int, validators=[Optional()])
     submit = SubmitField('Enregistrer')
     
-    def __init__(self, current_user=None, *args, **kwargs):
+    def __init__(self, current_user=None, project=None, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
         self.estimated_time.choices = [(0.0, "Non défini")] + generate_hour_options()
         
-        # Si l'utilisateur est un client, on ne montre que les techniciens de son client
-        if current_user and current_user.is_client():
-            self.user_id.choices = [(0, "Non assigné")] + [
-                (user.id, user.name) 
-                for user in current_user.client.technicians
-            ]
-        else:
-            # Pour les administrateurs et techniciens, on montre tous les techniciens
-            self.user_id.choices = [(0, "Non assigné")] + [
-                (user.id, user.name) 
-                for user in User.query.filter_by(role='technician').all()
-            ]
+        # Récupérer tous les utilisateurs assignables
+        assignable_users = []
+        
+        # Toujours inclure les administrateurs
+        admins = User.query.filter_by(role='admin').all()
+        assignable_users.extend(admins)
+        
+        # Toujours inclure les techniciens
+        technicians = User.query.filter_by(role='technicien').all()
+        assignable_users.extend(technicians)
+        
+        # Si un projet est fourni, inclure l'utilisateur client associé au client du projet
+        if project and project.client:
+            client_users = User.query.filter_by(role='client').all()
+            for client_user in client_users:
+                if client_user.has_access_to_client(project.client.id):
+                    assignable_users.append(client_user)
+                    break  # On ne prend que le premier utilisateur client trouvé
+        
+        # Créer la liste des choix en évitant les doublons
+        seen_ids = set()
+        choices = [(0, "Non assigné")]
+        for user in assignable_users:
+            if user.id not in seen_ids:
+                seen_ids.add(user.id)
+                choices.append((user.id, user.name))
+        
+        self.user_id.choices = choices
 
 class TimeEntryForm(FlaskForm):
     hours = SelectField('Heures', coerce=float, validators=[DataRequired()])

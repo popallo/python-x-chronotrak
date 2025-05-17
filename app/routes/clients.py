@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
 from app import db
 from app.models.client import Client
 from app.forms.client import ClientForm
@@ -100,4 +101,5 @@ def delete_client(slug_or_id):
 @login_and_client_required
 def client_details(slug_or_id):
     client = get_client_by_slug_or_id(slug_or_id)
-    return render_template('clients/client_detail.html', client=client)
+    form = FlaskForm()  # Formulaire vide pour le CSRF token
+    return render_template('clients/client_detail.html', client=client, form=form)

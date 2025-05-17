@@ -64,10 +64,14 @@ def new_project(client_id):
         
     form = ProjectForm()
     if form.validate_on_submit():
+        # Si la gestion de temps est désactivée, on met le crédit à 0
+        initial_credit = form.initial_credit.data if form.time_tracking_enabled.data else 0
+        
         project = Project(
             name=form.name.data,
             description=form.description.data,
-            initial_credit=form.initial_credit.data,
+            initial_credit=initial_credit,
+            time_tracking_enabled=form.time_tracking_enabled.data,
             client_id=client_id
         )
         save_to_db(project)
@@ -106,7 +110,16 @@ def edit_project(slug_or_id):
     if form.validate_on_submit():
         project.name = form.name.data
         project.description = form.description.data
-        project.initial_credit = form.initial_credit.data
+        project.time_tracking_enabled = form.time_tracking_enabled.data
+        
+        # Si on active la gestion de temps, on met à jour le crédit initial
+        if form.time_tracking_enabled.data:
+            project.initial_credit = form.initial_credit.data
+        else:
+            # Si on désactive la gestion de temps, on met le crédit à 0
+            project.initial_credit = 0
+            project.remaining_credit = 0
+            
         save_to_db(project)
         
         flash(f'Projet "{project.name}" mis à jour!', 'success')

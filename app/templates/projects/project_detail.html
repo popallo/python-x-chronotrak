@@ -12,6 +12,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/project_detail.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -32,7 +33,7 @@
     </div>
 </div>
 
-<!-- Informations du projet - pleine largeur -->
+<!-- Informations du projet -->
 <div class="card mb-4">
     <div class="card-header bg-success text-white">
         <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
@@ -42,14 +43,24 @@
             <div class="col-md-6">
                 <p><strong>Client :</strong> <a href="{{ url_for('clients.client_details', slug_or_id=project.client.slug) }}">{{ project.client.name }}</a></p>
                 <p><strong>Date de création :</strong> {{ project.created_at.strftime('%d/%m/%Y') }}</p>
+                <p>
+                    <strong>Gestion de temps :</strong>
+                    {% if project.time_tracking_enabled %}
+                        <span class="badge bg-success">Activée</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Désactivée</span>
+                    {% endif %}
+                </p>
             </div>
             <div class="col-md-6">
+                {% if project.time_tracking_enabled %}
                 <p>
                     <strong>Crédit restant :</strong> 
                     <span class="{% if project.remaining_credit < 2 %}text-danger fw-bold{% elif project.remaining_credit < 5 %}text-warning fw-bold{% else %}text-success{% endif %}" style="font-size: 1.2em;">
                         {{ project.remaining_credit|format_time }}
                     </span>
                 </p>
+                {% endif %}
             </div>
             {% if project.description %}
                 <div class="col-12 mt-3">
@@ -61,7 +72,7 @@
     </div>
 </div>
 
-<!-- Tableau Kanban des tâches - Pleine largeur -->
+<!-- Tableau Kanban des tâches -->
 <div class="card mb-4 no-collapse">
     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Tâches</h5>
@@ -79,29 +90,8 @@
                     </div>
                     <div class="kanban-items">
                         {% for task in tasks_todo %}
-                            <div class="kanban-task" data-task-id="{{ task.id }}">
-                                <div class="task-title">{{ task.title }}</div>
-                                <div class="text-{{ task.priority }}">
-                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                </div>
-                                <div class="task-info">
-                                    <span>
-                                        {% if task.estimated_time %}
-                                            <span class="badge bg-info">
-                                                <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span>
-                                        {% if task.user_id %}
-                                            <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                <div class="mt-2">
-                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                </div>
-                            </div>
+                            {% from 'tasks/task_card.html' import task_card %}
+                            {{ task_card(task) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -113,29 +103,8 @@
                     </div>
                     <div class="kanban-items">
                         {% for task in tasks_in_progress %}
-                            <div class="kanban-task" data-task-id="{{ task.id }}">
-                                <div class="task-title">{{ task.title }}</div>
-                                <div class="text-{{ task.priority }}">
-                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                </div>
-                                <div class="task-info">
-                                    <span>
-                                        {% if task.estimated_time %}
-                                            <span class="badge bg-warning">
-                                                <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span>
-                                        {% if task.user_id %}
-                                            <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                <div class="mt-2">
-                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                </div>
-                            </div>
+                            {% from 'tasks/task_card.html' import task_card %}
+                            {{ task_card(task) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -147,35 +116,8 @@
                     </div>
                     <div class="kanban-items">
                         {% for task in tasks_done %}
-                            <div class="kanban-task" data-task-id="{{ task.id }}">
-                                <div class="task-title">{{ task.title }}</div>
-                                <div class="text-{{ task.priority }}">
-                                    <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                </div>
-                                <div class="task-info">
-                                    <span>
-                                        {% if task.actual_time %}
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }}
-                                            </span>
-                                        {% else %}
-                                            {% if task.estimated_time %}
-                                                <span class="badge bg-secondary">
-                                                    <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time }}
-                                                </span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </span>
-                                    <span>
-                                        {% if task.completed_at %}
-                                            <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m') }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                <div class="mt-2">
-                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary w-100">Détails</a>
-                                </div>
-                            </div>
+                            {% from 'tasks/task_card.html' import task_card %}
+                            {{ task_card(task) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -184,7 +126,8 @@
     </div>
 </div>
 
-<!-- Historique des crédits - pleine largeur avec hauteur limitée et défilement -->
+<!-- Historique des crédits -->
+{% if project.time_tracking_enabled %}
 <div class="card mb-4">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
@@ -223,35 +166,25 @@
         {% endif %}
     </div>
 </div>
-        
-<!-- Modal de confirmation de suppression -->
+{% endif %}
+
+<!-- Modal de suppression -->
 <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="deleteProjectModalLabel">Confirmer la suppression</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Êtes-vous sûr de vouloir supprimer le projet <strong>{{ project.name }}</strong> ?
-                
-                {% if project.tasks %}
-                    <div class="alert alert-warning mt-3">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Ce projet a {{ project.tasks|length }} tâche(s) associée(s).
-                        Vous devez d'abord supprimer toutes les tâches avant de pouvoir supprimer le projet.
-                    </div>
-                {% else %}
-                    <p class="text-danger mt-3"><i class="fas fa-exclamation-triangle me-1"></i>Cette action est irréversible.</p>
-                {% endif %}
+                Êtes-vous sûr de vouloir supprimer le projet "{{ project.name }}" ? Cette action est irréversible.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                {% if not project.tasks %}
-                    <form action="{{ url_for('projects.delete_project', slug_or_id=project.slug) }}" method="POST">
-                        {{ form.hidden_tag() }}
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')">Supprimer</button>
-                    </form>
-                {% endif %}
+                <form action="{{ url_for('projects.delete_project', slug_or_id=project.slug) }}" method="POST">
+                    {{ form.hidden_tag() }}
+                    {{ form.submit(class="btn btn-danger") }}
+                </form>
             </div>
         </div>
     </div>

@@ -18,3 +18,22 @@
     background-color: #f8d7da;
     color: #721c24;
 }
+
+/* Styles pour l'historique des crédits */
+.credit-history-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.credit-history-container .list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.credit-history-container .list-group-item:first-child {
+    border-top: none;
+}
+
+.credit-history-container .list-group-item:last-child {
+    border-bottom: none;
+}

@@ -12,8 +12,6 @@ jobs:
     runs-on: docker
     container:
       image: docker:latest
-      network: "host"
-      options: --privileged
     steps:
       - name: Configuration du runner
         run: |
@@ -24,7 +22,7 @@ jobs:
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.sha }}
-          fetch-depth: 0  # Pour récupérer l'historique des tags
+          fetch-depth: 0
 
       # Configuration du cache Docker
       - name: Configuration du cache Docker
@@ -39,23 +37,16 @@ jobs:
       - name: Détecter la version
         id: version
         run: |
-          # Essayer de récupérer le dernier tag
           VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          # Si aucun tag n'est trouvé, essayer à partir de la branche
           if [ -z "$VERSION" ]; then
             BRANCH=$(git branch --show-current)
             if [[ "$BRANCH" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               VERSION="$BRANCH"
             fi
           fi
-          
-          # Si toujours aucune version, utiliser une version par défaut
           if [ -z "$VERSION" ]; then
             VERSION="v1.0.0-dev"
           fi
-          
-          # Utilisation directe du tag avec le 'v'
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Version détectée: $VERSION"
 
@@ -82,8 +73,9 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # Analyse de sécurité avec Trivy
+      # Analyse de sécurité avec Trivy (uniquement sur main/master)
       - name: Installation et exécution de Trivy
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -94,8 +86,6 @@ jobs:
     runs-on: docker
     container:
       image: docker:latest
-      network: "host"
-      options: --privileged
     steps:
       # Installation des dépendances SSH
       - name: Installation des dépendances SSH
@@ -105,7 +95,7 @@ jobs:
           echo "StrictHostKeyChecking=no" > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
-      # Configuration de la clé SSH (ed25519)
+      # Configuration de la clé SSH
       - name: Configuration de la clé SSH
         run: |
           mkdir -p ~/.ssh
@@ -117,8 +107,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
 
-      # Sauvegarde de la base de données
+      # Sauvegarde de la base de données (uniquement sur main/master)
       - name: Sauvegarde de la base de données
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex
@@ -128,12 +119,9 @@ jobs:
             echo 'Sauvegarde de la base de données'
             cd ${{ secrets.PROJECT_DIRECTORY }}
             
-            # Date de la sauvegarde avec timestamp
             BACKUP_DATE=\$(date +'%Y%m%d_%H%M%S')
             
-            # Extraire la base de données du volume Docker
             docker run --rm -v docker-chronotrak_chronotrak_data:/app/instance -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
-              # Vérifier si la base de données existe
               if [ -f /app/instance/chronotrak.db ]; then
                 cp /app/instance/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
                 echo 'Sauvegarde effectuée avec succès'
@@ -143,7 +131,6 @@ jobs:
               fi
             \"
             
-            # Conserver uniquement les 10 dernières sauvegardes
             cd ${{ secrets.PROJECT_DIRECTORY }}/backups
             ls -t chronotrak_*.db | tail -n +11 | xargs -r rm
             

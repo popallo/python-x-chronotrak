@@ -6,13 +6,14 @@ ARG VERSION=dev
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    FLASK_APP=run.py \
+    FLASK_ENV=production
 
 # Installer bash et les dépendances système
-RUN apk add --no-cache bash
-
-# Créer un utilisateur non-root
-RUN addgroup -S chronouser && adduser -S -G chronouser chronouser
+RUN apk add --no-cache bash && \
+    addgroup -S chronouser && \
+    adduser -S -G chronouser chronouser
 
 # Créer le répertoire de l'application
 WORKDIR /app
@@ -23,8 +24,6 @@ COPY requirements.txt .
 # Installer les dépendances Python dans une couche séparée
 RUN pip install --no-cache-dir -r requirements.txt && \
     python -m pip install gunicorn && \
-    pip install pip-audit && \
-    pip-audit && \
     pip install --upgrade setuptools>=70.0.0
 
 # Copier les fichiers de l'application
@@ -51,10 +50,6 @@ RUN mkdir -p /app/instance && \
 
 # Passer à l'utilisateur non-root
 USER chronouser
-
-# Variable d'environnement par défaut pour Flask
-ENV FLASK_APP=run.py \
-    FLASK_ENV=production
 
 EXPOSE 5000
 

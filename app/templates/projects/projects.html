@@ -10,7 +10,7 @@
     <div>
         <!-- Si l'utilisateur est admin ou technicien, afficher le bouton de création -->
         {% if not current_user.is_client() %}
-        <a href="#" class="btn btn-success">
+        <a href="{{ url_for('clients.list_clients') }}" class="btn btn-success">
             <i class="fas fa-plus me-1"></i>Nouveau projet
         </a>
         {% endif %}

@@ -7,7 +7,7 @@ from app.models.task import Task, TimeEntry, Comment
 from app.models.project import Project
 from app.models.client import Client
 from app.models.user import User
-from app.forms.task import TaskForm, TimeEntryForm, CommentForm, EditCommentForm
+from app.forms.task import TaskForm, TimeEntryForm, CommentForm, EditCommentForm, DeleteTaskForm
 from app.utils import get_utc_now
 from app.utils.decorators import login_and_client_required, login_and_admin_required
 from app.utils.route_utils import (
@@ -120,8 +120,8 @@ def task_details(slug_or_id):
     # Formulaire pour ajouter un commentaire
     comment_form = CommentForm()
     
-    # Formulaire CSRF pour la suppression
-    delete_form = FlaskForm()
+    # Formulaire pour la suppression
+    delete_form = DeleteTaskForm()
     
     return render_template('tasks/task_detail.html', 
                            task=task, 
@@ -232,11 +232,12 @@ def log_time(slug_or_id):
     form = TimeEntryForm()
     
     if form.validate_on_submit():
-        # Vérifier s'il reste assez de crédit
-        if task.project.remaining_credit < form.hours.data:
-            credit_display = str(task.project.remaining_credit).replace('.', ',')
-            flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
-            return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+        # Vérifier s'il reste assez de crédit uniquement si la gestion de temps est activée
+        if task.project.time_tracking_enabled:
+            if task.project.remaining_credit < form.hours.data:
+                credit_display = str(task.project.remaining_credit).replace('.', ',')
+                flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
+                return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
         
         # Créer l'entrée de temps
         time_entry = TimeEntry(
@@ -253,8 +254,9 @@ def log_time(slug_or_id):
         else:
             task.actual_time += form.hours.data
         
-        # Déduire du crédit du projet
-        task.project.remaining_credit -= form.hours.data
+        # Déduire du crédit du projet uniquement si la gestion de temps est activée
+        if task.project.time_tracking_enabled:
+            task.project.remaining_credit -= form.hours.data
         
         db.session.commit()
         
@@ -264,8 +266,8 @@ def log_time(slug_or_id):
         from app.utils.time_format import format_time
         flash(f'{format_time(form.hours.data)} enregistrées sur la tâche!', 'success')
         
-        # Si le crédit devient faible, afficher une alerte
-        if task.project.remaining_credit < 2:
+        # Si le crédit devient faible, afficher une alerte uniquement si la gestion de temps est activée
+        if task.project.time_tracking_enabled and task.project.remaining_credit < 2:
             flash(f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!', 'warning')
             
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))

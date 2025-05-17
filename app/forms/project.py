@@ -1,13 +1,25 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, SubmitField, SelectField, HiddenField
+from wtforms import StringField, TextAreaField, FloatField, SubmitField, SelectField, HiddenField, BooleanField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from app.utils.time_format import generate_hour_options
 
 class ProjectForm(FlaskForm):
     name = StringField('Nom du projet', validators=[DataRequired(), Length(min=2, max=100)])
     description = TextAreaField('Description', validators=[Optional()])
-    initial_credit = FloatField('Crédit initial (heures)', validators=[DataRequired(), NumberRange(min=0)])
+    initial_credit = FloatField('Crédit initial (heures)', validators=[Optional(), NumberRange(min=0)])
+    time_tracking_enabled = BooleanField('Activer la gestion de temps', default=True)
     submit = SubmitField('Enregistrer')
+
+    def validate(self, extra_validators=None):
+        if not super().validate():
+            return False
+        
+        # Si la gestion de temps est activée, le crédit initial est requis
+        if self.time_tracking_enabled.data and not self.initial_credit.data:
+            self.initial_credit.errors.append('Le crédit initial est requis quand la gestion de temps est activée')
+            return False
+            
+        return True
 
 class AddCreditForm(FlaskForm):
     amount = SelectField('Heures à ajouter', validators=[DataRequired()], coerce=float)

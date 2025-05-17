@@ -9,6 +9,7 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     initial_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
     remaining_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
+    time_tracking_enabled = db.Column(db.Boolean, nullable=True, default=True)  # Indique si le projet utilise la gestion de temps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Clé étrangère
@@ -37,6 +38,10 @@ class Project(db.Model):
 
     def add_credit(self, amount, note=None):
         """Ajoute du crédit au projet et crée une entrée dans l'historique"""
+        # Si le projet n'utilise pas la gestion de temps, on ne fait rien
+        if not self.time_tracking_enabled:
+            return
+            
         # Arrondir le montant à 2 décimales pour éviter les erreurs de calcul
         amount = round(amount, 2)
         
@@ -60,9 +65,12 @@ class Project(db.Model):
         )
         db.session.add(log)
             
-    # app/models/project.py (modifiez la méthode deduct_credit)
     def deduct_credit(self, amount, task_id=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
+        # Si le projet n'utilise pas la gestion de temps, on ne fait rien
+        if not self.time_tracking_enabled:
+            return
+            
         # Arrondir le montant à 4 décimales pour éviter les erreurs de précision
         amount = round(float(amount), 4)
         

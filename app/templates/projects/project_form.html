@@ -1,5 +1,15 @@
 {% extends 'layout.html' %}
 
+{% block scripts %}
+<script type="module">
+    import { initProjectForm } from "{{ url_for('static', filename='js/pages/project_form.js') }}";
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initProjectForm();
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -33,7 +43,14 @@
                         {{ form.description.label(class="form-label") }}
                         {{ form.description(class="form-control", rows=3) }}
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 form-check">
+                        {{ form.time_tracking_enabled(class="form-check-input") }}
+                        {{ form.time_tracking_enabled.label(class="form-check-label") }}
+                        <small class="form-text text-muted">
+                            Si désactivé, le temps passé sur les tâches sera enregistré mais n'affectera pas le crédit du projet.
+                        </small>
+                    </div>
+                    <div class="mb-3" id="creditField">
                         {{ form.initial_credit.label(class="form-label") }}
                         {% if form.initial_credit.errors %}
                             {{ form.initial_credit(class="form-control is-invalid", step="0.1") }}

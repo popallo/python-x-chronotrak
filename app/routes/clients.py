@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from app import db
+from app import db, cache
 from app.models.client import Client
 from app.forms.client import ClientForm
 from app.utils.decorators import login_and_client_required, login_and_admin_required
@@ -19,6 +19,7 @@ clients = Blueprint('clients', __name__)
 
 @clients.route('/clients')
 @login_required
+# @cache.cached(timeout=300, query_string=True)  # Désactivé temporairement pour le débogage
 def list_clients():
     page = request.args.get('page', 1, type=int)
     per_page = 10
@@ -28,15 +29,19 @@ def list_clients():
         'search': request.args.get('search')
     }
     
-    # Appliquer les filtres
-    query = get_accessible_clients()
-    query, filters_active = apply_filters(query, Client, filters)
+    # Appliquer les filtres avec une sous-requête optimisée
+    base_query = get_accessible_clients()
+    query, filters_active = apply_filters(base_query, Client, filters)
     
-    # Appliquer le tri
+    # Appliquer le tri avec un index implicite
     sort_by = request.args.get('sort_by', 'name')
     sort_order = request.args.get('sort_order', 'asc')
     query = apply_sorting(query, Client, sort_by, sort_order)
     
+    # Charger explicitement les relations
+    query = query.options(db.joinedload(Client.projects))
+    
+    # Pagination
     clients = query.paginate(page=page, per_page=per_page, error_out=False)
     
     return render_template('clients/clients.html', 

@@ -26,7 +26,8 @@ class EncryptedType(TypeDecorator):
             encrypted_data = f.encrypt(value.encode('utf-8'))
             return encrypted_data.decode('utf-8')
         except Exception as e:
-            logger.error(f"Erreur lors du chiffrement: {e}")
+            logger.error(f"Erreur lors du chiffrement: {str(e)}")
+            logger.error(f"Valeur à chiffrer: {value[:20]}...")
             return value  # En cas d'erreur, retourner la valeur non chiffrée
 
     def process_result_value(self, value, dialect):
@@ -37,20 +38,23 @@ class EncryptedType(TypeDecorator):
         try:
             # Tester si la valeur semble être chiffrée (commence par 'gAAA')
             if not isinstance(value, str) or not value.startswith('gAAA'):
-                logger.warning(f"Valeur non chiffrée détectée: {value[:10]}...")
+                logger.warning(f"Valeur non chiffrée détectée: {value[:20]}...")
                 return value
                 
             key = current_app.config.get('ENCRYPTION_KEY')
             if not key:
                 logger.error("Clé de chiffrement manquante dans la configuration")
-                return value
+                return "[Erreur: Clé de chiffrement manquante]"
                 
             f = Fernet(key)
             decrypted_data = f.decrypt(value.encode('utf-8'))
             return decrypted_data.decode('utf-8')
         except InvalidToken:
             logger.error(f"Impossible de déchiffrer la valeur. Token invalide ou mauvaise clé.")
+            logger.error(f"Valeur chiffrée: {value[:20]}...")
+            logger.error(f"Clé utilisée: {key[:10]}...")
             return "[Erreur de déchiffrement]"
         except Exception as e:
-            logger.error(f"Erreur lors du déchiffrement: {e}")
-            return value  # En cas d'erreur, retourner la valeur chiffrée
+            logger.error(f"Erreur lors du déchiffrement: {str(e)}")
+            logger.error(f"Valeur chiffrée: {value[:20]}...")
+            return "[Erreur de déchiffrement]"

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
+from flask_caching import Cache
 from config import config
 from datetime import datetime, timezone
 from flask_mail import Mail
@@ -17,25 +18,50 @@ login_manager.login_message = "Veuillez vous connecter pour accéder à cette pa
 login_manager.login_message_category = "info"
 bcrypt = Bcrypt()
 mail = Mail()
+cache = Cache()
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
-    # Initialiser Mail
-    mail.init_app(app)
+    # Configuration de sécurité
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 heure
     
-    # Initialisation des extensions avec l'app
+    # Initialiser les extensions avec l'app
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     bcrypt.init_app(app)
+    mail.init_app(app)
+    cache.init_app(app)
     
     # Importer ici pour éviter les imports circulaires
     from app.utils.page_timer import start_timer, get_elapsed_time, log_request_time
     from app.utils.version import get_version, get_build_info
     from app.utils.error_handler import send_error_email
     
+    # Middleware pour les en-têtes de sécurité
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://cdn.jsdelivr.net https://code.jquery.com; "
+            "style-src 'self' 'unsafe-inline' "
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'"
+        )
+        return response
+
     # Middleware pour mesurer le temps de chargement
     @app.before_request
     def before_request():

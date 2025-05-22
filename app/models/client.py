@@ -5,6 +5,19 @@ from cryptography.fernet import Fernet
 from flask import current_app
 from app.utils.slug_utils import update_slug
 
+# Cache pour l'instance Fernet
+_fernet_instance = None
+
+def get_fernet():
+    global _fernet_instance
+    if _fernet_instance is None:
+        key = current_app.config.get('ENCRYPTION_KEY')
+        if not key:
+            current_app.logger.error("Clé de chiffrement manquante dans la configuration")
+            return None
+        _fernet_instance = Fernet(key)
+    return _fernet_instance
+
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, index=True)
@@ -45,18 +58,15 @@ class Client(db.Model):
             return encrypted_value
             
         try:
-            key = current_app.config.get('ENCRYPTION_KEY')
-            if not key:
-                current_app.logger.error("Clé de chiffrement manquante dans la configuration")
+            f = get_fernet()
+            if f is None:
                 return "[Erreur: Clé de chiffrement manquante]"
                 
-            f = Fernet(key)
             decrypted_data = f.decrypt(encrypted_value.encode('utf-8'))
             return decrypted_data.decode('utf-8')
         except Exception as e:
             current_app.logger.error(f"Erreur lors du déchiffrement: {str(e)}")
             current_app.logger.error(f"Valeur chiffrée: {encrypted_value[:20]}...")
-            current_app.logger.error(f"Clé utilisée: {key[:10]}...")
             return "[Erreur de déchiffrement]"
     
     # Propriétés pour accéder aux données déchiffrées

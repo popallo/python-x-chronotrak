@@ -38,8 +38,8 @@ def list_clients():
     sort_order = request.args.get('sort_order', 'asc')
     query = apply_sorting(query, Client, sort_by, sort_order)
     
-    # Charger explicitement les relations
-    query = query.options(db.joinedload(Client.projects))
+    # Charger explicitement les relations avec selectinload pour les collections
+    query = query.options(db.selectinload(Client.projects))
     
     # Pagination
     clients = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -106,5 +106,7 @@ def delete_client(slug_or_id):
 @login_and_client_required
 def client_details(slug_or_id):
     client = get_client_by_slug_or_id(slug_or_id)
+    # Charger les projets en une seule requête
+    client.projects  # Force le chargement des projets
     form = FlaskForm()  # Formulaire vide pour le CSRF token
     return render_template('clients/client_detail.html', client=client, form=form)

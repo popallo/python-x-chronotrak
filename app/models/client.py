@@ -7,17 +7,22 @@ from app.utils.slug_utils import update_slug
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    slug = db.Column(db.String(100), unique=True, nullable=False)
-    contact_name = db.Column(db.String(100), nullable=True)
+    name = db.Column(db.String(100), nullable=False, index=True)
+    slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    contact_name = db.Column(db.String(100), nullable=True, index=True)
     email = db.Column(EncryptedType, nullable=True)  # Chiffré
     phone = db.Column(EncryptedType, nullable=True)  # Chiffré
     address = db.Column(EncryptedType, nullable=True)  # Chiffré
     notes = db.Column(EncryptedType, nullable=True)  # Chiffré
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     
     # Relations
-    projects = db.relationship('Project', backref='client', lazy=True, cascade='all, delete-orphan')
+    projects = db.relationship('Project', backref='client', lazy='joined', cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_client_name_slug', 'name', 'slug'),
+        db.Index('idx_client_created_at', 'created_at'),
+    )
     
     def __repr__(self):
         return f"Client('{self.name}', '{self.email}')"
@@ -41,10 +46,17 @@ class Client(db.Model):
             
         try:
             key = current_app.config.get('ENCRYPTION_KEY')
+            if not key:
+                current_app.logger.error("Clé de chiffrement manquante dans la configuration")
+                return "[Erreur: Clé de chiffrement manquante]"
+                
             f = Fernet(key)
-            return f.decrypt(encrypted_value.encode('utf-8')).decode('utf-8')
+            decrypted_data = f.decrypt(encrypted_value.encode('utf-8'))
+            return decrypted_data.decode('utf-8')
         except Exception as e:
-            current_app.logger.error(f"Erreur lors du déchiffrement: {e}")
+            current_app.logger.error(f"Erreur lors du déchiffrement: {str(e)}")
+            current_app.logger.error(f"Valeur chiffrée: {encrypted_value[:20]}...")
+            current_app.logger.error(f"Clé utilisée: {key[:10]}...")
             return "[Erreur de déchiffrement]"
     
     # Propriétés pour accéder aux données déchiffrées

@@ -1,39 +1,127 @@
-.project-header {
+/* 
+ * STYLES SPÉCIFIQUES À LA PAGE DE DÉTAIL DU PROJET
+ */
+
+/* Styles pour les cartes de statistiques */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 10px;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    will-change: transform, box-shadow;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.stats-card i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.stats-card .stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Styles pour les sections du projet */
+.project-section {
     margin-bottom: 2rem;
 }
 
-.project-description {
-    margin-bottom: 1.5rem;
-    font-style: italic;
+.project-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
 }
 
-/* Personnalisation des statuts pour le projet */
-.project-status {
-    font-weight: bold;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
+/* Styles pour les listes de tâches */
+.task-list {
+    list-style: none;
+    padding: 0;
 }
 
-.project-status.low-credit {
-    background-color: #f8d7da;
-    color: #721c24;
+.task-list-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* Styles pour l'historique des crédits */
-.credit-history-container {
-    max-height: 400px;
-    overflow-y: auto;
+.task-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.credit-history-container .list-group-item {
-    border-left: none;
-    border-right: none;
+/* Styles pour le mode sombre */
+html.dark-mode body .task-list-item {
+    background-color: #2c2c2c;
 }
 
-.credit-history-container .list-group-item:first-child {
-    border-top: none;
+/* Styles pour les indicateurs de progression */
+.progress-indicator {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
 }
 
-.credit-history-container .list-group-item:last-child {
-    border-bottom: none;
+.progress-indicator .progress-bar {
+    transition: width var(--transition-smooth);
 }
+
+/* Styles pour les badges de statut */
+.status-badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.85em;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+/* Styles pour les formulaires de commentaires */
+.comment-form {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+html.dark-mode body .comment-form {
+    background-color: #2c2c2c;
+}
+
+/* Styles pour la liste des commentaires */
+.comment-list {
+    margin-top: 1rem;
+}
+
+.comment-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+html.dark-mode body .comment-item {
+    background-color: #2c2c2c;
+}
+
+/* Styles pour les boutons d'action */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.action-buttons .btn {
+    flex: 1;
+    max-width: 200px;
+} 

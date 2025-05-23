@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
+from flask_wtf.csrf import CSRFProtect
 from config import config
 from datetime import datetime, timezone
 from flask_mail import Mail
@@ -19,6 +20,7 @@ login_manager.login_message_category = "info"
 bcrypt = Bcrypt()
 mail = Mail()
 cache = Cache()
+csrf = CSRFProtect()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -30,6 +32,11 @@ def create_app(config_name):
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 heure
     
+    # Configuration de CSRF pour les requêtes AJAX
+    app.config['WTF_CSRF_CHECK_DEFAULT'] = False
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_HEADERS'] = ['X-CSRF-Token']
+    
     # Initialiser les extensions avec l'app
     db.init_app(app)
     migrate.init_app(app, db)
@@ -37,6 +44,7 @@ def create_app(config_name):
     bcrypt.init_app(app)
     mail.init_app(app)
     cache.init_app(app)
+    csrf.init_app(app)
     
     # Importer ici pour éviter les imports circulaires
     from app.utils.page_timer import start_timer, get_elapsed_time, log_request_time
@@ -179,6 +187,11 @@ def create_app(config_name):
             'urgente': 'danger'
         }
         return priority_colors.get(priority, 'secondary')
+    
+    # Configuration de CSRF pour les requêtes AJAX
+    @csrf.exempt
+    def csrf_exempt():
+        return True
     
     # Enregistrement des blueprints
     from app.routes.auth import auth

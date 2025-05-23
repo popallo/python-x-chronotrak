@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import case
 from datetime import datetime, timezone
 from app import db
-from app.models.task import Task, TimeEntry, Comment
+from app.models.task import Task, TimeEntry, Comment, ChecklistItem
 from app.models.project import Project
 from app.models.client import Client
 from app.models.user import User
@@ -451,3 +451,123 @@ def edit_comment(comment_id):
                 flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
     
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+
+@tasks.route('/tasks/<slug_or_id>/checklist', methods=['POST'])
+@login_required
+def add_checklist_item(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    data = request.get_json()
+    
+    if not data or 'content' not in data:
+        return jsonify({'error': 'Contenu manquant'}), 400
+    
+    # Vérifier si c'est un shortcode
+    if data.get('is_shortcode', False):
+        if task.parse_checklist_shortcode(data['content']):
+            return jsonify({'success': True, 'message': 'Checklist créée avec succès'}), 201
+        else:
+            return jsonify({'error': 'Format de shortcode invalide'}), 400
+    
+    # Sinon, ajouter un élément normal
+    item = task.add_checklist_item(data['content'])
+    
+    return jsonify({
+        'success': True,
+        'item': {
+            'id': item.id,
+            'content': item.content,
+            'is_checked': item.is_checked,
+            'position': item.position
+        }
+    }), 201
+
+@tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['PUT'])
+@login_required
+def update_checklist_item(slug_or_id, item_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    item = ChecklistItem.query.get_or_404(item_id)
+    
+    # Vérifier que l'élément appartient bien à la tâche
+    if item.task_id != task.id:
+        return jsonify({'error': 'Élément non trouvé dans cette tâche'}), 404
+    
+    data = request.get_json()
+    
+    if 'is_checked' in data:
+        item.is_checked = data['is_checked']
+    
+    if 'content' in data:
+        item.content = data['content']
+    
+    if 'position' in data:
+        item.position = data['position']
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'item': {
+            'id': item.id,
+            'content': item.content,
+            'is_checked': item.is_checked,
+            'position': item.position
+        }
+    })
+
+@tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_checklist_item(slug_or_id, item_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    item = ChecklistItem.query.get_or_404(item_id)
+    
+    # Vérifier que l'élément appartient bien à la tâche
+    if item.task_id != task.id:
+        return jsonify({'error': 'Élément non trouvé dans cette tâche'}), 404
+    
+    db.session.delete(item)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@tasks.route('/tasks/<slug_or_id>/checklist/reorder', methods=['POST'])
+@login_required
+def reorder_checklist(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    data = request.get_json()
+    
+    if not data or 'items' not in data:
+        return jsonify({'error': 'Données manquantes'}), 400
+    
+    # Mettre à jour les positions
+    for item_data in data['items']:
+        item = ChecklistItem.query.get(item_data['id'])
+        if item and item.task_id == task.id:
+            item.position = item_data['position']
+    
+    db.session.commit()
+    
+    return jsonify({'success': True})

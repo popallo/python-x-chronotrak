@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block scripts %}
+{{ super() }}
 <script type="module">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     
@@ -8,6 +9,8 @@
         initTasksPage();
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -113,6 +116,74 @@
                     </div>
                 {% endif %}
                 
+                <!-- Checklist Section -->
+                <div id="checklist-container" class="checklist-container" data-task-id="{{ task.id }}">
+                    <div class="checklist-header">
+                        <h5 class="checklist-title">
+                            <i class="fas fa-tasks me-2"></i>Checklist
+                        </h5>
+                        <div class="checklist-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-checklist-shortcode-button">
+                                <i class="fas fa-code me-1"></i>Shortcode
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="checklist-items" class="checklist-items">
+                        {% for item in task.checklist_items %}
+                        <div class="checklist-item" data-id="{{ item.id }}">
+                            <div class="form-check">
+                                <input class="form-check-input checklist-checkbox" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
+                                <label class="form-check-label" for="checklist-item-{{ item.id }}">
+                                    <span class="checklist-content">{{ item.content }}</span>
+                                </label>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-checklist-item">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <form id="add-checklist-item-form" class="checklist-add-form">
+                        <input type="text" id="add-checklist-item-input" class="form-control" placeholder="Ajouter un élément à la checklist...">
+                        <button type="button" id="add-checklist-item-button" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Modal pour le shortcode -->
+                <div class="modal fade" id="shortcode-modal" tabindex="-1" aria-labelledby="shortcodeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="shortcodeModalLabel">Ajouter une checklist avec un shortcode</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="shortcode-input">Shortcode</label>
+                                    <input type="text" class="form-control" id="shortcode-input" placeholder='tasks["Élément 1", "Élément 2"]'>
+                                    <small class="form-text text-muted">
+                                        Utilisez le format <code>tasks["Élément 1", "Élément 2"]</code> pour créer plusieurs éléments à la fois.
+                                    </small>
+                                    <div class="shortcode-example">
+                                        Exemple: tasks["Vérifier les emails", "Répondre aux messages", "Mettre à jour la documentation"]
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="button" class="btn btn-primary" id="shortcode-submit">Ajouter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Container pour les alertes -->
+                <div id="alert-container"></div>
+
                 <div class="mt-3">
                     <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
                         <button type="submit" class="btn btn-outline-primary">

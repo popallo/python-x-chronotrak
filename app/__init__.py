@@ -66,8 +66,14 @@ def create_app(config_name):
             "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "img-src 'self' data: https:; "
-            "connect-src 'self'"
+            "connect-src 'self' https://static.cloudflareinsights.com; "
+            "frame-src 'self'; "
+            "worker-src 'self'"
         )
+        # Ajouter les en-têtes CORS pour Cloudflare Insights
+        response.headers['Access-Control-Allow-Origin'] = 'https://static.cloudflareinsights.com'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         return response
 
     # Middleware pour mesurer le temps de chargement

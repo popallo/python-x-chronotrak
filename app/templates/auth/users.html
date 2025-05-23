@@ -50,26 +50,33 @@
                                         <span class="badge bg-warning">Jamais connecté</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">
-                                    <a href="{{ url_for('auth.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ url_for('auth.send_user_access', user_id=user.id) }}" method="POST" class="d-inline">
-                                        {{ form.hidden_tag() }}
-                                        <button type="submit" class="btn btn-sm btn-outline-info" title="Envoyer informations d'accès">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                    </form>
-                                    {% if current_user.id != user.id %}
-                                        <button class="btn btn-sm btn-outline-danger delete-user-btn" 
-                                                data-user-id="{{ user.id }}"
-                                                data-user-name="{{ user.name }}"
-                                                data-is-client="{{ user.is_client()|lower }}"
-                                                data-client-count="{{ user.clients|length if user.is_client() else 0 }}"
-                                                title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    {% endif %}
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('auth.edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ url_for('auth.send_user_access', user_id=user.id) }}" method="POST" class="d-inline">
+                                            {{ form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-sm btn-info" title="Envoyer informations d'accès">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        </form>
+                                        {% if (current_user.is_admin() or current_user.is_technician()) and not user.is_admin() %}
+                                            <a href="{{ url_for('auth.impersonate_user', user_id=user.id) }}" class="btn btn-sm btn-warning" title="Se connecter en tant que">
+                                                <i class="fas fa-mask"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if current_user.id != user.id %}
+                                            <button class="btn btn-sm btn-danger delete-user-btn" 
+                                                    data-user-id="{{ user.id }}"
+                                                    data-user-name="{{ user.name }}"
+                                                    data-is-client="{{ user.is_client()|lower }}"
+                                                    data-client-count="{{ user.clients|length if user.is_client() else 0 }}"
+                                                    title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}

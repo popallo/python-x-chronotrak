@@ -562,3 +562,139 @@ html.dark-mode body .status-update-msg {
 [data-bs-theme="dark"] {
     --kanban-title-color: #ffffff;
 }
+
+/* Checklist Styles */
+.checklist-container {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.checklist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.checklist-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.checklist-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.checklist-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.checklist-item {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.checklist-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.checklist-item .form-check {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.checklist-item .form-check-label {
+    flex-grow: 1;
+    margin-left: 0.5rem;
+    cursor: pointer;
+}
+
+.checklist-item .checklist-content {
+    display: inline-block;
+    padding: 0.25rem 0;
+}
+
+.checklist-item .delete-checklist-item {
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 0.5rem;
+}
+
+.checklist-item:hover .delete-checklist-item {
+    opacity: 1;
+}
+
+.checklist-item .form-check-input:checked + .form-check-label .checklist-content {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.checklist-item .form-check-input:checked + .form-check-label {
+    color: #6c757d;
+}
+
+.checklist-add-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.checklist-add-form .form-control {
+    flex-grow: 1;
+}
+
+/* Modal de shortcode */
+.shortcode-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.shortcode-modal .form-group {
+    margin-bottom: 1rem;
+}
+
+.shortcode-modal .form-text {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.shortcode-modal .shortcode-example {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    margin-top: 0.5rem;
+}
+
+/* Style pour le drag & drop */
+.sortable-ghost {
+    opacity: 0.5;
+    background-color: #f8f9fa;
+}
+
+.checklist-item.sortable-ghost {
+    border: 1px dashed #dee2e6;
+}
+
+/* Style pour l'édition du contenu */
+.checklist-content.editing {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Style pour les alertes */
+#alert-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1050;
+    max-width: 350px;
+}

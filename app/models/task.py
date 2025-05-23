@@ -5,6 +5,20 @@ from flask import current_app
 from cryptography.fernet import Fernet
 from app.utils.slug_utils import update_slug
 
+class ChecklistItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(255), nullable=False)
+    is_checked = db.Column(db.Boolean, default=False)
+    position = db.Column(db.Integer, default=0)  # Pour maintenir l'ordre des éléments
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Clé étrangère
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    
+    def __repr__(self):
+        return f"ChecklistItem('{self.content}', Checked: {self.is_checked}, Task: {self.task_id})"
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -25,6 +39,7 @@ class Task(db.Model):
     # Relations
     time_entries = db.relationship('TimeEntry', backref='task', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='task', lazy=True, cascade='all, delete-orphan')
+    checklist_items = db.relationship('ChecklistItem', backref='task', lazy=True, cascade='all, delete-orphan', order_by='ChecklistItem.position')
     
     def __repr__(self):
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}')"
@@ -71,7 +86,44 @@ class Task(db.Model):
         
         # Déduit du crédit du projet
         self.project.deduct_credit(hours, self.id)
-
+        
+    def add_checklist_item(self, content, position=None):
+        """Ajoute un élément à la checklist"""
+        if position is None:
+            # Si aucune position n'est spécifiée, ajouter à la fin
+            position = len(self.checklist_items)
+            
+        item = ChecklistItem(
+            content=content,
+            position=position,
+            task_id=self.id
+        )
+        db.session.add(item)
+        db.session.commit()
+        return item
+        
+    def parse_checklist_shortcode(self, shortcode):
+        """Parse un shortcode de type tasks["item1", "item2"] et ajoute les éléments à la checklist"""
+        import re
+        
+        # Expression régulière pour extraire les éléments entre crochets
+        pattern = r'tasks\[(.*?)\]'
+        match = re.search(pattern, shortcode)
+        
+        if match:
+            # Extraire le contenu entre crochets
+            content = match.group(1)
+            
+            # Diviser par les virgules et nettoyer les guillemets
+            items = [item.strip().strip('"\'') for item in content.split(',')]
+            
+            # Ajouter chaque élément à la checklist
+            for item in items:
+                if item:  # Ignorer les éléments vides
+                    self.add_checklist_item(item)
+                    
+            return True
+        return False
 
 class TimeEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)

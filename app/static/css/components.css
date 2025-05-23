@@ -566,7 +566,6 @@ html.dark-mode body .status-update-msg {
 /* Checklist Styles */
 .checklist-container {
     margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
 }
 
 .checklist-header {
@@ -578,7 +577,8 @@ html.dark-mode body .status-update-msg {
 
 .checklist-title {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
+    color: var(--color-primary);
     margin: 0;
 }
 
@@ -588,113 +588,143 @@ html.dark-mode body .status-update-msg {
 }
 
 .checklist-items {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    margin-bottom: 1rem;
 }
 
 .checklist-item {
+    display: flex;
+    align-items: center;
     padding: 0.5rem;
     border-radius: 0.25rem;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
 }
 
 .checklist-item:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
 .checklist-item .form-check {
     display: flex;
     align-items: center;
+    width: 100%;
     margin: 0;
 }
 
 .checklist-item .form-check-label {
-    flex-grow: 1;
+    flex: 1;
     margin-left: 0.5rem;
     cursor: pointer;
 }
 
-.checklist-item .checklist-content {
-    display: inline-block;
-    padding: 0.25rem 0;
-}
-
-.checklist-item .delete-checklist-item {
+.checklist-item .btn-group {
     opacity: 0;
-    transition: opacity 0.2s;
-    margin-left: 0.5rem;
+    transition: opacity 0.2s ease;
 }
 
-.checklist-item:hover .delete-checklist-item {
+.checklist-item:hover .btn-group {
     opacity: 1;
 }
 
-.checklist-item .form-check-input:checked + .form-check-label .checklist-content {
-    text-decoration: line-through;
-    color: #6c757d;
-}
-
-.checklist-item .form-check-input:checked + .form-check-label {
-    color: #6c757d;
-}
-
 .checklist-add-form {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    position: relative;
 }
 
 .checklist-add-form .form-control {
-    flex-grow: 1;
+    padding-right: 100px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Modal de shortcode */
+.checklist-add-form .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.15);
+}
+
+.checklist-add-form .position-absolute {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+/* Modal Styles */
+.shortcode-modal .modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.shortcode-modal .modal-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
 .shortcode-modal .modal-body {
     padding: 1.5rem;
 }
 
-.shortcode-modal .form-group {
-    margin-bottom: 1rem;
-}
-
-.shortcode-modal .form-text {
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    color: #6c757d;
-}
-
-.shortcode-modal .shortcode-example {
-    background-color: #f8f9fa;
+.shortcode-example {
+    margin-top: 1rem;
     padding: 0.75rem;
+    background-color: #f8f9fa;
     border-radius: 0.25rem;
     font-family: monospace;
-    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
 }
 
-/* Style pour le drag & drop */
+/* Drag & Drop Styles */
 .sortable-ghost {
     opacity: 0.5;
     background-color: #f8f9fa;
 }
 
-.checklist-item.sortable-ghost {
-    border: 1px dashed #dee2e6;
+/* Editing Styles */
+.checklist-content {
+    display: inline-block;
+    padding: 0.25rem 0;
 }
 
-/* Style pour l'édition du contenu */
-.checklist-content.editing {
-    background-color: #fff;
+.checklist-content input {
+    width: 100%;
+    padding: 0.25rem 0.5rem;
     border: 1px solid #ced4da;
     border-radius: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
 }
 
-/* Style pour les alertes */
+/* Alert Styles */
 #alert-container {
     position: fixed;
     top: 1rem;
     right: 1rem;
     z-index: 1050;
     max-width: 350px;
+}
+
+/* Disabled button styles */
+.copy-to-time-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Mode sombre */
+html.dark-mode body .checklist-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+html.dark-mode body .checklist-add-form .form-control {
+    background-color: #2c2c2c;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+html.dark-mode body .checklist-add-form .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+html.dark-mode body .shortcode-example {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
 }

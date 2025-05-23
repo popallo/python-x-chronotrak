@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
 import requests
@@ -352,3 +352,48 @@ def reset_request():
 def reset_request_sent():
     """Page de confirmation d'envoi de demande de réinitialisation"""
     return render_template('auth/reset_request_sent.html', title='Email envoyé')
+
+@auth.route('/users/<int:user_id>/impersonate')
+@login_required
+def impersonate_user(user_id):
+    # Vérifier que l'utilisateur actuel est admin ou technicien
+    if not (current_user.is_admin() or current_user.is_technician()):
+        flash('Accès refusé. Droits administrateur ou technicien requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Récupérer l'utilisateur cible
+    target_user = User.query.get_or_404(user_id)
+    
+    # Vérifier que l'utilisateur cible n'est pas un admin
+    if target_user.is_admin():
+        flash('Vous ne pouvez pas vous connecter en tant qu\'administrateur.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    # Stocker l'ID de l'utilisateur original dans la session
+    session['original_user_id'] = current_user.id
+    
+    # Se connecter en tant que l'utilisateur cible
+    login_user(target_user)
+    flash(f'Vous êtes maintenant connecté en tant que {target_user.name}.', 'info')
+    return redirect(url_for('main.dashboard'))
+
+@auth.route('/stop-impersonating')
+@login_required
+def stop_impersonating():
+    if 'original_user_id' not in session:
+        flash('Vous n\'êtes pas en train d\'impersonner un autre utilisateur.', 'warning')
+        return redirect(url_for('main.dashboard'))
+    
+    # Récupérer l'utilisateur original
+    original_user = User.query.get(session['original_user_id'])
+    if not original_user:
+        flash('Erreur lors de la récupération de votre compte.', 'danger')
+        return redirect(url_for('auth.logout'))
+    
+    # Supprimer l'ID de l'utilisateur original de la session
+    session.pop('original_user_id', None)
+    
+    # Se reconnecter en tant qu'utilisateur original
+    login_user(original_user)
+    flash('Vous êtes revenu à votre compte.', 'info')
+    return redirect(url_for('main.dashboard'))

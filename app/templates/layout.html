@@ -90,15 +90,23 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user me-1"></i>{{ current_user.name }}
-                            {% if current_user.is_client() %}
-                            <span class="badge bg-info">Client</span>
+                            {% if session.get('original_user_id') %}
+                                <span class="badge bg-warning">Mode impersonation</span>
+                            {% elif current_user.is_client() %}
+                                <span class="badge bg-info">Client</span>
                             {% elif current_user.is_admin() %}
-                            <span class="badge bg-danger">Admin</span>
+                                <span class="badge bg-danger">Admin</span>
                             {% else %}
-                            <span class="badge bg-success">Technicien</span>
+                                <span class="badge bg-success">Technicien</span>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            {% if session.get('original_user_id') %}
+                                <li><a class="dropdown-item text-warning" href="{{ url_for('auth.stop_impersonating') }}">
+                                    <i class="fas fa-user-secret me-2"></i>Revenir à mon compte
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Déconnexion</a></li>

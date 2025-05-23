@@ -2,8 +2,15 @@
  * Gestion des checklists pour les tâches
  */
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initialisation de la checklist...');
+    
     const checklistContainer = document.getElementById('checklist-container');
-    if (!checklistContainer) return;
+    if (!checklistContainer) {
+        console.log('Container de checklist non trouvé');
+        return;
+    }
+    
+    console.log('Container de checklist trouvé');
     
     const taskId = checklistContainer.dataset.taskId;
     const addItemForm = document.getElementById('add-checklist-item-form');
@@ -12,6 +19,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeModal = document.getElementById('shortcode-modal');
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
+    
+    console.log('Éléments trouvés:', {
+        addItemForm: !!addItemForm,
+        addItemInput: !!addItemInput,
+        shortcodeButton: !!shortcodeButton,
+        shortcodeModal: !!shortcodeModal,
+        shortcodeInput: !!shortcodeInput,
+        shortcodeSubmit: !!shortcodeSubmit
+    });
     
     // Initialiser les écouteurs d'événements pour les cases à cocher existantes
     document.querySelectorAll('.checklist-checkbox').forEach(function(checkbox) {

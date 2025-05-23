@@ -2,12 +2,12 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script type="module">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}

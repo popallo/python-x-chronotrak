@@ -10,6 +10,42 @@
  */
 
 /* ===== CARTES ===== */
+.card {
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+    will-change: transform, box-shadow;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Cartes de statistiques */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 10px;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    will-change: transform, box-shadow;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.stats-card i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.stats-card .stats-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
 .card-header {
     font-weight: 500;
     position: relative;
@@ -125,18 +161,39 @@ html.dark-mode body .time-entry-form {
     background-color: #2c2c2c;
 }
 
-/* Commentaires */
+/* ===== COMMENTAIRES ===== */
+.comment-form {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    transition: background-color var(--transition-base);
+}
+
+.comment-list {
+    margin-top: 1rem;
+}
+
 .comment-item {
-    border-left: 3px solid var(--color-primary);
-    padding-left: 10px;
-    margin-bottom: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    will-change: transform, box-shadow;
+}
+
+.comment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .comment-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
+    margin-bottom: 0.5rem;
 }
 
 .comment-author {
@@ -151,6 +208,16 @@ html.dark-mode body .time-entry-form {
 
 .comment-content {
     white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* Mode sombre */
+html.dark-mode body .comment-form {
+    background-color: #2c2c2c;
+}
+
+html.dark-mode body .comment-item {
+    background-color: #2c2c2c;
 }
 
 .edit-comment-form {

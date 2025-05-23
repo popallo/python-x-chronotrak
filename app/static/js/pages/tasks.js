@@ -237,7 +237,7 @@ function updateCommentTimers() {
 }
 
 // Initialiser la page des tâches
-function initTasksPage() {
+export function initTasksPage() {
     if (document.querySelector('.status-btn')) {
         initStatusToggle();
     }
@@ -245,6 +245,18 @@ function initTasksPage() {
     if (document.querySelector('.edit-comment-btn')) {
         initCommentManagement();
     }
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize tooltip for delete button separately
+    const deleteBtn = document.querySelector('.delete-task-btn');
+    if (deleteBtn) {
+        new bootstrap.Tooltip(deleteBtn, {
+            trigger: 'hover'
+        });
+    }
 }
-
-export { initTasksPage };

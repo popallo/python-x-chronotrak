@@ -3,7 +3,7 @@
     --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
     --transition-speed: 0.2s;
-    --border-radius: 0.5rem;
+    --border-radius: 0.75rem;
     --gradient-start: rgba(255, 255, 255, 0.05);
     --gradient-end: rgba(255, 255, 255, 0.02);
     --light-bg: #f5f6f8;
@@ -112,7 +112,7 @@
 
 /* Surcharge de la couleur warning de Bootstrap */
 .stats-item.warning i.text-warning {
-    color: #d97706 !important; /* Notre nouvelle couleur warning */
+    color: #d97706 !important;
 }
 
 .stats-item:hover i {
@@ -150,14 +150,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: rgba(255, 255, 255, 0.9);
-    cursor: help; /* Indique que le texte a un tooltip */
-    display: inline-block; /* Ajout pour que le soulignement ne s'étende pas */
+    cursor: help;
+    display: inline-block;
 }
 
 /* Style pour le tooltip personnalisé */
 .stats-title[data-bs-toggle="tooltip"] {
     border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
-    width: fit-content; /* Ajout pour que le soulignement s'adapte au texte */
+    width: fit-content;
 }
 
 /* Ajustement du tooltip Bootstrap */
@@ -190,52 +190,90 @@
     }
 }
 
-/* Cartes de contenu */
+/* Styles pour les cartes */
 .card {
-    border: none;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: var(--border-radius);
+    background: var(--bs-body-bg);
+    margin-bottom: 1.5rem;
+    border: none;
     box-shadow: var(--card-shadow);
-    transition: all var(--transition-speed) ease;
-    height: 100%;
-    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-}
-
-[data-bs-theme="light"] .card {
-    background-color: var(--light-bg);
-}
-
-.card:hover {
-    box-shadow: var(--card-shadow-hover);
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
-    border-bottom: none;
-    padding: 1rem 1.25rem;
-    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-    background-color: transparent;
+    border: none;
+    padding: 1.25rem;
+    background: transparent;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 1px;
+    background: var(--bs-border-color);
+    opacity: 0.5;
 }
 
 .card-header h5 {
-    font-weight: 600;
-    font-size: 1rem;
     margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    color: var(--bs-heading-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-header h5 i {
+    font-size: 1.2rem;
+    opacity: 0.8;
 }
 
 .card-body {
-    padding: 1.25rem;
+    padding: 1.5rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bs-border-color) transparent;
+}
+
+/* Style de la scrollbar pour Chrome/Safari */
+.card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.card-body::-webkit-scrollbar-thumb {
+    background-color: var(--bs-border-color);
+    border-radius: 3px;
 }
 
 /* Listes */
 .list-group-item {
     border: none;
     padding: 1rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     border-radius: calc(var(--border-radius) - 0.25rem) !important;
-    transition: all var(--transition-speed) ease;
-    background-color: var(--bs-body-bg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--bs-tertiary-bg);
+}
+
+.list-group-item:last-child {
+    margin-bottom: 0;
 }
 
 .list-group-item:hover {
@@ -247,6 +285,7 @@
     font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
+    color: var(--bs-heading-color);
 }
 
 .list-group-item p {
@@ -260,33 +299,34 @@
     padding: 0.4em 0.6em;
     font-weight: 500;
     font-size: 0.75rem;
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.priority-high { color: #dc3545; }
-.priority-medium { color: #fd7e14; }
-.priority-low { color: #198754; }
-
-/* Boutons */
-.btn {
-    border-radius: var(--border-radius);
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    font-size: 0.875rem;
-    transition: all var(--transition-speed) ease;
+.priority-high { 
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-secondary:hover,
-.btn-outline-warning:hover,
-.btn-outline-danger:hover {
-    transform: translateY(-1px);
+.priority-medium { 
+    background-color: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.priority-low { 
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
 }
 
 /* États vides */
 .empty-state {
     text-align: center;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1rem;
+    color: var(--bs-secondary-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .empty-state i {
@@ -296,8 +336,21 @@
 }
 
 .empty-state p {
-    color: #6c757d;
     margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Mode sombre */
+[data-bs-theme="dark"] .card {
+    background: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] .list-group-item {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Animations */
@@ -326,4 +379,48 @@
     border-radius: 50%;
     display: inline-block;
     margin-right: 5px;
+}
+
+.dashboard-card {
+    margin-bottom: 1rem;
+}
+
+.dashboard-card .card-header {
+    padding: 0.5rem 1rem;
+}
+
+.dashboard-card .card-body {
+    padding: 0.5rem;
+}
+
+.dashboard-card .list-group-item {
+    padding: 0.5rem;
+    border-left: none;
+    border-right: none;
+}
+
+.dashboard-card .list-group-item:first-child {
+    border-top: none;
+}
+
+.dashboard-card .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard-card .task-title {
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.dashboard-card .task-info {
+    font-size: 0.8rem;
+}
+
+.dashboard-card .badge {
+    font-size: 0.8rem;
+}
+
+.dashboard-card .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
 }

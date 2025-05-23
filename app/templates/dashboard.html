@@ -8,7 +8,7 @@
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Tableau de bord</h1>
-        <button id="resetCardCollapse" class="btn btn-outline-secondary">
+        <button id="toggleCardsCollapse" class="btn btn-outline-secondary">
             <i class="fas fa-expand-alt me-1"></i>Développer toutes les cartes
         </button>
     </div>
@@ -56,36 +56,38 @@
                     <h5><i class="fas fa-battery-quarter"></i>Projets avec peu de crédit</h5>
                     <span class="badge bg-white text-warning">{{ projects_low_credit }}</span>
                 </div>
-                <div class="card-body">
-                    {% if low_credit_projects %}
-                        <div class="list-group">
-                            {% for project in low_credit_projects %}
-                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <div>
-                                            <h5>{{ project.name }}</h5>
-                                            <p class="text-muted">{{ project.client.name }}</p>
+                <div class="collapse show">
+                    <div class="card-body">
+                        {% if low_credit_projects %}
+                            <div class="list-group">
+                                {% for project in low_credit_projects %}
+                                    <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h5>{{ project.name }}</h5>
+                                                <p class="text-muted">{{ project.client.name }}</p>
+                                            </div>
+                                            <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                                                {{ project.remaining_credit|format_time }}
+                                            </span>
                                         </div>
-                                        <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
-                                            {{ project.remaining_credit|format_time }}
-                                        </span>
-                                    </div>
-                                </a>
-                            {% endfor %}
-                        </div>
-                        {% if projects_low_credit > 5 %}
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-warning">
-                                    <i class="fas fa-eye me-1"></i>Voir tous les projets
-                                </a>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            {% if projects_low_credit > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-warning">
+                                        <i class="fas fa-eye me-1"></i>Voir tous les projets
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <p>Tous les projets ont encore suffisamment de crédit.</p>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <p>Tous les projets ont encore suffisamment de crédit.</p>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -97,42 +99,44 @@
                     <h5><i class="fas fa-exclamation-triangle"></i>Tâches urgentes</h5>
                     <span class="badge bg-white text-danger">{{ urgent_tasks|length }}</span>
                 </div>
-                <div class="card-body">
-                    {% if urgent_tasks %}
-                        <div class="list-group">
-                            {% for task in urgent_tasks[:5] %}
-                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <div>
-                                            <h5>{{ task.title }}</h5>
-                                            <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                <div class="collapse show">
+                    <div class="card-body">
+                        {% if urgent_tasks %}
+                            <div class="list-group">
+                                {% for task in urgent_tasks[:5] %}
+                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h5>{{ task.title }}</h5>
+                                                <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                                            </div>
+                                            <div class="text-end">
+                                                {% if task.user_id %}
+                                                    <span class="badge bg-info text-white">
+                                                        <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary text-white">Non assignée</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
-                                        <div class="text-end">
-                                            {% if task.user_id %}
-                                                <span class="badge bg-info text-white">
-                                                    <i class="fas fa-user me-1"></i>{{ task.assigned_to.name }}
-                                                </span>
-                                            {% else %}
-                                                <span class="badge bg-secondary text-white">Non assignée</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </a>
-                            {% endfor %}
-                        </div>
-                        {% if urgent_tasks|length > 5 %}
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('tasks.my_tasks') }}?filter=urgent" class="btn btn-outline-danger">
-                                    <i class="fas fa-eye me-1"></i>Voir toutes les tâches urgentes
-                                </a>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            {% if urgent_tasks|length > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('tasks.my_tasks') }}?filter=urgent" class="btn btn-outline-danger">
+                                        <i class="fas fa-eye me-1"></i>Voir toutes les tâches urgentes
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <p>Aucune tâche urgente à traiter pour le moment.</p>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <p>Aucune tâche urgente à traiter pour le moment.</p>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,36 +148,38 @@
                     <h5><i class="fas fa-list-check"></i>Mes tâches en cours</h5>
                     <span class="badge bg-white text-info">{{ my_tasks|length }}</span>
                 </div>
-                <div class="card-body">
-                    {% if my_tasks %}
-                        <div class="list-group">
-                            {% for task in my_tasks[:5] %}
-                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <div>
-                                            <h5>{{ task.title }}</h5>
-                                            <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                <div class="collapse show">
+                    <div class="card-body">
+                        {% if my_tasks %}
+                            <div class="list-group">
+                                {% for task in my_tasks[:5] %}
+                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h5>{{ task.title }}</h5>
+                                                <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                                            </div>
+                                            <span class="badge priority-{{ task.priority }}">
+                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
+                                            </span>
                                         </div>
-                                        <span class="badge priority-{{ task.priority }}">
-                                            <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                        </span>
-                                    </div>
-                                </a>
-                            {% endfor %}
-                        </div>
-                        {% if my_tasks|length > 5 %}
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-outline-info">
-                                    <i class="fas fa-eye me-1"></i>Voir toutes mes tâches
-                                </a>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            {% if my_tasks|length > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-outline-info">
+                                        <i class="fas fa-eye me-1"></i>Voir toutes mes tâches
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <p>Vous n'avez pas de tâches en cours pour le moment.</p>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <p>Vous n'avez pas de tâches en cours pour le moment.</p>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,47 +191,53 @@
                     <h5><i class="fas fa-clock"></i>Temps récemment enregistré</h5>
                     <span class="badge bg-white text-secondary">{{ recent_time_entries|length }}</span>
                 </div>
-                <div class="card-body">
-                    {% if recent_time_entries %}
-                        <div class="list-group">
-                            {% for entry in recent_time_entries[:5] %}
-                                <div class="list-group-item">
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <div>
-                                            <h5>
-                                                <span class="text-danger">
-                                                    <i class="fas fa-minus-circle me-1"></i>{{ entry.hours|format_time }}
-                                                </span>
-                                                sur "{{ entry.task.title }}"
-                                            </h5>
-                                            <p class="text-muted">
-                                                Par {{ entry.user.name }} - {{ entry.task.project.name }}
-                                            </p>
-                                            {% if entry.description %}
-                                                <small class="text-muted">{{ entry.description }}</small>
-                                            {% endif %}
+                <div class="collapse show">
+                    <div class="card-body">
+                        {% if recent_time_entries %}
+                            <div class="list-group">
+                                {% for entry in recent_time_entries[:5] %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h5>
+                                                    <span class="text-danger">
+                                                        <i class="fas fa-minus-circle me-1"></i>{{ entry.hours|format_time }}
+                                                    </span>
+                                                    sur "{{ entry.task.title }}"
+                                                </h5>
+                                                <p class="text-muted">
+                                                    Par {{ entry.user.name }} - {{ entry.task.project.name }}
+                                                </p>
+                                                {% if entry.description %}
+                                                    <small class="text-muted">{{ entry.description }}</small>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                                         </div>
-                                        <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                                     </div>
+                                {% endfor %}
+                            </div>
+                            {% if recent_time_entries|length > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('main.reports') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-eye me-1"></i>Voir tous les temps enregistrés
+                                    </a>
                                 </div>
-                            {% endfor %}
-                        </div>
-                        {% if recent_time_entries|length > 5 %}
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('main.reports') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-eye me-1"></i>Voir tous les temps enregistrés
-                                </a>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <p>Aucun temps n'a été enregistré récemment.</p>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <p>Aucun temps n'a été enregistré récemment.</p>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/dashboard.js') }}"></script>
 {% endblock %}

@@ -13,7 +13,6 @@ import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
 import { initCardCollapse } from './pages/card_collapse.js';
-import { initDashboard } from './pages/dashboard.js';
 import { initWelcomePage } from './pages/welcome-page.js';
 import { initTaskFilters } from './pages/task_filters.js';
 
@@ -34,11 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page d'accueil (bienvenue)
     if (currentPath === '/') {
         initWelcomePage();
-    }
-    
-    // Page du tableau de bord
-    if (currentPath === '/' || currentPath === '/dashboard') {
-        initDashboard();
     }
     
     // Page des tâches

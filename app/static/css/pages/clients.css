@@ -1,0 +1,117 @@
+/* Variables */
+:root {
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.2s;
+    --border-radius: 0.75rem;
+}
+
+/* Mode sombre */
+[data-bs-theme="dark"] {
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Style des cartes clients */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all var(--transition-speed) ease;
+    background: var(--bs-body-bg);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.card-header {
+    border: none;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-primary-dark));
+    position: relative;
+}
+
+.card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.card-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-body p {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-body p:last-child {
+    margin-bottom: 0;
+}
+
+.card-body i {
+    width: 1rem;
+    color: var(--bs-primary);
+    opacity: 0.8;
+}
+
+.card-footer {
+    background: transparent;
+    border-top: 1px solid var(--bs-border-color);
+    padding: 0.75rem 1rem;
+}
+
+.card-footer .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.card-footer .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Mode sombre */
+[data-bs-theme="dark"] .card {
+    background: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] .card-body p {
+    color: var(--bs-light);
+}
+
+[data-bs-theme="dark"] .card-body i {
+    color: var(--bs-primary);
+}
+
+/* Animation d'apparition */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+} 

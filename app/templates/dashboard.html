@@ -52,7 +52,7 @@
                         <i class="fas fa-exclamation-circle"></i>
                         <div class="stats-content">
                             <div class="stats-number">{{ projects_low_credit }}</div>
-                            <div class="stats-title" data-bs-toggle="tooltip" title="Projets avec un niveau de crédit faible">Projet{{ 's' if projects_low_credit > 1 else '' }} en crédit faible</div>
+                            <div class="stats-title text-truncate px-1" style="max-width: 100%;" data-bs-toggle="tooltip" data-bs-placement="top" title="Projets dont le crédit restant est inférieur à 25% du crédit initial">Projet{{ 's' if projects_low_credit > 1 else '' }} en crédit faible</div>
                         </div>
                     </div>
                 </div>
@@ -61,47 +61,42 @@
     </div>
 
     <div class="row g-4">
-        <!-- Projets avec peu de crédit -->
+        <!-- Mes tâches en cours -->
         <div class="col-lg-6">
-            <div class="card" id="card-low-credit">
-                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                    <h5><i class="fas fa-battery-quarter"></i>Projets avec peu de crédit</h5>
-                    <span class="badge bg-white text-warning">{{ projects_low_credit }}</span>
+            <div class="card" id="card-my-tasks">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-list-check"></i>Mes tâches en cours</h5>
+                    <span class="badge bg-white text-info">{{ my_tasks|length }}</span>
                 </div>
                 <div class="collapse show">
                     <div class="card-body">
-                        {% if low_credit_projects %}
-                            <div class="list-group list-group-flush">
-                                {% for project in low_credit_projects %}
-                                    <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <i class="fas fa-battery-quarter text-warning"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0">{{ project.name }}</h6>
-                                                    <small class="text-muted">{{ project.client.name }}</small>
-                                                </div>
+                        {% if my_tasks %}
+                            <div class="list-group">
+                                {% for task in my_tasks[:5] %}
+                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h5>{{ task.title }}</h5>
+                                                <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
                                             </div>
-                                            <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
-                                                {{ project.remaining_credit|format_time }}
+                                            <span class="badge priority-{{ task.priority }}">
+                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
                                             </span>
                                         </div>
                                     </a>
                                 {% endfor %}
                             </div>
-                            {% if projects_low_credit > 5 %}
+                            {% if my_tasks|length > 5 %}
                                 <div class="text-center mt-3">
-                                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm btn-outline-warning">
-                                        <i class="fas fa-eye me-1"></i>Voir tous les projets
+                                    <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-outline-info">
+                                        <i class="fas fa-eye me-1"></i>Voir toutes mes tâches
                                     </a>
                                 </div>
                             {% endif %}
                         {% else %}
                             <div class="empty-state">
                                 <i class="fas fa-check-circle text-success"></i>
-                                <p>Tous les projets ont encore suffisamment de crédit.</p>
+                                <p>Vous n'avez pas de tâches en cours pour le moment.</p>
                             </div>
                         {% endif %}
                     </div>
@@ -158,42 +153,47 @@
             </div>
         </div>
 
-        <!-- Mes tâches en cours -->
+        <!-- Projets avec peu de crédit -->
         <div class="col-lg-6">
-            <div class="card" id="card-my-tasks">
-                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <h5><i class="fas fa-list-check"></i>Mes tâches en cours</h5>
-                    <span class="badge bg-white text-info">{{ my_tasks|length }}</span>
+            <div class="card" id="card-low-credit">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-battery-quarter"></i>Projets avec peu de crédit</h5>
+                    <span class="badge bg-white text-warning">{{ projects_low_credit }}</span>
                 </div>
                 <div class="collapse show">
                     <div class="card-body">
-                        {% if my_tasks %}
-                            <div class="list-group">
-                                {% for task in my_tasks[:5] %}
-                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between align-items-center">
-                                            <div>
-                                                <h5>{{ task.title }}</h5>
-                                                <p class="text-muted">{{ task.project.name }} ({{ task.project.client.name }})</p>
+                        {% if low_credit_projects %}
+                            <div class="list-group list-group-flush">
+                                {% for project in low_credit_projects %}
+                                    <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="fas fa-battery-quarter text-warning"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ project.name }}</h6>
+                                                    <small class="text-muted">{{ project.client.name }}</small>
+                                                </div>
                                             </div>
-                                            <span class="badge priority-{{ task.priority }}">
-                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
+                                            <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                                                {{ project.remaining_credit|format_time }}
                                             </span>
                                         </div>
                                     </a>
                                 {% endfor %}
                             </div>
-                            {% if my_tasks|length > 5 %}
+                            {% if projects_low_credit > 5 %}
                                 <div class="text-center mt-3">
-                                    <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-outline-info">
-                                        <i class="fas fa-eye me-1"></i>Voir toutes mes tâches
+                                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-eye me-1"></i>Voir tous les projets
                                     </a>
                                 </div>
                             {% endif %}
                         {% else %}
                             <div class="empty-state">
                                 <i class="fas fa-check-circle text-success"></i>
-                                <p>Vous n'avez pas de tâches en cours pour le moment.</p>
+                                <p>Tous les projets ont encore suffisamment de crédit.</p>
                             </div>
                         {% endif %}
                     </div>

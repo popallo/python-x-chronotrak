@@ -176,14 +176,6 @@
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Gestion du temps</h5>
             </div>
             <div class="card-body">
-                <!-- Debug direct -->
-                <div style="background-color: #ff0000; color: white; padding: 10px; margin-bottom: 10px;">
-                    <h3>DEBUG</h3>
-                    <p>Project Name: {{ task.project.name }}</p>
-                    <p>Time Tracking: {{ task.project.time_tracking_enabled }}</p>
-                    <p>Remaining Credit: {{ task.project.remaining_credit }}</p>
-                </div>
-
                 {% if task.project.time_tracking_enabled %}
                 <!-- Utilisation des mêmes seuils pour la couleur que pour les administrateurs/techniciens -->
                 {% set color = 'success' if task.project.remaining_credit >= 5 else 'warning' if task.project.remaining_credit >= 2 else 'danger' %}
@@ -223,21 +215,21 @@
         <!-- Formulaire pour ajouter un commentaire -->
         <form method="POST" action="{{ url_for('tasks.add_comment', slug_or_id=task.slug) }}" class="mb-4">
             {{ comment_form.hidden_tag() }}
-            <div class="mb-3">
+            <div class="mb-3 position-relative">
                 {{ comment_form.content.label(class="form-label") }}
                 {% if comment_form.content.errors %}
-                    {{ comment_form.content(class="form-control is-invalid", rows=2) }}
+                    {{ comment_form.content(class="form-control is-invalid", rows=2, style="padding-right: 100px;") }}
                     <div class="invalid-feedback">
                         {% for error in comment_form.content.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ comment_form.content(class="form-control", rows=2) }}
+                    {{ comment_form.content(class="form-control", rows=2, style="padding-right: 100px;") }}
                 {% endif %}
-            </div>
-            <div class="text-center">
-                {{ comment_form.submit(class="btn btn-secondary") }}
+                <div class="position-absolute" style="right: 10px; bottom: 10px;">
+                    {{ comment_form.submit(class="btn btn-primary btn-sm", style="border-radius: 20px; padding: 5px 15px;") }}
+                </div>
             </div>
         </form>
 

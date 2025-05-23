@@ -1,7 +1,6 @@
 /* 
  * STYLES DE BASE OPTIMISÉS
- * Ce fichier remplace le contenu de base.css et consolide
- * les styles communs utilisés dans toute l'application
+ * Ce fichier consolide les styles communs utilisés dans toute l'application
  */
 
 /* Variables pour les couleurs principales */
@@ -20,147 +19,119 @@
     --color-secondary-dark: #5a6268;
     --color-reports: #6f42c1;
     --color-reports-dark: #4527a0;
-  }
-  
-  /* Styles de base */
-  body {
+    
+    /* Variables pour les transitions */
+    --transition-base: 0.2s ease;
+    --transition-smooth: 0.3s ease;
+    
+    /* Variables pour les ombres */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles de base */
+body {
     background-color: #f8f9fa;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-  }
-  
-  main {
+}
+
+main {
     flex: 1;
-  }
-  
-  /* ===== COMPOSANTS DE BASE ===== */
-  
-  /* Cards - Base */
-  .card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .card:hover {
+}
+
+/* ===== COMPOSANTS DE BASE ===== */
+
+/* Cards - Base */
+.card {
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+    will-change: transform, box-shadow;
+}
+
+.card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Formulaires - Base */
-  .form-label {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Formulaires - Base */
+.form-label {
     font-weight: 500;
-  }
-  
-  /* ===== ARRIÈRE-PLANS ET DÉGRADÉS ===== */
-  
-  /* Dégradés de couleurs pour les headers */
-  .bg-info {
-    background: linear-gradient(135deg, var(--color-info), var(--color-info-dark)) !important;
-  }
-  
-  .bg-danger {
-    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark)) !important;
-  }
-  
-  .bg-success {
-    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark)) !important;
-  }
-  
-  .bg-primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
-  }
-  
-  .bg-secondary {
-    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark)) !important;
-  }
-  
-  .bg-warning {
-    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark)) !important;
-  }
-  
-  .bg-reports {
-    background: linear-gradient(135deg, var(--color-reports), var(--color-reports-dark)) !important;
-  }
-  
-  /* ===== COULEURS DE PRIORITÉ ===== */
-  .priority-basse {
-    color: var(--color-info);
-  }
-  
-  .priority-normale {
-    color: var(--color-success);
-  }
-  
-  .priority-haute {
-    color: var(--color-warning);
-  }
-  
-  .priority-urgente {
-    color: var(--color-danger);
-  }
-  
-  /* ===== UTILITAIRES ===== */
-  
-  /* Barre de priorité */
-  .priority-indicator {
+}
+
+/* ===== ARRIÈRE-PLANS ET DÉGRADÉS ===== */
+.bg-info { background: linear-gradient(135deg, var(--color-info), var(--color-info-dark)) !important; }
+.bg-danger { background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark)) !important; }
+.bg-success { background: linear-gradient(135deg, var(--color-success), var(--color-success-dark)) !important; }
+.bg-primary { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important; }
+.bg-secondary { background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark)) !important; }
+.bg-warning { background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark)) !important; }
+.bg-reports { background: linear-gradient(135deg, var(--color-reports), var(--color-reports-dark)) !important; }
+
+/* ===== COULEURS DE PRIORITÉ ===== */
+.priority-basse { color: var(--color-info); }
+.priority-normale { color: var(--color-success); }
+.priority-haute { color: var(--color-warning); }
+.priority-urgente { color: var(--color-danger); }
+
+/* ===== UTILITAIRES ===== */
+.priority-indicator {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     display: inline-block;
     margin-right: 5px;
-  }
-  
-  /* Animation de pulsation pour les éléments importants */
-  @keyframes pulse {
+}
+
+/* Animations optimisées */
+@keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.8; }
     100% { opacity: 1; }
-  }
-  
-  /* Animation d'apparition */
-  @keyframes fadeIn {
+}
+
+@keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-  }
-  
-  /* ===== STYLES SPÉCIFIQUES ===== */
-  
-  /* Dashboard stats */
-  .stats-card {
+}
+
+/* ===== STYLES SPÉCIFIQUES ===== */
+.stats-card {
     text-align: center;
     padding: 5px;
     border-radius: 10px;
-  }
-  
-  .stats-card i {
+}
+
+.stats-card i {
     font-size: 2rem;
     margin-bottom: 10px;
-  }
-  
-  .stats-card .stats-number {
+}
+
+.stats-card .stats-number {
     font-size: 1.8rem;
     font-weight: bold;
-  }
-  
-  /* Barre de rappel des couleurs */
-  .color-reminder-bar {
+}
+
+/* Barre de rappel des couleurs */
+.color-reminder-bar {
     height: 5px;
     background: #fff !important;
     margin-bottom: 1px;
-  }
-  
-  .color-item {
+}
+
+.color-item {
     width: 16.66%;
     height: 5px;
     transition: height 0.3s ease;
-  }
-  
-  .color-reminder-bar:hover .color-item {
+}
+
+.color-reminder-bar:hover .color-item {
     height: 10px;
-  }
-  
-  /* Footer */
-  .footer {
+}
+
+/* Footer */
+.footer {
     background-color: #f8f9fa;
-  }
+}

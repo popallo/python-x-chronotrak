@@ -45,24 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Ajouter des styles CSS pour l'animation
-    const style = document.createElement('style');
-    style.textContent = `
-        .collapse {
-            transition: all 0.3s ease-in-out;
-        }
-        .collapse:not(.show) {
-            display: none;
-        }
-        .card {
-            transition: all 0.3s ease-in-out;
-        }
-        .card-body {
-            transition: all 0.3s ease-in-out;
-        }
-    `;
-    document.head.appendChild(style);
-
     // Vérifier l'état initial des cartes
     updateButtonState();
 

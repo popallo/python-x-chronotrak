@@ -4,28 +4,25 @@
 {{ super() }}
 <script type="module">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        initTasksPage();
-    });
+    document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>{{ task.title }}</h1>
-    <div>
-        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-secondary me-1">
-            <i class="fas fa-arrow-left me-1"></i>Retour au projet
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+    <h1 class="mb-2 mb-md-0">{{ task.title }}</h1>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Retour au projet">
+            <i class="fas fa-arrow-left"></i>
         </a>
-        <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-primary">
-            <i class="fas fa-edit me-1"></i>Modifier
+        <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Modifier">
+            <i class="fas fa-edit"></i>
         </a>
         {% if not current_user.is_client() %}
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
-            <i class="fas fa-trash me-1"></i>Supprimer
+        <button type="button" class="btn btn-outline-danger delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
+            <i class="fas fa-trash"></i>
         </button>
         {% endif %}
     </div>

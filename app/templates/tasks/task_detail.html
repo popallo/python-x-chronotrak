@@ -137,19 +137,26 @@
                                 <label class="form-check-label" for="checklist-item-{{ item.id }}">
                                     <span class="checklist-content">{{ item.content }}</span>
                                 </label>
-                                <button type="button" class="btn btn-sm btn-outline-danger delete-checklist-item">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
+                                        <i class="fas fa-clock"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger delete-checklist-item" title="Supprimer">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                     
-                    <form id="add-checklist-item-form" class="checklist-add-form">
-                        <input type="text" id="add-checklist-item-input" class="form-control" placeholder="Ajouter un élément à la checklist...">
-                        <button type="button" id="add-checklist-item-button" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <form id="add-checklist-item-form" class="checklist-add-form position-relative">
+                        <input type="text" id="add-checklist-item-input" class="form-control" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
+                        <div class="position-absolute" style="right: 10px; bottom: 10px;">
+                            <span class="text-muted" style="font-size: 0.8rem;">
+                                <i class="fas fa-keyboard me-1"></i>Entrée
+                            </span>
+                        </div>
                     </form>
                 </div>
                 

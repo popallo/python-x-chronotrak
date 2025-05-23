@@ -58,27 +58,21 @@
 /* Système de collapse pour les cartes */
 .card-collapse-btn {
     position: absolute;
-    right: 10px;
+    right: 1rem;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: inherit;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.7;
-    transition: opacity var(--transition-base), background-color var(--transition-base);
+    padding: 0.25rem;
     cursor: pointer;
-    border-radius: 4px;
-    z-index: 5;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    z-index: 1;
 }
 
 .card-collapse-btn:hover {
     opacity: 1;
-    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .card-collapse-btn:active {
@@ -90,42 +84,35 @@
 }
 
 .card-collapse-btn i {
-    transition: transform var(--transition-smooth);
+    font-size: 0.875rem;
+    transition: transform 0.2s ease;
 }
 
-/* État réduit de la carte */
-.card-body {
-    max-height: 1000px;
-    transition: max-height var(--transition-smooth), padding var(--transition-smooth);
+/* Styles pour les cartes non-dashboard */
+.card:not(.dashboard-card) .card-body {
+    transition: max-height 0.3s ease-out;
     overflow: hidden;
-    will-change: max-height, padding;
 }
 
-.card-body.collapsed {
+.card:not(.dashboard-card) .card-body.collapsed {
     max-height: 70px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    overflow: hidden;
-    display: block;
     position: relative;
 }
 
-/* Effet de dégradé pour indiquer qu'il y a plus de contenu */
-.card-body.collapsed::after {
+.card:not(.dashboard-card) .card-body.collapsed::after {
     content: '';
-    display: block;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 30px;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9));
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--bs-body-bg));
     pointer-events: none;
 }
 
-/* Adapter le dégradé au mode sombre */
-html.dark-mode body .card-body.collapsed::after {
-    background: linear-gradient(to bottom, rgba(30, 30, 30, 0), rgba(30, 30, 30, 0.9));
+/* Mode sombre */
+html.dark-mode body .card:not(.dashboard-card) .card-body.collapsed::after {
+    background: linear-gradient(to bottom, transparent, var(--bs-dark));
 }
 
 /* Carte d'info-crédit */

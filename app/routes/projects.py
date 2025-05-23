@@ -53,6 +53,7 @@ def list_projects():
                          filters_active=filters_active,
                          sort_by=sort_by,
                          sort_order=sort_order,
+                         pagination=projects,
                          title='Projets')
 
 @projects.route('/clients/<int:client_id>/projects/new', methods=['GET', 'POST'])

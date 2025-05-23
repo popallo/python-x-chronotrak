@@ -61,7 +61,8 @@ def create_app(config_name):
         response.headers['Content-Security-Policy'] = (
             "default-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net https://code.jquery.com https://*.cloudflare.com https://*.cloudflareinsights.com; "
+            "https://cdn.jsdelivr.net https://code.jquery.com https://*.cloudflare.com https://*.cloudflareinsights.com "
+            "'sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='; "
             "style-src 'self' 'unsafe-inline' "
             "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
@@ -71,9 +72,10 @@ def create_app(config_name):
             "worker-src 'self'"
         )
         # Ajouter les en-têtes CORS pour Cloudflare
-        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Origin'] = 'https://static.cloudflareinsights.com'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
         return response
 
     # Middleware pour mesurer le temps de chargement

@@ -57,9 +57,10 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <!-- Mes tâches en cours -->
-        <div class="col-lg-6">
+    <!-- Cartes du dashboard -->
+    <div class="dashboard-columns">
+        <div class="dashboard-column">
+            <!-- Mes tâches en cours -->
             <div class="card dashboard-card" id="card-my-tasks">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-list-check"></i>Mes tâches en cours</h5>
@@ -97,10 +98,49 @@
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Projets avec peu de crédit -->
+            <div class="card dashboard-card" id="card-low-credit">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-battery-quarter"></i>Projets avec peu de crédit</h5>
+                    <span class="badge bg-white text-warning">{{ projects_low_credit }}</span>
+                </div>
+                <div class="card-body">
+                    {% if low_credit_projects %}
+                        <div class="list-group list-group-flush">
+                            {% for project in low_credit_projects %}
+                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="task-title">{{ project.name }}</div>
+                                            <div class="task-info text-muted">{{ project.client.name }}</div>
+                                        </div>
+                                        <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                                            {{ project.remaining_credit|format_time }}
+                                        </span>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                        {% if projects_low_credit > 5 %}
+                            <div class="text-center mt-2">
+                                <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-eye me-1"></i>Voir tous les projets
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="empty-state py-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <p class="mb-0">Tous les projets ont encore suffisamment de crédit.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
-        <!-- Tâches urgentes -->
-        <div class="col-lg-6">
+        <div class="dashboard-column">
+            <!-- Tâches urgentes -->
             <div class="card dashboard-card" id="card-urgent-tasks">
                 <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i>Tâches urgentes</h5>
@@ -142,51 +182,8 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Projets avec peu de crédit -->
-        <div class="col-lg-6">
-            <div class="card dashboard-card" id="card-low-credit">
-                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-battery-quarter"></i>Projets avec peu de crédit</h5>
-                    <span class="badge bg-white text-warning">{{ projects_low_credit }}</span>
-                </div>
-                <div class="card-body">
-                    {% if low_credit_projects %}
-                        <div class="list-group list-group-flush">
-                            {% for project in low_credit_projects %}
-                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="list-group-item list-group-item-action">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="task-title">{{ project.name }}</div>
-                                            <div class="task-info text-muted">{{ project.client.name }}</div>
-                                        </div>
-                                        <span class="badge {% if project.remaining_credit < 1 %}bg-danger{% else %}bg-warning{% endif %} text-white">
-                                            {{ project.remaining_credit|format_time }}
-                                        </span>
-                                    </div>
-                                </a>
-                            {% endfor %}
-                        </div>
-                        {% if projects_low_credit > 5 %}
-                            <div class="text-center mt-2">
-                                <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm btn-outline-warning">
-                                    <i class="fas fa-eye me-1"></i>Voir tous les projets
-                                </a>
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        <div class="empty-state py-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <p class="mb-0">Tous les projets ont encore suffisamment de crédit.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Temps récemment enregistré -->
-        <div class="col-lg-6">
+            <!-- Temps récemment enregistré -->
             <div class="card dashboard-card" id="card-recent-time">
                 <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-clock"></i>Temps récemment enregistré</h5>
@@ -236,5 +233,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/dashboard.js') }}"></script>
 {% endblock %}

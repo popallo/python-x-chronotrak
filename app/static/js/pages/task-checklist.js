@@ -80,12 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Gérer la touche Entrée
-        addItemInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addChecklistItem();
-            }
-        });
+        if (addItemInput) {
+            addItemInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addChecklistItem();
+                }
+            });
+        }
     }
     
     // Gérer le modal de shortcode

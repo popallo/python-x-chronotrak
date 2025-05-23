@@ -59,19 +59,19 @@ def create_app(config_name):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         response.headers['Content-Security-Policy'] = (
-            "default-src 'self'; "
+            "default-src 'self' https://*.cloudflare.com; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net https://code.jquery.com https://static.cloudflareinsights.com; "
+            "https://cdn.jsdelivr.net https://code.jquery.com https://*.cloudflare.com; "
             "style-src 'self' 'unsafe-inline' "
             "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://static.cloudflareinsights.com; "
-            "frame-src 'self'; "
+            "connect-src 'self' https://*.cloudflare.com; "
+            "frame-src 'self' https://*.cloudflare.com; "
             "worker-src 'self'"
         )
-        # Ajouter les en-têtes CORS pour Cloudflare Insights
-        response.headers['Access-Control-Allow-Origin'] = 'https://static.cloudflareinsights.com'
+        # Ajouter les en-têtes CORS pour Cloudflare
+        response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         return response

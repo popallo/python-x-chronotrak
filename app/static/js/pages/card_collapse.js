@@ -3,24 +3,17 @@
  */
 
 function initCardCollapse() {
-    // Sélectionner toutes les cartes du dashboard qui ont un header et un body
-    const dashboardCards = document.querySelectorAll('.card:has(.card-header):has(.card-body):not(.no-collapse)');
+    // Sélectionner toutes les cartes sauf celles du dashboard
+    const cards = document.querySelectorAll('.card:has(.card-header):has(.card-body):not(.no-collapse):not(.dashboard-card)');
     
-    // Si aucune carte n'est trouvée, sortir
-    if (!dashboardCards.length) return;
-    
-    // Pour chaque carte, ajouter le bouton de collapse s'il n'existe pas déjà
-    dashboardCards.forEach(card => {
+    cards.forEach(card => {
+        const cardId = card.id || `card-${Math.random().toString(36).substr(2, 9)}`;
+        card.id = cardId;
+        
         const cardHeader = card.querySelector('.card-header');
         const cardBody = card.querySelector('.card-body');
-        const cardId = card.id || `card-${Math.random().toString(36).substring(2, 9)}`;
         
-        // S'assurer que la carte a un ID
-        if (!card.id) {
-            card.id = cardId;
-        }
-        
-        // Vérifier si le bouton existe déjà
+        // Pour chaque carte, ajouter le bouton de collapse s'il n'existe pas déjà
         if (!cardHeader.querySelector('.card-collapse-btn')) {
             // Créer le bouton de collapse
             const collapseBtn = document.createElement('button');
@@ -29,30 +22,23 @@ function initCardCollapse() {
             collapseBtn.setAttribute('data-card-id', cardId);
             collapseBtn.setAttribute('title', 'Réduire/Développer');
             
-            // Ajouter le bouton au header de la carte
+            // Ajouter le bouton à l'en-tête de la carte
             cardHeader.appendChild(collapseBtn);
             
-            // Ajouter l'écouteur d'événement
+            // Ajouter l'événement de clic
             collapseBtn.addEventListener('click', function(e) {
-                e.preventDefault();
                 e.stopPropagation();
                 toggleCardCollapse(cardId);
             });
         }
         
-        // Restaurer l'état de la carte depuis les cookies
+        // Vérifier l'état initial de la carte
         const isCollapsed = getCookie(`card_${cardId}_collapsed`) === 'true';
         if (isCollapsed) {
-            // Ajouter la classe sans animation puis mettre à jour l'icône
-            cardBody.style.transition = 'none'; // Désactiver la transition temporairement
+            // Appliquer l'état collapsed
             cardBody.classList.add('collapsed');
-            cardBody.style.maxHeight = '70px'; // Définir la hauteur d'aperçu
             
-            // Réactiver la transition après un court délai
-            setTimeout(() => {
-                cardBody.style.transition = '';
-            }, 50);
-            
+            // Mettre à jour l'icône
             const icon = cardHeader.querySelector('.card-collapse-btn i');
             if (icon) {
                 icon.classList.replace('fa-minus', 'fa-plus');
@@ -69,59 +55,45 @@ function toggleCardCollapse(cardId) {
     const cardBody = card.querySelector('.card-body');
     const collapseBtn = card.querySelector('.card-collapse-btn i');
     
-    if (cardBody) {
-        // Si la carte est déjà réduite
-        const isCurrentlyCollapsed = cardBody.classList.contains('collapsed');
+    const isCurrentlyCollapsed = cardBody.classList.contains('collapsed');
+    
+    // Basculer la classe collapsed
+    if (isCurrentlyCollapsed) {
+        // Développer la carte
+        cardBody.classList.remove('collapsed');
         
-        // Basculer la classe collapsed
-        if (isCurrentlyCollapsed) {
-            // Développer la carte
-            const actualHeight = cardBody.scrollHeight;
-            cardBody.style.maxHeight = `${actualHeight}px`;
-            
-            setTimeout(() => {
-                cardBody.classList.remove('collapsed');
-                // Après l'animation, supprimer la hauteur fixe pour permettre un redimensionnement automatique
-                setTimeout(() => {
-                    cardBody.style.maxHeight = '';
-                }, 300);
-            }, 10);
-            
+        // Mettre à jour l'icône
+        if (collapseBtn) {
             collapseBtn.classList.replace('fa-plus', 'fa-minus');
-            setCookie(`card_${cardId}_collapsed`, 'false', 30);
-        } else {
-            // Réduire la carte
-            // D'abord, définir la hauteur actuelle pour l'animation
-            const actualHeight = cardBody.scrollHeight;
-            cardBody.style.maxHeight = `${actualHeight}px`;
-            
-            // Déclencher le reflow pour que la transition fonctionne
-            cardBody.offsetHeight; 
-            
-            // Puis réduire à la hauteur d'aperçu (70px définie dans le CSS)
-            cardBody.classList.add('collapsed');
-            cardBody.style.maxHeight = '70px';
-            
-            collapseBtn.classList.replace('fa-minus', 'fa-plus');
-            setCookie(`card_${cardId}_collapsed`, 'true', 30);
         }
+        
+        // Sauvegarder la préférence
+        setCookie(`card_${cardId}_collapsed`, 'false', 30);
+    } else {
+        // Réduire la carte
+        cardBody.classList.add('collapsed');
+        
+        // Mettre à jour l'icône
+        if (collapseBtn) {
+            collapseBtn.classList.replace('fa-minus', 'fa-plus');
+        }
+        
+        // Sauvegarder la préférence
+        setCookie(`card_${cardId}_collapsed`, 'true', 30);
     }
 }
 
-// Fonction pour définir un cookie
+// Fonction utilitaire pour définir un cookie
 function setCookie(name, value, days) {
-    let expires = '';
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = '; expires=' + date.toUTCString();
-    }
-    document.cookie = name + '=' + (value || '') + expires + '; path=/';
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${value};${expires};path=/`;
 }
 
-// Fonction pour récupérer un cookie
+// Fonction utilitaire pour récupérer un cookie
 function getCookie(name) {
-    const nameEQ = name + '=';
+    const nameEQ = `${name}=`;
     const ca = document.cookie.split(';');
     for (let i = 0; i < ca.length; i++) {
         let c = ca[i];
@@ -131,52 +103,32 @@ function getCookie(name) {
     return null;
 }
 
-// Fonction pour supprimer un cookie
-function eraseCookie(name) {
-    document.cookie = name + '=; Max-Age=-99999999; path=/;';
-}
-
-// Fonction pour réinitialiser toutes les préférences de cartes réduites
+// Fonction pour réinitialiser toutes les préférences de collapse
 function resetAllCardPreferences() {
-    // Récupérer tous les cookies
-    const allCookies = document.cookie.split(';');
-    
-    // Filtrer les cookies liés aux cartes
-    const cardCookies = allCookies.filter(cookie => {
+    // Supprimer tous les cookies liés au collapse des cartes
+    const cookies = document.cookie.split(';');
+    cookies.forEach(cookie => {
         const trimmedCookie = cookie.trim();
-        return trimmedCookie.startsWith('card_') && trimmedCookie.includes('_collapsed');
+        if (trimmedCookie.startsWith('card_') && trimmedCookie.includes('_collapsed')) {
+            const cookieName = trimmedCookie.split('=')[0].trim();
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        }
     });
     
-    // Supprimer chaque cookie
-    cardCookies.forEach(cookie => {
-        const cookieName = cookie.split('=')[0].trim();
-        eraseCookie(cookieName);
-    });
-    
-    // Développer toutes les cartes actuellement affichées
+    // Réinitialiser l'état visuel de toutes les cartes
     const collapsedCards = document.querySelectorAll('.card-body.collapsed');
     collapsedCards.forEach(cardBody => {
-        // Trouver l'ID de la carte parente
         const card = cardBody.closest('.card');
-        if (card && card.id) {
-            // Développer la carte sans animation
-            cardBody.style.transition = 'none';
+        if (card) {
             cardBody.classList.remove('collapsed');
-            cardBody.style.maxHeight = '';
             
             // Mettre à jour l'icône
             const icon = card.querySelector('.card-collapse-btn i');
             if (icon) {
                 icon.classList.replace('fa-plus', 'fa-minus');
             }
-            
-            // Réactiver les transitions après un court délai
-            setTimeout(() => {
-                cardBody.style.transition = '';
-            }, 50);
         }
     });
 }
 
-// Exporter les fonctions
 export { initCardCollapse, toggleCardCollapse, resetAllCardPreferences };

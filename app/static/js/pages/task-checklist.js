@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskId = checklistContainer.dataset.taskId;
     const addItemForm = document.getElementById('add-checklist-item-form');
     const addItemInput = document.getElementById('add-checklist-item-input');
-    const addItemButton = document.getElementById('add-checklist-item-button');
     const shortcodeButton = document.getElementById('add-checklist-shortcode-button');
     const shortcodeModal = document.getElementById('shortcode-modal');
     const shortcodeInput = document.getElementById('shortcode-input');
@@ -18,6 +17,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.checklist-checkbox').forEach(function(checkbox) {
         checkbox.addEventListener('change', function() {
             const itemId = this.closest('.checklist-item').dataset.id;
+            const copyButton = this.closest('.checklist-item').querySelector('.copy-to-time-btn');
+            
+            // Mettre à jour l'état du bouton de copie
+            if (this.checked) {
+                copyButton.classList.remove('disabled');
+                copyButton.disabled = false;
+            } else {
+                copyButton.classList.add('disabled');
+                copyButton.disabled = true;
+            }
+            
             updateChecklistItem(itemId, { is_checked: this.checked });
         });
     });
@@ -34,6 +44,19 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.checklist-content').forEach(function(content) {
         content.addEventListener('dblclick', function() {
             makeContentEditable(this);
+        });
+    });
+    
+    // Initialiser les écouteurs d'événements pour les boutons de copie vers le temps
+    document.querySelectorAll('.copy-to-time-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const content = this.closest('.checklist-item').querySelector('.checklist-content').textContent;
+            const timeDescription = document.querySelector('#description');
+            if (timeDescription) {
+                timeDescription.value = content;
+                timeDescription.focus();
+                timeDescription.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
     });
     
@@ -56,8 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
             addChecklistItem();
         });
         
-        addItemButton.addEventListener('click', function() {
-            addChecklistItem();
+        // Gérer la touche Entrée
+        addItemInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addChecklistItem();
+            }
         });
     }
     
@@ -141,9 +168,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label class="form-check-label" for="checklist-item-${item.id}">
                     <span class="checklist-content">${item.content}</span>
                 </label>
-                <button type="button" class="btn btn-sm btn-outline-danger delete-checklist-item">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-primary copy-to-time-btn ${!item.is_checked ? 'disabled' : ''}" title="Copier dans le formulaire de temps" ${!item.is_checked ? 'disabled' : ''}>
+                        <i class="fas fa-clock"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger delete-checklist-item" title="Supprimer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
         `;
         
@@ -152,14 +184,33 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ajouter les écouteurs d'événements
         const checkbox = itemElement.querySelector('.checklist-checkbox');
         const deleteButton = itemElement.querySelector('.delete-checklist-item');
+        const copyButton = itemElement.querySelector('.copy-to-time-btn');
         const contentSpan = itemElement.querySelector('.checklist-content');
         
         checkbox.addEventListener('change', function() {
+            // Mettre à jour l'état du bouton de copie
+            if (this.checked) {
+                copyButton.classList.remove('disabled');
+                copyButton.disabled = false;
+            } else {
+                copyButton.classList.add('disabled');
+                copyButton.disabled = true;
+            }
+            
             updateChecklistItem(item.id, { is_checked: this.checked });
         });
         
         deleteButton.addEventListener('click', function() {
             deleteChecklistItem(item.id, itemElement);
+        });
+        
+        copyButton.addEventListener('click', function() {
+            const timeDescription = document.querySelector('#description');
+            if (timeDescription) {
+                timeDescription.value = contentSpan.textContent;
+                timeDescription.focus();
+                timeDescription.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
         
         // Rendre le contenu éditable

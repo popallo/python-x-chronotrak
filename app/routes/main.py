@@ -53,7 +53,7 @@ def get_dashboard_stats():
         
         # Temps total en une seule requête
         total_time = db.session.query(
-            func.sum(TimeEntry.duration).label('total_time')
+            func.sum(TimeEntry.hours).label('total_time')
         ).join(Task, TimeEntry.task_id == Task.id).join(Project, Task.project_id == Project.id).filter(
             Project.client_id.in_(client_ids)
         ).scalar() or 0

@@ -52,7 +52,7 @@
                         <i class="fas fa-exclamation-circle"></i>
                         <div class="stats-content">
                             <div class="stats-number">{{ projects_low_credit }}</div>
-                            <div class="stats-title">Projet{{ 's' if projects_low_credit > 1 else '' }} en crédit faible</div>
+                            <div class="stats-title" data-bs-toggle="tooltip" title="Projets avec un niveau de crédit faible">Projet{{ 's' if projects_low_credit > 1 else '' }} en crédit faible</div>
                         </div>
                     </div>
                 </div>

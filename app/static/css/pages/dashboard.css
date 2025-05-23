@@ -63,29 +63,29 @@
 }
 
 .stats-item.primary {
-    background-color: var(--bs-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: #ffffff;
 }
 
 .stats-item.success {
-    background-color: var(--bs-success);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
     color: #ffffff;
 }
 
 .stats-item.info {
-    background-color: var(--bs-info);
+    background: linear-gradient(135deg, var(--color-info), var(--color-info-dark));
     color: #ffffff;
 }
 
 .stats-item.warning {
-    background-color: var(--bs-warning);
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
     color: #ffffff;
 }
 
 .stats-item:hover {
     transform: translateY(-2px);
     box-shadow: var(--card-shadow-hover);
-    filter: brightness(1.1);
+    filter: brightness(1.05);
 }
 
 /* Icônes */
@@ -100,12 +100,31 @@
     color: #ffffff;
     opacity: 0.9;
     transition: all var(--transition-speed) ease;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Style spécifique pour l'icône de batterie */
+.stats-item.warning i.fa-battery-quarter,
+.stats-item.warning i.fa-battery-half {
+    color: #d97706 !important;
     background: rgba(255, 255, 255, 0.2);
+}
+
+/* Surcharge de la couleur warning de Bootstrap */
+.stats-item.warning i.text-warning {
+    color: #d97706 !important; /* Notre nouvelle couleur warning */
 }
 
 .stats-item:hover i {
     transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Style spécifique pour l'icône des projets avec peu de crédit */
+.stats-item.warning i.fa-exclamation-triangle,
+.stats-item.warning i.fa-triangle-exclamation {
+    color: #d97706 !important;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Contenu */
@@ -131,6 +150,27 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: rgba(255, 255, 255, 0.9);
+    cursor: help; /* Indique que le texte a un tooltip */
+    display: inline-block; /* Ajout pour que le soulignement ne s'étende pas */
+}
+
+/* Style pour le tooltip personnalisé */
+.stats-title[data-bs-toggle="tooltip"] {
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
+    width: fit-content; /* Ajout pour que le soulignement s'adapte au texte */
+}
+
+/* Ajustement du tooltip Bootstrap */
+.tooltip {
+    font-size: 0.75rem;
+    opacity: 0.95;
+}
+
+.tooltip-inner {
+    max-width: 200px;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
 }
 
 /* Responsive */

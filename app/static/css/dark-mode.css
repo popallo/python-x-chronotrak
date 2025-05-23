@@ -5,12 +5,12 @@ html:not(.theme-loaded) body {
   
   /* Variables pour les couleurs du mode sombre */
   :root {
-    --dm-bg-main: #121212;
-    --dm-bg-card: #1e1e1e;
-    --dm-bg-elevated: #2c2c2c;
-    --dm-border: #3c3c3c;
-    --dm-text: #e0e0e0;
-    --dm-text-muted: #9e9e9e;
+    --dm-bg-main: #0f172a;      /* Fond principal plus profond */
+    --dm-bg-card: #1e293b;      /* Cartes légèrement plus claires */
+    --dm-bg-elevated: #334155;  /* Éléments surélevés */
+    --dm-border: #475569;       /* Bordures plus douces */
+    --dm-text: #f1f5f9;         /* Texte principal plus doux */
+    --dm-text-muted: #94a3b8;   /* Texte secondaire plus lisible */
   }
   
   /* Sélecteur principal pour le mode sombre */
@@ -22,11 +22,13 @@ html:not(.theme-loaded) body {
   /* ===== Éléments de base ===== */
   html.dark-mode body .navbar-dark {
     background-color: var(--dm-bg-card) !important;
+    border-bottom: 1px solid var(--dm-border);
   }
   
   html.dark-mode body .footer {
     background-color: var(--dm-bg-card) !important;
     color: var(--dm-text);
+    border-top: 1px solid var(--dm-border);
   }
   
   html.dark-mode body .text-muted {

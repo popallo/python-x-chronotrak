@@ -743,3 +743,51 @@ html.dark-mode body .shortcode-example {
     background-color: #2c2c2c;
     color: #e0e0e0;
 }
+
+/* Barre de rappel des couleurs */
+.color-reminder-bar {
+    height: 3px;
+    background: transparent !important;
+    margin-bottom: 0;
+    transition: height 0.3s ease;
+}
+
+.color-item {
+    width: 16.66%;
+    height: 3px;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.color-reminder-bar:hover {
+    height: 6px;
+}
+
+.color-reminder-bar:hover .color-item {
+    opacity: 1;
+}
+
+/* Styles spécifiques pour chaque couleur */
+.color-item.bg-primary {
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+}
+
+.color-item.bg-success {
+    background: linear-gradient(90deg, var(--color-success), var(--color-success-dark));
+}
+
+.color-item.bg-info {
+    background: linear-gradient(90deg, var(--color-info), var(--color-info-dark));
+}
+
+.color-item.bg-warning {
+    background: linear-gradient(90deg, var(--color-warning), var(--color-warning-dark));
+}
+
+.color-item.bg-danger {
+    background: linear-gradient(90deg, var(--color-danger), var(--color-danger-dark));
+}
+
+.color-item.bg-reports {
+    background: linear-gradient(90deg, var(--color-reports), var(--color-reports-dark));
+}

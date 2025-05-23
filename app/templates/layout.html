@@ -15,8 +15,7 @@
     <meta name="application-name" content="ChronoTrak">
     <meta name="msapplication-TileColor" content="#007bff">
     <meta name="theme-color" content="#007bff">
-    <!-- Chargeur de thème précoce -->
-    <script src="{{ url_for('static', filename='js/theme-loader.js') }}"></script>
+    
     <!-- CSS critique pour le thème - chargé en premier pour éviter le flash -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
     <!-- Bootstrap CSS -->
@@ -27,9 +26,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <!-- Composants (fichier consolidé) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-    <!-- Filtres (fichier optimisé) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
-    <!-- Styles spécifiques à chaque page -->
+    
+    <!-- Chargeur de thème précoce -->
+    <script src="{{ url_for('static', filename='js/theme-loader.js') }}" defer></script>
+    
     {% block styles %}{% endblock %}
 </head>
 <body>

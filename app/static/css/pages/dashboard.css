@@ -4,12 +4,18 @@
     --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
     --transition-speed: 0.2s;
     --border-radius: 0.5rem;
+    --gradient-start: rgba(255, 255, 255, 0.05);
+    --gradient-end: rgba(255, 255, 255, 0.02);
+    --light-bg: #f5f6f8;
+    --light-bg-gradient: #eef0f3;
 }
 
 /* Mode sombre */
 [data-bs-theme="dark"] {
     --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --gradient-start: rgba(255, 255, 255, 0.03);
+    --gradient-end: rgba(255, 255, 255, 0.01);
 }
 
 /* Conteneur des statistiques */
@@ -36,11 +42,11 @@
 }
 
 [data-bs-theme="light"] .stats-container {
-    background: #f8f9fa;
+    background: linear-gradient(135deg, var(--light-bg), var(--light-bg-gradient));
 }
 
 [data-bs-theme="dark"] .stats-container {
-    background: #1a1d20;
+    background: linear-gradient(135deg, #1a1d20, #16181a);
 }
 
 /* Items statistiques */
@@ -151,6 +157,11 @@
     box-shadow: var(--card-shadow);
     transition: all var(--transition-speed) ease;
     height: 100%;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+}
+
+[data-bs-theme="light"] .card {
+    background-color: var(--light-bg);
 }
 
 .card:hover {

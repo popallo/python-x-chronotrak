@@ -1,21 +1,265 @@
-/* Couleurs des cartes de statistiques */
-.stats-card.bg-primary {
-    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+/* Variables */
+:root {
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.2s;
+    --border-radius: 0.5rem;
 }
 
-.stats-card.bg-success {
-    background: linear-gradient(135deg, #28a745, #155724) !important;
+/* Mode sombre */
+[data-bs-theme="dark"] {
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
-.stats-card.bg-info {
-    background: linear-gradient(135deg, #17a2b8, #0f6674) !important;
+/* Conteneur des statistiques */
+.stats-container {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    position: relative;
+    overflow: hidden;
 }
 
-.stats-card.bg-warning {
-    background: linear-gradient(135deg, #ffc107, #d39e00) !important;
+.stats-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--bs-primary), var(--bs-info));
+    opacity: 1;
 }
 
-/* Améliorations visuelles pour les listes de projets et tâches */
+[data-bs-theme="light"] .stats-container {
+    background: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .stats-container {
+    background: #1a1d20;
+}
+
+/* Items statistiques */
+.stats-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-speed) ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-item.primary {
+    background-color: var(--bs-primary);
+    color: #ffffff;
+}
+
+.stats-item.success {
+    background-color: var(--bs-success);
+    color: #ffffff;
+}
+
+.stats-item.info {
+    background-color: var(--bs-info);
+    color: #ffffff;
+}
+
+.stats-item.warning {
+    background-color: var(--bs-warning);
+    color: #ffffff;
+}
+
+.stats-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+    filter: brightness(1.1);
+}
+
+/* Icônes */
+.stats-item i {
+    font-size: 1.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #ffffff;
+    opacity: 0.9;
+    transition: all var(--transition-speed) ease;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.stats-item:hover i {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Contenu */
+.stats-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+    color: #ffffff;
+}
+
+.stats-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .stats-container {
+        flex-wrap: wrap;
+    }
+    
+    .stats-item {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-item {
+        flex: 1 1 100%;
+    }
+}
+
+/* Cartes de contenu */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all var(--transition-speed) ease;
+    height: 100%;
+}
+
+.card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    background-color: transparent;
+}
+
+.card-header h5 {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Listes */
+.list-group-item {
+    border: none;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: calc(var(--border-radius) - 0.25rem) !important;
+    transition: all var(--transition-speed) ease;
+    background-color: var(--bs-body-bg);
+}
+
+.list-group-item:hover {
+    transform: translateX(4px);
+    background-color: var(--bs-tertiary-bg);
+}
+
+.list-group-item h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.list-group-item p {
+    font-size: 0.875rem;
+    margin-bottom: 0;
+    color: var(--bs-secondary-color);
+}
+
+/* Badges et indicateurs */
+.badge {
+    padding: 0.4em 0.6em;
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.priority-high { color: #dc3545; }
+.priority-medium { color: #fd7e14; }
+.priority-low { color: #198754; }
+
+/* Boutons */
+.btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-outline-warning:hover,
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+}
+
+/* États vides */
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Améliorations visuelles pour les listes */
 .dashboard-list-item {
     transition: transform 0.2s ease;
 }

@@ -53,27 +53,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block content %}
 <!-- Barre d'actions fixe -->
-<div class="action-toolbar sticky-top shadow-sm py-2" data-bs-theme="dark">
+<div class="action-toolbar sticky-top shadow-sm py-2 bg-secondary text-white rounded">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="h4 mb-0">{{ task.title }}</h1>
             <div class="d-flex gap-2">
-                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Retour au projet">
+                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Retour au projet">
                     <i class="fas fa-arrow-left"></i>
                 </a>
-                <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Modifier">
+                <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Modifier">
                     <i class="fas fa-edit"></i>
                 </a>
                 {% if not current_user.is_client() %}
-                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
+                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
                     <i class="fas fa-clock"></i>
                 </button>
                 <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Cloner la tâche">
+                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Cloner la tâche">
                         <i class="fas fa-copy"></i>
                     </button>
                 </form>
-                <button type="button" class="btn btn-outline-danger delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
+                <button type="button" class="btn btn-outline-light delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
                     <i class="fas fa-trash"></i>
                 </button>
                 {% endif %}
@@ -83,11 +83,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- Espace pour compenser la barre fixe -->
-<div style="height: 70px;"></div>
+<div class="toolbar-spacer"></div>
 
 <!-- Bloc d'informations principal -->
 <div class="card mb-4">
-    <div class="card-header bg-info text-white">
+    <div class="card-header bg-secondary text-white">
         <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
     </div>
     <div class="card-body">
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!-- Statut -->
                 <div class="mb-3">
                     <div class="status-toggle">
-                        <div class="btn-group" role="group" aria-label="Changer le statut">
+                        <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
                             <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
                                     data-status="à faire" data-task-id="{{ task.id }}" style="white-space: nowrap;">
                                 <i class="fas fa-list me-1"></i>À faire
@@ -343,17 +343,17 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="mb-3 position-relative">
                 {{ comment_form.content.label(class="form-label") }}
                 {% if comment_form.content.errors %}
-                    {{ comment_form.content(class="form-control is-invalid", rows=2, style="padding-right: 100px;") }}
+                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=2) }}
                     <div class="invalid-feedback">
                         {% for error in comment_form.content.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ comment_form.content(class="form-control", rows=2, style="padding-right: 100px;") }}
+                    {{ comment_form.content(class="form-control comment-input", rows=2) }}
                 {% endif %}
-                <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                    {{ comment_form.submit(class="btn btn-primary btn-sm", style="border-radius: 20px; padding: 5px 15px;") }}
+                <div class="comment-submit-container">
+                    {{ comment_form.submit(class="btn btn-primary btn-sm comment-submit") }}
                 </div>
             </div>
         </form>
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="comment-item" id="comment-{{ comment.id }}">
                         <div class="comment-header">
                             <span class="comment-author">{{ comment.user.name }}</span>
-                            <div>
+                            <div class="d-flex align-items-center">
                                 <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
                                 
                                 {# Calcul du temps écoulé en minutes depuis la création du commentaire #}
@@ -395,43 +395,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <div class="comment-content">
-                            <p class="mb-0">{{ comment.content }}</p>
+                            {{ comment.content }}
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
             <p class="text-muted">Aucun commentaire pour le moment.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Troisième rangée avec l'historique des temps -->
-<div class="card mb-4">
-    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
-        <span class="badge bg-light text-secondary">{{ time_entries|length }}</span>
-    </div>
-    <div class="card-body">
-        {% if time_entries %}
-            <div class="list-group">
-                {% for entry in time_entries %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ entry.hours|format_time }}</h6>
-                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
-                        </div>
-                        <p class="mb-1">
-                            <strong>{{ entry.user.name }}</strong>
-                            {% if entry.description %}
-                                : {{ entry.description }}
-                            {% endif %}
-                        </p>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted">Aucun temps n'a été enregistré sur cette tâche.</p>
         {% endif %}
     </div>
 </div>

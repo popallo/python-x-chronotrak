@@ -1,5 +1,10 @@
 {% extends 'layout.html' %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+{% endblock %}
+
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -11,134 +16,133 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
-    <h1 class="mb-2 mb-md-0">{{ task.title }}</h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Retour au projet">
-            <i class="fas fa-arrow-left"></i>
-        </a>
-        <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Modifier">
-            <i class="fas fa-edit"></i>
-        </a>
-        {% if not current_user.is_client() %}
-        <button type="button" class="btn btn-outline-danger delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
-            <i class="fas fa-trash"></i>
-        </button>
-        {% endif %}
+<!-- Barre d'actions fixe -->
+<div class="action-toolbar sticky-top shadow-sm py-2 bg-secondary text-white rounded">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h4 mb-0">{{ task.title }}</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Retour au projet">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% if not current_user.is_client() %}
+                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
+                    <i class="fas fa-clock"></i>
+                </button>
+                <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Cloner la tâche">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </form>
+                <button type="button" class="btn btn-outline-light delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Première rangée avec les deux blocs côte à côte, sans marge en bas -->
-<div class="row mb-4">
-    <!-- Informations principales de la tâche -->
-    <div class="col-lg-8">
-        <div class="card h-100 mb-0">  <!-- Suppression de mb-4 ici -->
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p>
-                            <strong>Projet :</strong> 
-                            <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}">{{ task.project.name }}</a>
-                        </p>
-                        <p>
-                            <strong>Client :</strong> 
-                            <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}">{{ task.project.client.name }}</a>
-                        </p>
-                        <p>
-                            <strong>Statut :</strong> 
-                            <div class="status-toggle mt-1">
-                                <div class="btn-group" role="group" aria-label="Changer le statut">
-                                    <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
-                                            data-status="à faire" data-task-id="{{ task.id }}">
-                                        À faire
-                                    </button>
-                                    <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
-                                            data-status="en cours" data-task-id="{{ task.id }}">
-                                        En cours
-                                    </button>
-                                    <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
-                                            data-status="terminé" data-task-id="{{ task.id }}">
-                                        Terminé
-                                    </button>
-                                </div>
-                            </div>
-                        </p>
-                        <p>
-                            <strong>Priorité :</strong> 
-                            <span class="text-{{ task.priority }}">{{ task.priority }}</span>
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <p>
-                            <strong>Assigné à :</strong> 
-                            {% if task.user_id %}
-                                {{ task.assigned_to.name }}
-                            {% else %}
-                                <span class="text-muted">Non assigné</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Temps estimé :</strong> 
-                            {% if task.estimated_time %}
-                                {{ task.estimated_time|format_time }}
-                            {% else %}
-                                <span class="text-muted">Non défini</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Temps passé :</strong> 
-                            {% if task.actual_time %}
-                                {{ task.actual_time|format_time }}
-                            {% else %}
-                                <span class="text-muted">0 min</span>
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Créée le :</strong> {{ task.created_at.strftime('%d/%m/%Y') }}
-                        </p>
-                        {% if task.completed_at %}
-                            <p>
-                                <strong>Terminée le :</strong> {{ task.completed_at.strftime('%d/%m/%Y') }}
-                            </p>
-                        {% endif %}
+<!-- Espace pour compenser la barre fixe -->
+<div class="toolbar-spacer"></div>
+
+<!-- Bloc d'informations principal -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <!-- Première colonne -->
+            <div class="col-md-6">
+                <!-- Badges de temps -->
+                <div class="d-flex gap-2 mb-3">
+                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
+                        <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
+                    </span>
+                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps estimé pour la tâche">
+                        <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time if task.estimated_time else 'Non défini' }}
+                    </span>
+                </div>
+
+                <!-- Statut -->
+                <div class="mb-3">
+                    <div class="status-toggle">
+                        <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
+                            <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
+                                    data-status="à faire" data-task-id="{{ task.id }}">
+                                <i class="fas fa-list me-1"></i>À faire
+                            </button>
+                            <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
+                                    data-status="en cours" data-task-id="{{ task.id }}">
+                                <i class="fas fa-spinner me-1"></i>En cours
+                            </button>
+                            <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
+                                    data-status="terminé" data-task-id="{{ task.id }}">
+                                <i class="fas fa-check me-1"></i>Terminé
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 {% if task.description %}
-                    <div class="mt-3">
-                        <strong>Description :</strong>
-                        <p>{{ task.description }}</p>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-align-left me-2 text-muted mt-1"></i>
+                            <div>
+                                <strong>Description :</strong>
+                                <p class="mb-0">{{ task.description }}</p>
+                            </div>
+                        </div>
                     </div>
                 {% endif %}
-                
+
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-project-diagram me-2 text-muted"></i>
+                        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none">{{ task.project.name }}</a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-building me-2 text-muted"></i>
+                        <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user me-2 text-muted"></i>
+                        <span>{{ task.assigned_to.name if task.user_id else 'Non assigné' }}</span>
+                    </div>
+                </div>
+
                 <!-- Checklist Section -->
-                <div id="checklist-container" class="checklist-container" data-task-id="{{ task.id }}">
-                    <div class="checklist-header">
-                        <h5 class="checklist-title">
-                            <i class="fas fa-tasks me-2"></i>Checklist
-                        </h5>
+                <div id="checklist-container" class="checklist-container border border-secondary rounded p-2 mt-3" data-task-id="{{ task.id }}">
+                    <div class="checklist-header d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="checklist-title mb-0">
+                            <i class="fas fa-tasks me-1"></i>Checklist
+                        </h6>
                         <div class="checklist-actions">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-checklist-shortcode-button">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
                                 <i class="fas fa-code me-1"></i>Shortcode
                             </button>
                         </div>
                     </div>
                     
-                    <div id="checklist-items" class="checklist-items">
+                    <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
                         {% for item in task.checklist_items %}
-                        <div class="checklist-item" data-id="{{ item.id }}">
-                            <div class="form-check">
-                                <input class="form-check-input checklist-checkbox" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                                <label class="form-check-label" for="checklist-item-{{ item.id }}">
-                                    <span class="checklist-content">{{ item.content }}</span>
-                                </label>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-primary copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
+                        <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
+                            <div class="form-check d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
+                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
+                                        <span class="checklist-content">{{ item.content }}</span>
+                                    </label>
+                                </div>
+                                <div class="btn-group btn-group-sm ms-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
                                         <i class="fas fa-clock"></i>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger delete-checklist-item" title="Supprimer">
+                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
@@ -147,66 +151,99 @@
                         {% endfor %}
                     </div>
                     
-                    <form id="add-checklist-item-form" class="checklist-add-form position-relative">
-                        <input type="text" id="add-checklist-item-input" class="form-control" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
+                    <form id="add-checklist-item-form" class="checklist-add-form position-relative mt-1">
+                        <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
                         <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                            <span class="text-muted" style="font-size: 0.8rem;">
+                            <span class="text-muted" style="font-size: 0.7rem;">
                                 <i class="fas fa-keyboard me-1"></i>Entrée
                             </span>
                         </div>
                     </form>
                 </div>
-                
-                <!-- Modal pour le shortcode -->
-                <div class="modal fade" id="shortcode-modal" tabindex="-1" aria-labelledby="shortcodeModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="shortcodeModalLabel">Ajouter une checklist avec un shortcode</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="form-group">
-                                    <label for="shortcode-input">Shortcode</label>
-                                    <input type="text" class="form-control" id="shortcode-input" placeholder='tasks["Élément 1", "Élément 2"]'>
-                                    <small class="form-text text-muted">
-                                        Utilisez le format <code>tasks["Élément 1", "Élément 2"]</code> pour créer plusieurs éléments à la fois.
-                                    </small>
-                                    <div class="shortcode-example">
-                                        Exemple: tasks["Vérifier les emails", "Répondre aux messages", "Mettre à jour la documentation"]
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <button type="button" class="btn btn-primary" id="shortcode-submit">Ajouter</button>
-                            </div>
+            </div>
+            
+            <!-- Deuxième colonne -->
+            <div class="col-md-6">
+                <div class="d-flex flex-column h-100">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-flag me-2 text-muted"></i>
+                            <span class="badge bg-{{ task.priority }}">{{ task.priority }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar me-2 text-muted"></i>
+                            <span>Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        {% if task.completed_at %}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2 text-muted"></i>
+                            <span>Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock me-2 text-muted"></i>
+                            <span>Dernière activité : 
+                                {% if comments %}
+                                    {{ comments[0].created_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    {{ task.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Container pour les alertes -->
-                <div id="alert-container"></div>
 
-                <div class="mt-3">
-                    <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-copy me-1"></i>Cloner la tâche
-                        </button>
-                    </form>
+                    <!-- Historique de temps -->
+                    <div class="time-history border border-secondary rounded p-2 mt-3 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-history me-2 text-muted"></i>
+                                <small class="text-muted">Historique des temps</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if time_entries %}
+                            <div class="list-group list-group-flush">
+                                {% for entry in time_entries %}
+                                    <div class="list-group-item py-1 px-2 time-entry-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-{{ 'plus' if entry.hours > 0 else 'minus' }} me-1 text-{{ 'success' if entry.hours > 0 else 'danger' }}"></i>
+                                                <span class="text-{{ 'success' if entry.hours > 0 else 'danger' }}">
+                                                    {{ entry.hours|format_time }}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
+                                        </div>
+                                        <small class="text-muted d-block">{{ entry.user.name }}</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted small">Aucun temps enregistré</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <!-- Enregistrement du temps - visible uniquement pour les administrateurs et techniciens -->
-        {% if not current_user.is_client() %}
-        <div class="card h-100 mb-0">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Enregistrer du temps</h5>
+</div>
+
+<!-- Modal pour l'enregistrement du temps -->
+{% if not current_user.is_client() %}
+<div class="modal fade" id="timeEntryModal" tabindex="-1" aria-labelledby="timeEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="timeEntryModalLabel">
+                    <i class="fas fa-clock me-2"></i>Enregistrer du temps
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="card-body d-flex flex-column">
+            <div class="modal-body">
                 {% if task.project.time_tracking_enabled %}
                 <div class="alert {% if task.project.remaining_credit < 2 %}alert-danger{% elif task.project.remaining_credit < 5 %}alert-warning{% else %}alert-success{% endif %} mb-4 no-auto-close">
                     <div class="d-flex justify-content-between align-items-center">
@@ -218,7 +255,7 @@
                 </div>
                 {% endif %}
                 
-                <form method="POST" action="{{ url_for('tasks.log_time', slug_or_id=task.slug) }}" class="d-flex flex-column h-100">
+                <form method="POST" action="{{ url_for('tasks.log_time', slug_or_id=task.slug) }}">
                     {{ time_form.hidden_tag() }}
                     <div class="mb-3">
                         {{ time_form.hours.label(class="form-label") }}
@@ -234,60 +271,28 @@
                         {% endif %}
                         <div class="form-text">Temps par tranches de 15 minutes</div>
                     </div>
-                    <div class="mb-4 position-relative">
+                    <div class="mb-3">
                         {{ time_form.description.label(class="form-label") }}
                         {% if time_form.description.errors %}
-                            {{ time_form.description(class="form-control is-invalid", rows=3, style="padding-right: 100px;") }}
+                            {{ time_form.description(class="form-control is-invalid", rows=3) }}
                             <div class="invalid-feedback">
                                 {% for error in time_form.description.errors %}
                                     {{ error }}
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ time_form.description(class="form-control", rows=3, style="padding-right: 100px;") }}
+                            {{ time_form.description(class="form-control", rows=3) }}
                         {% endif %}
-                        <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                            {{ time_form.submit(class="btn btn-secondary btn-sm", style="border-radius: 20px; padding: 5px 15px;") }}
-                        </div>
+                    </div>
+                    <div class="text-end">
+                        {{ time_form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
             </div>
         </div>
-        {% else %}
-        <!-- Informations sur le crédit pour les clients -->
-        <div class="card h-100 mb-0">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Gestion du temps</h5>
-            </div>
-            <div class="card-body">
-                {% if task.project.time_tracking_enabled %}
-                <!-- Utilisation des mêmes seuils pour la couleur que pour les administrateurs/techniciens -->
-                {% set color = 'success' if task.project.remaining_credit >= 5 else 'warning' if task.project.remaining_credit >= 2 else 'danger' %}
-                
-                <div class="card mb-3 border-{{ color }} credit-info-card">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="fas fa-clock me-2"></i>Crédit restant
-                            </h6>
-                            <span class="fs-5 fw-bold text-{{ color }}">
-                                {{ task.project.remaining_credit|format_time }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="alert alert-warning">
-                    La gestion du temps n'est pas activée pour ce projet.
-                </div>
-                {% endif %}
-                
-                <p>Pour enregistrer du temps sur cette tâche ou demander l'ajout de crédit, veuillez contacter votre gestionnaire de compte.</p>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
+{% endif %}
 
 <!-- Deuxième rangée avec les commentaires -->
 <div class="card mb-4">
@@ -302,17 +307,17 @@
             <div class="mb-3 position-relative">
                 {{ comment_form.content.label(class="form-label") }}
                 {% if comment_form.content.errors %}
-                    {{ comment_form.content(class="form-control is-invalid", rows=2, style="padding-right: 100px;") }}
+                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=2) }}
                     <div class="invalid-feedback">
                         {% for error in comment_form.content.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ comment_form.content(class="form-control", rows=2, style="padding-right: 100px;") }}
+                    {{ comment_form.content(class="form-control comment-input", rows=2) }}
                 {% endif %}
-                <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                    {{ comment_form.submit(class="btn btn-primary btn-sm", style="border-radius: 20px; padding: 5px 15px;") }}
+                <div class="comment-submit-container">
+                    {{ comment_form.submit(class="btn btn-primary btn-sm comment-submit") }}
                 </div>
             </div>
         </form>
@@ -325,7 +330,7 @@
                     <div class="comment-item" id="comment-{{ comment.id }}">
                         <div class="comment-header">
                             <span class="comment-author">{{ comment.user.name }}</span>
-                            <div>
+                            <div class="d-flex align-items-center">
                                 <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
                                 
                                 {# Calcul du temps écoulé en minutes depuis la création du commentaire #}
@@ -354,43 +359,13 @@
                             </div>
                         </div>
                         <div class="comment-content">
-                            <p class="mb-0">{{ comment.content }}</p>
+                            {{ comment.content }}
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
             <p class="text-muted">Aucun commentaire pour le moment.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Troisième rangée avec l'historique des temps -->
-<div class="card mb-4">
-    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des temps</h5>
-        <span class="badge bg-light text-secondary">{{ time_entries|length }}</span>
-    </div>
-    <div class="card-body">
-        {% if time_entries %}
-            <div class="list-group">
-                {% for entry in time_entries %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ entry.hours|format_time }}</h6>
-                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
-                        </div>
-                        <p class="mb-1">
-                            <strong>{{ entry.user.name }}</strong>
-                            {% if entry.description %}
-                                : {{ entry.description }}
-                            {% endif %}
-                        </p>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted">Aucun temps n'a été enregistré sur cette tâche.</p>
         {% endif %}
     </div>
 </div>

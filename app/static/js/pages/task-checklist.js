@@ -2,15 +2,9 @@
  * Gestion des checklists pour les tâches
  */
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initialisation de la checklist...');
-    
+    // Initialisation des éléments DOM
     const checklistContainer = document.getElementById('checklist-container');
-    if (!checklistContainer) {
-        console.log('Container de checklist non trouvé');
-        return;
-    }
-    
-    console.log('Container de checklist trouvé');
+    if (!checklistContainer) return;
     
     const taskId = checklistContainer.dataset.taskId;
     const addItemForm = document.getElementById('add-checklist-item-form');
@@ -19,115 +13,147 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeModal = document.getElementById('shortcode-modal');
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
+
+    // Initialisation des écouteurs d'événements
+    initChecklistEventListeners();
+    initSortable();
+    initTimeHistoryHeight();
     
-    console.log('Éléments trouvés:', {
-        addItemForm: !!addItemForm,
-        addItemInput: !!addItemInput,
-        shortcodeButton: !!shortcodeButton,
-        shortcodeModal: !!shortcodeModal,
-        shortcodeInput: !!shortcodeInput,
-        shortcodeSubmit: !!shortcodeSubmit
-    });
-    
-    // Initialiser les écouteurs d'événements pour les cases à cocher existantes
-    document.querySelectorAll('.checklist-checkbox').forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            const itemId = this.closest('.checklist-item').dataset.id;
-            const copyButton = this.closest('.checklist-item').querySelector('.copy-to-time-btn');
-            
-            // Mettre à jour l'état du bouton de copie
-            if (this.checked) {
-                copyButton.classList.remove('disabled');
-                copyButton.disabled = false;
-            } else {
-                copyButton.classList.add('disabled');
-                copyButton.disabled = true;
-            }
-            
-            updateChecklistItem(itemId, { is_checked: this.checked });
-        });
-    });
-    
-    // Initialiser les écouteurs d'événements pour les boutons de suppression existants
-    document.querySelectorAll('.delete-checklist-item').forEach(function(button) {
-        button.addEventListener('click', function() {
-            const itemId = this.closest('.checklist-item').dataset.id;
-            deleteChecklistItem(itemId, this.closest('.checklist-item'));
-        });
-    });
-    
-    // Initialiser les écouteurs d'événements pour le contenu éditable existant
-    document.querySelectorAll('.checklist-content').forEach(function(content) {
-        content.addEventListener('dblclick', function() {
-            makeContentEditable(this);
-        });
-    });
-    
-    // Initialiser les écouteurs d'événements pour les boutons de copie vers le temps
-    document.querySelectorAll('.copy-to-time-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            const content = this.closest('.checklist-item').querySelector('.checklist-content').textContent;
-            const timeDescription = document.querySelector('#description');
-            if (timeDescription) {
-                timeDescription.value = content;
-                timeDescription.focus();
-                timeDescription.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-    });
-    
-    // Initialiser Sortable pour le réarrangement des éléments
-    const checklistItems = document.getElementById('checklist-items');
-    if (checklistItems) {
-        new Sortable(checklistItems, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function(evt) {
-                updateItemsOrder();
-            }
-        });
-    }
-    
-    // Ajouter un élément à la checklist
-    if (addItemForm) {
-        addItemForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            addChecklistItem();
+    // ==========================================================================
+    // Gestion des événements de la checklist
+    // ==========================================================================
+    function initChecklistEventListeners() {
+        // Écouteurs pour les cases à cocher existantes
+        document.querySelectorAll('.checklist-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', handleCheckboxChange);
         });
         
-        // Gérer la touche Entrée
+        // Écouteurs pour les boutons de suppression
+        document.querySelectorAll('.delete-checklist-item').forEach(button => {
+            button.addEventListener('click', handleDeleteClick);
+        });
+        
+        // Écouteurs pour le contenu éditable
+        document.querySelectorAll('.checklist-content').forEach(content => {
+            content.addEventListener('dblclick', () => makeContentEditable(content));
+        });
+        
+        // Écouteurs pour les boutons de copie vers le temps
+        document.querySelectorAll('.copy-to-time-btn').forEach(button => {
+            button.addEventListener('click', handleCopyToTime);
+        });
+        
+        // Gestion du formulaire d'ajout
+        if (addItemForm) {
+            addItemForm.addEventListener('submit', e => {
+                e.preventDefault();
+                addChecklistItem();
+            });
+        }
+        
+        // Gestion de la touche Entrée
         if (addItemInput) {
-            addItemInput.addEventListener('keydown', function(e) {
+            addItemInput.addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     addChecklistItem();
                 }
             });
         }
+        
+        // Gestion du modal de shortcode
+        if (shortcodeButton && shortcodeModal) {
+            const modal = new bootstrap.Modal(shortcodeModal);
+            shortcodeButton.addEventListener('click', () => modal.show());
+            
+            if (shortcodeSubmit && shortcodeInput) {
+                shortcodeSubmit.addEventListener('click', () => {
+                    const shortcode = shortcodeInput.value.trim();
+                    if (shortcode) {
+                        addChecklistItem(shortcode, true);
+                        shortcodeInput.value = '';
+                        modal.hide();
+                    }
+                });
+            }
+        }
     }
     
-    // Gérer le modal de shortcode
-    if (shortcodeButton && shortcodeModal) {
-        const modal = new bootstrap.Modal(shortcodeModal);
+    // ==========================================================================
+    // Gestion de la hauteur de l'historique de temps
+    // ==========================================================================
+    function initTimeHistoryHeight() {
+        const timeHistory = document.querySelector('.time-history');
         
-        shortcodeButton.addEventListener('click', function() {
-            modal.show();
+        function updateTimeHistoryHeight() {
+            if (checklistContainer && timeHistory) {
+                const checklistHeight = checklistContainer.offsetHeight;
+                timeHistory.style.height = `${checklistHeight}px`;
+                timeHistory.style.maxHeight = 'none';
+            }
+        }
+
+        updateTimeHistoryHeight();
+
+        const observer = new MutationObserver(updateTimeHistoryHeight);
+        observer.observe(checklistContainer, {
+            childList: true,
+            subtree: true,
+            attributes: true
         });
-        
-        // Soumettre le shortcode
-        if (shortcodeSubmit && shortcodeInput) {
-            shortcodeSubmit.addEventListener('click', function() {
-                const shortcode = shortcodeInput.value.trim();
-                if (shortcode) {
-                    addChecklistItem(shortcode, true);
-                    shortcodeInput.value = '';
-                    modal.hide();
-                }
+
+        window.addEventListener('resize', updateTimeHistoryHeight);
+    }
+    
+    // ==========================================================================
+    // Gestion du tri des éléments
+    // ==========================================================================
+    function initSortable() {
+        const checklistItems = document.getElementById('checklist-items');
+        if (checklistItems) {
+            new Sortable(checklistItems, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: updateItemsOrder
             });
         }
     }
     
-    // Fonction pour ajouter un élément à la checklist
+    // ==========================================================================
+    // Gestionnaires d'événements
+    // ==========================================================================
+    function handleCheckboxChange() {
+        const itemId = this.closest('.checklist-item').dataset.id;
+        const copyButton = this.closest('.checklist-item').querySelector('.copy-to-time-btn');
+        
+        copyButton.classList.toggle('disabled', !this.checked);
+        copyButton.disabled = !this.checked;
+        
+        updateChecklistItem(itemId, { is_checked: this.checked });
+    }
+    
+    function handleDeleteClick() {
+        const itemId = this.closest('.checklist-item').dataset.id;
+        deleteChecklistItem(itemId, this.closest('.checklist-item'));
+    }
+    
+    function handleCopyToTime() {
+        const checklistItem = this.closest('.checklist-item');
+        const content = checklistItem.querySelector('.checklist-content').textContent;
+        const timeModal = new bootstrap.Modal(document.getElementById('timeEntryModal'));
+        const descriptionInput = document.querySelector('#timeEntryModal textarea[name="description"]');
+        
+        timeModal.show();
+        
+        document.getElementById('timeEntryModal').addEventListener('shown.bs.modal', function() {
+            descriptionInput.value = content;
+            descriptionInput.focus();
+        }, { once: true });
+    }
+    
+    // ==========================================================================
+    // Opérations CRUD
+    // ==========================================================================
     function addChecklistItem(content = null, isShortcode = false) {
         if (!content && addItemInput) {
             content = addItemInput.value.trim();
@@ -135,27 +161,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!content) return;
         
-        const data = {
-            content: content,
-            is_shortcode: isShortcode
-        };
-        
         fetch(`/tasks/${taskId}/checklist`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': getCsrfToken()
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                content: content,
+                is_shortcode: isShortcode
+            })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 if (isShortcode) {
-                    // Recharger la page pour afficher tous les éléments créés par le shortcode
                     window.location.reload();
                 } else {
-                    // Ajouter l'élément à la liste
                     addItemToList(data.item);
                     if (addItemInput) {
                         addItemInput.value = '';
@@ -171,7 +193,78 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Fonction pour ajouter un élément à la liste
+    function updateChecklistItem(itemId, data) {
+        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                showError(data.error || 'Erreur lors de la mise à jour de l\'élément');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showError('Erreur lors de la mise à jour de l\'élément');
+        });
+    }
+    
+    function deleteChecklistItem(itemId, element) {
+        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-Token': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                element.remove();
+            } else {
+                showError(data.error || 'Erreur lors de la suppression de l\'élément');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showError('Erreur lors de la suppression de l\'élément');
+        });
+    }
+    
+    function updateItemsOrder() {
+        const items = Array.from(document.querySelectorAll('.checklist-item'));
+        const itemsData = items.map((item, index) => ({
+            id: item.dataset.id,
+            position: index
+        }));
+        
+        fetch(`/tasks/${taskId}/checklist/reorder`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({ items: itemsData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                showError(data.error || 'Erreur lors de la réorganisation des éléments');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showError('Erreur lors de la réorganisation des éléments');
+        });
+    }
+    
+    // ==========================================================================
+    // Utilitaires
+    // ==========================================================================
     function addItemToList(item) {
         const checklistItems = document.getElementById('checklist-items');
         if (!checklistItems) return;
@@ -205,111 +298,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const copyButton = itemElement.querySelector('.copy-to-time-btn');
         const contentSpan = itemElement.querySelector('.checklist-content');
         
-        checkbox.addEventListener('change', function() {
-            // Mettre à jour l'état du bouton de copie
-            if (this.checked) {
-                copyButton.classList.remove('disabled');
-                copyButton.disabled = false;
-            } else {
-                copyButton.classList.add('disabled');
-                copyButton.disabled = true;
-            }
-            
-            updateChecklistItem(item.id, { is_checked: this.checked });
-        });
-        
-        deleteButton.addEventListener('click', function() {
-            deleteChecklistItem(item.id, itemElement);
-        });
-        
-        copyButton.addEventListener('click', function() {
-            const timeDescription = document.querySelector('#description');
-            if (timeDescription) {
-                timeDescription.value = contentSpan.textContent;
-                timeDescription.focus();
-                timeDescription.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-        
-        // Rendre le contenu éditable
-        contentSpan.addEventListener('dblclick', function() {
-            makeContentEditable(contentSpan);
-        });
+        checkbox.addEventListener('change', handleCheckboxChange);
+        deleteButton.addEventListener('click', handleDeleteClick);
+        copyButton.addEventListener('click', handleCopyToTime);
+        contentSpan.addEventListener('dblclick', () => makeContentEditable(contentSpan));
     }
     
-    // Fonction pour mettre à jour un élément de la checklist
-    function updateChecklistItem(itemId, data) {
-        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': getCsrfToken()
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                showError(data.error || 'Erreur lors de la mise à jour de l\'élément');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la mise à jour de l\'élément');
-        });
-    }
-    
-    // Fonction pour supprimer un élément de la checklist
-    function deleteChecklistItem(itemId, element) {
-        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-Token': getCsrfToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                element.remove();
-            } else {
-                showError(data.error || 'Erreur lors de la suppression de l\'élément');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la suppression de l\'élément');
-        });
-    }
-    
-    // Fonction pour mettre à jour l'ordre des éléments
-    function updateItemsOrder() {
-        const items = Array.from(document.querySelectorAll('.checklist-item'));
-        const itemsData = items.map((item, index) => ({
-            id: item.dataset.id,
-            position: index
-        }));
-        
-        fetch(`/tasks/${taskId}/checklist/reorder`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': getCsrfToken()
-            },
-            body: JSON.stringify({ items: itemsData })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                showError(data.error || 'Erreur lors de la réorganisation des éléments');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la réorganisation des éléments');
-        });
-    }
-    
-    // Fonction pour rendre le contenu éditable
     function makeContentEditable(element) {
         const currentContent = element.textContent;
         const input = document.createElement('input');
@@ -341,17 +335,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Fonction pour récupérer le token CSRF
     function getCsrfToken() {
         const metaTag = document.querySelector('meta[name="csrf-token"]');
-        if (!metaTag) {
-            console.error('CSRF token meta tag not found');
-            return '';
-        }
-        return metaTag.getAttribute('content');
+        return metaTag ? metaTag.getAttribute('content') : '';
     }
     
-    // Fonction pour afficher une erreur
     function showError(message) {
         const alertContainer = document.getElementById('alert-container');
         if (alertContainer) {
@@ -363,10 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             alertContainer.appendChild(alert);
             
-            // Supprimer l'alerte après 5 secondes
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
+            setTimeout(() => alert.remove(), 5000);
         }
     }
 }); 

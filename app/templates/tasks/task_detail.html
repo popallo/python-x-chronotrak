@@ -3,12 +3,6 @@
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
-<style>
-.action-toolbar {
-    backdrop-filter: blur(10px);
-    background-color: rgba(var(--bs-body-bg-rgb), 0.8) !important;
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
@@ -19,36 +13,6 @@
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}" defer></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const checklistContainer = document.getElementById('checklist-container');
-    const timeHistory = document.querySelector('.time-history');
-    
-    function updateTimeHistoryHeight() {
-        if (checklistContainer && timeHistory) {
-            const checklistHeight = checklistContainer.offsetHeight;
-            timeHistory.style.height = `${checklistHeight}px`;
-            timeHistory.style.maxHeight = 'none'; // Remove max-height constraint
-        }
-    }
-
-    // Initial update
-    updateTimeHistoryHeight();
-
-    // Update on checklist changes
-    const observer = new MutationObserver(updateTimeHistoryHeight);
-    if (checklistContainer) {
-        observer.observe(checklistContainer, {
-            childList: true,
-            subtree: true,
-            attributes: true
-        });
-    }
-
-    // Update on window resize
-    window.addEventListener('resize', updateTimeHistoryHeight);
-});
-</script>
 {% endblock %}
 
 {% block content %}
@@ -109,15 +73,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="status-toggle">
                         <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
                             <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
-                                    data-status="à faire" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                    data-status="à faire" data-task-id="{{ task.id }}">
                                 <i class="fas fa-list me-1"></i>À faire
                             </button>
                             <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
-                                    data-status="en cours" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                    data-status="en cours" data-task-id="{{ task.id }}">
                                 <i class="fas fa-spinner me-1"></i>En cours
                             </button>
                             <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
-                                    data-status="terminé" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                    data-status="terminé" data-task-id="{{ task.id }}">
                                 <i class="fas fa-check me-1"></i>Terminé
                             </button>
                         </div>

@@ -375,4 +375,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 5000);
         }
     }
+
+    // Gestion de la hauteur de l'historique de temps
+    function initTimeHistoryHeight() {
+        const checklistContainer = document.getElementById('checklist-container');
+        const timeHistory = document.querySelector('.time-history');
+        
+        function updateTimeHistoryHeight() {
+            if (checklistContainer && timeHistory) {
+                const checklistHeight = checklistContainer.offsetHeight;
+                timeHistory.style.height = `${checklistHeight}px`;
+                timeHistory.style.maxHeight = 'none'; // Remove max-height constraint
+            }
+        }
+
+        // Initial update
+        updateTimeHistoryHeight();
+
+        // Update on checklist changes
+        const observer = new MutationObserver(updateTimeHistoryHeight);
+        if (checklistContainer) {
+            observer.observe(checklistContainer, {
+                childList: true,
+                subtree: true,
+                attributes: true
+            });
+        }
+
+        // Update on window resize
+        window.addEventListener('resize', updateTimeHistoryHeight);
+    }
+
+    // Initialisation au chargement de la page
+    initTimeHistoryHeight();
 }); 

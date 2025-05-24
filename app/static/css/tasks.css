@@ -2,4 +2,47 @@
     backdrop-filter: blur(10px);
     background-color: rgba(var(--bs-body-bg-rgb), 0.8) !important;
     z-index: 1020;
+}
+
+/* Styles pour la checklist */
+.checklist-container {
+    max-width: 600px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.checklist-item .form-check {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.checklist-item .form-check-label {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checklist-item .checklist-content {
+    flex: 1;
+    word-break: break-word;
+}
+
+.checklist-item .btn-group {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.checklist-add-form {
+    max-width: 600px;
+    margin-top: 1rem;
 } 

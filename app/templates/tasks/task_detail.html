@@ -234,12 +234,21 @@
                         {% endif %}
                         <div class="form-text">Temps par tranches de 15 minutes</div>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-4 position-relative">
                         {{ time_form.description.label(class="form-label") }}
-                        {{ time_form.description(class="form-control", rows=3) }}
-                    </div>
-                    <div class="mt-auto">
-                        {{ time_form.submit(class="btn btn-secondary w-100") }}
+                        {% if time_form.description.errors %}
+                            {{ time_form.description(class="form-control is-invalid", rows=3, style="padding-right: 100px;") }}
+                            <div class="invalid-feedback">
+                                {% for error in time_form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ time_form.description(class="form-control", rows=3, style="padding-right: 100px;") }}
+                        {% endif %}
+                        <div class="position-absolute" style="right: 10px; bottom: 10px;">
+                            {{ time_form.submit(class="btn btn-secondary btn-sm", style="border-radius: 20px; padding: 5px 15px;") }}
+                        </div>
                     </div>
                 </form>
             </div>

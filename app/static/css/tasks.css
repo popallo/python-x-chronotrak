@@ -45,4 +45,43 @@
 .checklist-add-form {
     max-width: 600px;
     margin-top: 1rem;
+}
+
+/* Styles pour le bloc informations */
+.card-header h5 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.card-body p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.card-body strong {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.card-body .status-toggle .btn-group {
+    margin-top: 0.25rem;
+}
+
+.card-body .status-toggle .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.card-body .description {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.card-body .description strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.card-body .description p {
+    margin-bottom: 0;
 } 

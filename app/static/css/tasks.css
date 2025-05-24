@@ -84,4 +84,16 @@
 
 .card-body .description p {
     margin-bottom: 0;
+}
+
+.time-history {
+    overflow-y: auto;
+}
+
+.time-entry-item {
+    font-size: 0.85rem;
+}
+
+.time-entry-item:last-child {
+    border-bottom: none !important;
 } 

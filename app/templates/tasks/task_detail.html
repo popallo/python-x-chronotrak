@@ -3,6 +3,12 @@
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+<style>
+.action-toolbar {
+    backdrop-filter: blur(10px);
+    background-color: rgba(var(--bs-body-bg-rgb), 0.8) !important;
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -13,6 +19,36 @@
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checklistContainer = document.getElementById('checklist-container');
+    const timeHistory = document.querySelector('.time-history');
+    
+    function updateTimeHistoryHeight() {
+        if (checklistContainer && timeHistory) {
+            const checklistHeight = checklistContainer.offsetHeight;
+            timeHistory.style.height = `${checklistHeight}px`;
+            timeHistory.style.maxHeight = 'none'; // Remove max-height constraint
+        }
+    }
+
+    // Initial update
+    updateTimeHistoryHeight();
+
+    // Update on checklist changes
+    const observer = new MutationObserver(updateTimeHistoryHeight);
+    if (checklistContainer) {
+        observer.observe(checklistContainer, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+    }
+
+    // Update on window resize
+    window.addEventListener('resize', updateTimeHistoryHeight);
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -46,13 +82,6 @@
     </div>
 </div>
 
-<style>
-.action-toolbar {
-    backdrop-filter: blur(10px);
-    background-color: rgba(var(--bs-body-bg-rgb), 0.8) !important;
-}
-</style>
-
 <!-- Espace pour compenser la barre fixe -->
 <div style="height: 70px;"></div>
 
@@ -62,159 +91,179 @@
         <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
     </div>
     <div class="card-body">
-        <div class="row">
+        <div class="row g-3">
+            <!-- Première colonne -->
             <div class="col-md-6">
-                <p>
-                    <strong>Projet :</strong> 
-                    <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}">{{ task.project.name }}</a>
-                </p>
-                <p>
-                    <strong>Client :</strong> 
-                    <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}">{{ task.project.client.name }}</a>
-                </p>
-                <p>
-                    <strong>Statut :</strong> 
-                    <div class="status-toggle mt-1">
-                        <div class="btn-group" role="group" aria-label="Changer le statut">
-                            <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
-                                    data-status="à faire" data-task-id="{{ task.id }}">
-                                À faire
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
-                                    data-status="en cours" data-task-id="{{ task.id }}">
-                                En cours
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
-                                    data-status="terminé" data-task-id="{{ task.id }}">
-                                Terminé
-                            </button>
-                        </div>
-                    </div>
-                </p>
-                <p>
-                    <strong>Priorité :</strong> 
-                    <span class="text-{{ task.priority }}">{{ task.priority }}</span>
-                </p>
-            </div>
-            <div class="col-md-6">
-                <p>
-                    <strong>Assigné à :</strong> 
-                    {% if task.user_id %}
-                        {{ task.assigned_to.name }}
-                    {% else %}
-                        <span class="text-muted">Non assigné</span>
-                    {% endif %}
-                </p>
-                <p>
-                    <strong>Temps estimé :</strong> 
-                    {% if task.estimated_time %}
-                        {{ task.estimated_time|format_time }}
-                    {% else %}
-                        <span class="text-muted">Non défini</span>
-                    {% endif %}
-                </p>
-                <p>
-                    <strong>Temps passé :</strong> 
-                    {% if task.actual_time %}
-                        {{ task.actual_time|format_time }}
-                    {% else %}
-                        <span class="text-muted">0 min</span>
-                    {% endif %}
-                </p>
-                <p>
-                    <strong>Créée le :</strong> {{ task.created_at.strftime('%d/%m/%Y') }}
-                </p>
-                {% if task.completed_at %}
-                    <p>
-                        <strong>Terminée le :</strong> {{ task.completed_at.strftime('%d/%m/%Y') }}
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-        {% if task.description %}
-            <div class="mt-3">
-                <strong>Description :</strong>
-                <p>{{ task.description }}</p>
-            </div>
-        {% endif %}
-        
-        <!-- Checklist Section -->
-        <div id="checklist-container" class="checklist-container" data-task-id="{{ task.id }}">
-            <div class="checklist-header">
-                <h5 class="checklist-title">
-                    <i class="fas fa-tasks me-2"></i>Checklist
-                </h5>
-                <div class="checklist-actions">
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-checklist-shortcode-button">
-                        <i class="fas fa-code me-1"></i>Shortcode
-                    </button>
-                </div>
-            </div>
-            
-            <div id="checklist-items" class="checklist-items">
-                {% for item in task.checklist_items %}
-                <div class="checklist-item" data-id="{{ item.id }}">
-                    <div class="form-check">
-                        <input class="form-check-input checklist-checkbox" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                        <label class="form-check-label" for="checklist-item-{{ item.id }}">
-                            <span class="checklist-content">{{ item.content }}</span>
-                        </label>
-                        <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-primary copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
-                                <i class="fas fa-clock"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-danger delete-checklist-item" title="Supprimer">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <form id="add-checklist-item-form" class="checklist-add-form position-relative">
-                <input type="text" id="add-checklist-item-input" class="form-control" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
-                <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                    <span class="text-muted" style="font-size: 0.8rem;">
-                        <i class="fas fa-keyboard me-1"></i>Entrée
+                <!-- Badges de temps -->
+                <div class="d-flex gap-2 mb-3">
+                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
+                        <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
+                    </span>
+                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps estimé pour la tâche">
+                        <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time if task.estimated_time else 'Non défini' }}
                     </span>
                 </div>
-            </form>
-        </div>
-        
-        <!-- Modal pour le shortcode -->
-        <div class="modal fade" id="shortcode-modal" tabindex="-1" aria-labelledby="shortcodeModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="shortcodeModalLabel">Ajouter une checklist avec un shortcode</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                <!-- Statut -->
+                <div class="mb-3">
+                    <div class="status-toggle">
+                        <div class="btn-group" role="group" aria-label="Changer le statut">
+                            <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn" 
+                                    data-status="à faire" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                <i class="fas fa-list me-1"></i>À faire
+                            </button>
+                            <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn" 
+                                    data-status="en cours" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                <i class="fas fa-spinner me-1"></i>En cours
+                            </button>
+                            <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn" 
+                                    data-status="terminé" data-task-id="{{ task.id }}" style="white-space: nowrap;">
+                                <i class="fas fa-check me-1"></i>Terminé
+                            </button>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="shortcode-input">Shortcode</label>
-                            <input type="text" class="form-control" id="shortcode-input" placeholder='tasks["Élément 1", "Élément 2"]'>
-                            <small class="form-text text-muted">
-                                Utilisez le format <code>tasks["Élément 1", "Élément 2"]</code> pour créer plusieurs éléments à la fois.
-                            </small>
-                            <div class="shortcode-example">
-                                Exemple: tasks["Vérifier les emails", "Répondre aux messages", "Mettre à jour la documentation"]
+                </div>
+
+                {% if task.description %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-align-left me-2 text-muted mt-1"></i>
+                            <div>
+                                <strong>Description :</strong>
+                                <p class="mb-0">{{ task.description }}</p>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="button" class="btn btn-primary" id="shortcode-submit">Ajouter</button>
+                {% endif %}
+
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-project-diagram me-2 text-muted"></i>
+                        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none">{{ task.project.name }}</a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-building me-2 text-muted"></i>
+                        <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user me-2 text-muted"></i>
+                        <span>{{ task.assigned_to.name if task.user_id else 'Non assigné' }}</span>
+                    </div>
+                </div>
+
+                <!-- Checklist Section -->
+                <div id="checklist-container" class="checklist-container border border-secondary rounded p-2 mt-3" data-task-id="{{ task.id }}">
+                    <div class="checklist-header d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="checklist-title mb-0">
+                            <i class="fas fa-tasks me-1"></i>Checklist
+                        </h6>
+                        <div class="checklist-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
+                                <i class="fas fa-code me-1"></i>Shortcode
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
+                        {% for item in task.checklist_items %}
+                        <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
+                            <div class="form-check d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
+                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
+                                        <span class="checklist-content">{{ item.content }}</span>
+                                    </label>
+                                </div>
+                                <div class="btn-group btn-group-sm ms-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
+                                        <i class="fas fa-clock"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <form id="add-checklist-item-form" class="checklist-add-form position-relative mt-1">
+                        <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
+                        <div class="position-absolute" style="right: 10px; bottom: 10px;">
+                            <span class="text-muted" style="font-size: 0.7rem;">
+                                <i class="fas fa-keyboard me-1"></i>Entrée
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Deuxième colonne -->
+            <div class="col-md-6">
+                <div class="d-flex flex-column h-100">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-flag me-2 text-muted"></i>
+                            <span class="badge bg-{{ task.priority }}">{{ task.priority }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar me-2 text-muted"></i>
+                            <span>Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        {% if task.completed_at %}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2 text-muted"></i>
+                            <span>Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock me-2 text-muted"></i>
+                            <span>Dernière activité : 
+                                {% if comments %}
+                                    {{ comments[0].created_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    {{ task.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Historique de temps -->
+                    <div class="time-history border border-secondary rounded p-2 mt-3 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-history me-2 text-muted"></i>
+                                <small class="text-muted">Historique des temps</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if time_entries %}
+                            <div class="list-group list-group-flush">
+                                {% for entry in time_entries %}
+                                    <div class="list-group-item py-1 px-2 time-entry-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-{{ 'plus' if entry.hours > 0 else 'minus' }} me-1 text-{{ 'success' if entry.hours > 0 else 'danger' }}"></i>
+                                                <span class="text-{{ 'success' if entry.hours > 0 else 'danger' }}">
+                                                    {{ entry.hours|format_time }}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
+                                        </div>
+                                        <small class="text-muted d-block">{{ entry.user.name }}</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted small">Aucun temps enregistré</div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Container pour les alertes -->
-        <div id="alert-container"></div>
-
-        <div class="mt-3">
-            <!-- Le bouton de clonage a été déplacé dans la toolbar -->
         </div>
     </div>
 </div>

@@ -64,15 +64,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Initialiser les écouteurs d'événements pour les boutons de copie vers le temps
-    document.querySelectorAll('.copy-to-time-btn').forEach(function(button) {
+    document.querySelectorAll('.copy-to-time-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const content = this.closest('.checklist-item').querySelector('.checklist-content').textContent;
-            const timeDescription = document.querySelector('#description');
-            if (timeDescription) {
-                timeDescription.value = content;
-                timeDescription.focus();
-                timeDescription.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            const checklistItem = this.closest('.checklist-item');
+            const content = checklistItem.querySelector('.checklist-content').textContent;
+            const timeModal = new bootstrap.Modal(document.getElementById('timeEntryModal'));
+            const descriptionInput = document.querySelector('#timeEntryModal textarea[name="description"]');
+            
+            // Ouvrir la modal
+            timeModal.show();
+            
+            // Une fois la modal ouverte, mettre à jour le champ de description
+            document.getElementById('timeEntryModal').addEventListener('shown.bs.modal', function() {
+                descriptionInput.value = content;
+                descriptionInput.focus();
+            }, { once: true });
         });
     });
     

@@ -1,0 +1,5 @@
+.action-toolbar {
+    backdrop-filter: blur(10px);
+    background-color: rgba(var(--bs-body-bg-rgb), 0.8) !important;
+    z-index: 1020;
+} 

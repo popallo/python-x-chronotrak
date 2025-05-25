@@ -24,12 +24,17 @@ def format_time(value):
 
 def generate_hour_options(extra_blocks=None, include_undefined=False):
     """
-    Génère des options horaires pour les SelectField (5min à 8h + blocs supplémentaires).
+    Génère des options horaires pour les SelectField (1min à 8h + blocs supplémentaires).
     :param extra_blocks: liste de tuples (valeur, label) à ajouter à la fin
     :param include_undefined: si True, ajoute '-- Non défini --' au début
     """
     hours_options = []
-    for i in range(1, 13):
+    # Ajouter les options de 1 à 5 minutes
+    for minutes in range(1, 6):
+        decimal_value = round(minutes / 60, 2)
+        hours_options.append((decimal_value, f"{minutes} min"))
+    # Ajouter les options par tranches de 5 minutes
+    for i in range(2, 13):  # Commence à 2 car on a déjà ajouté 5 minutes
         minutes = i * 5
         decimal_value = round(minutes / 60, 2)
         label = f"{minutes} min" if minutes < 60 else "1h"

@@ -111,8 +111,8 @@ def task_details(slug_or_id):
     
     time_entries = TimeEntry.query.filter_by(task_id=task.id).order_by(TimeEntry.created_at.desc()).all()
     
-    # Récupérer les commentaires liés à cette tâche
-    comments = Comment.query.filter_by(task_id=task.id).order_by(Comment.created_at.desc()).all()
+    # Récupérer les commentaires liés à cette tâche (sans les réponses)
+    comments = Comment.query.filter_by(task_id=task.id, parent_id=None).order_by(Comment.created_at.desc()).all()
     
     # Formulaire pour ajouter du temps
     time_form = TimeEntryForm()
@@ -577,3 +577,34 @@ def reorder_checklist(slug_or_id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+@tasks.route('/comments/<int:comment_id>/reply', methods=['POST'])
+@login_required
+def add_reply(comment_id):
+    """Ajoute une réponse à un commentaire"""
+    parent_comment = Comment.query.get_or_404(comment_id)
+    task = parent_comment.task
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            flash("Vous n'avez pas accès à cette tâche.", "danger")
+            return redirect(url_for('main.dashboard'))
+    
+    form = CommentForm()
+    
+    if form.validate_on_submit():
+        reply = Comment(
+            content=form.content.data,
+            task_id=task.id,
+            user_id=current_user.id,
+            parent_id=parent_comment.id
+        )
+        save_to_db(reply)
+        flash('Réponse ajoutée avec succès!', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
+    
+    return redirect(url_for('tasks.task_details', slug_or_id=task.slug))

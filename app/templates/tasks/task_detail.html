@@ -333,59 +333,106 @@
         <hr>
         <!-- Liste des commentaires existants -->
         {% if comments %}
-            <div class="comment-list">
-                {% for comment in comments %}
-                    <div class="comment-item" id="comment-{{ comment.id }}">
+        <div class="comment-list">
+            {% for comment in comments %}
+            <div class="comment-item {% if comment.user_id == current_user.id %}own-comment{% endif %}" id="comment-{{ comment.id }}">
+                <div class="comment-header">
+                    <span class="comment-author">{{ comment.user.name }}</span>
+                    <div class="d-flex align-items-center">
+                        <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        {% set minutes_elapsed = ((now.replace(tzinfo=None) - comment.created_at).total_seconds() / 60)|int %}
+                        {% set can_edit = minutes_elapsed < 10 and (comment.user_id == current_user.id or current_user.is_admin()) %}
+                        <div class="d-inline-block ms-2">
+                            {% if can_edit %}
+                                <span class="edit-timer" title="Temps restant pour éditer">
+                                    {{ 10 - minutes_elapsed }} min
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                                        data-comment-id="{{ comment.id }}" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            {% endif %}
+                            {% if comment.user_id == current_user.id or current_user.is_admin() %}
+                                <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-content">
+                    {{ comment.content }}
+                </div>
+                <button type="button" class="reply-button" data-comment-id="{{ comment.id }}">
+                    <i class="fas fa-reply me-1"></i>Répondre
+                </button>
+                <div class="comment-reply-form" id="reply-form-{{ comment.id }}" style="display: none;">
+                    <form method="POST" action="{{ url_for('tasks.add_reply', comment_id=comment.id) }}">
+                        {{ comment_form.hidden_tag() }}
+                        <div class="mb-2">
+                            {{ comment_form.content(class="form-control", rows=2, placeholder="Écrivez votre réponse...") }}
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-light cancel-reply-btn" data-comment-id="{{ comment.id }}">Annuler</button>
+                            {{ comment_form.submit(class="btn btn-sm btn-light") }}
+                        </div>
+                    </form>
+                </div>
+                {% if comment.replies %}
+                <div class="comment-replies">
+                    {% for reply in comment.replies %}
+                    <div class="comment-reply {% if reply.user_id == current_user.id %}own-comment{% endif %}" id="reply-{{ reply.id }}">
                         <div class="comment-header">
-                            <span class="comment-author">{{ comment.user.name }}</span>
+                            <span class="comment-author">{{ reply.user.name }}</span>
                             <div class="d-flex align-items-center">
-                                <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                                
-                                {# Calcul du temps écoulé en minutes depuis la création du commentaire #}
-                                {% set minutes_elapsed = ((now.replace(tzinfo=None) - comment.created_at).total_seconds() / 60)|int %}
-                                {% set can_edit = minutes_elapsed < 10 and (comment.user_id == current_user.id or current_user.is_admin()) %}
-                                
-                                <div class="d-inline-block ms-2">
-                                    {% if can_edit %}
-                                        <span class="badge bg-info edit-timer" title="Temps restant pour éditer">
-                                            {{ 10 - minutes_elapsed }} min
-                                        </span>
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-comment-btn" 
-                                                data-comment-id="{{ comment.id }}" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    {% endif %}
-                                    
-                                    {% if comment.user_id == current_user.id or current_user.is_admin() %}
-                                        <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                <span class="comment-time">{{ reply.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                {% if reply.user_id == current_user.id or current_user.is_admin() %}
+                                    <div class="d-inline-block ms-2">
+                                        {% set reply_minutes_elapsed = ((now.replace(tzinfo=None) - reply.created_at).total_seconds() / 60)|int %}
+                                        {% if reply_minutes_elapsed < 10 %}
+                                            <span class="edit-timer" title="Temps restant pour éditer">
+                                                {{ 10 - reply_minutes_elapsed }} min
+                                            </span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                                                    data-comment-id="{{ reply.id }}" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
-                                    {% endif %}
-                                </div>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="comment-content">
-                            {{ comment.content }}
+                            {{ reply.content }}
                         </div>
-                        {% if can_edit %}
-                        <form id="edit-form-{{ comment.id }}" method="POST" action="{{ url_for('tasks.edit_comment', comment_id=comment.id) }}" class="edit-comment-form" style="display: none;">
-                            {{ edit_comment_form.hidden_tag() }}
-                            <div class="mb-2">
-                                {{ edit_comment_form.content(class="form-control", rows=2) }}
-                            </div>
-                            <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-sm btn-secondary cancel-edit-btn" data-comment-id="{{ comment.id }}">Annuler</button>
-                                {{ edit_comment_form.submit(class="btn btn-sm btn-primary") }}
-                            </div>
-                        </form>
-                        {% endif %}
                     </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if can_edit %}
+                <form id="edit-form-{{ comment.id }}" method="POST" action="{{ url_for('tasks.edit_comment', comment_id=comment.id) }}" class="edit-comment-form" style="display: none;">
+                    {{ edit_comment_form.hidden_tag() }}
+                    <div class="mb-2">
+                        {{ edit_comment_form.content(class="form-control", rows=2) }}
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-light cancel-edit-btn" data-comment-id="{{ comment.id }}">Annuler</button>
+                        {{ edit_comment_form.submit(class="btn btn-sm btn-light") }}
+                    </div>
+                </form>
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <p class="text-muted">Aucun commentaire pour le moment.</p>
+        <p class="text-muted">Aucun commentaire pour le moment.</p>
         {% endif %}
     </div>
 </div>

@@ -63,6 +63,12 @@
     border: 1px solid var(--bs-secondary) !important;
 }
 
+.checklist-items {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
 .checklist-item {
     display: flex;
     align-items: center;
@@ -84,11 +90,13 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .checklist-item .checklist-content {
     flex: 1;
     word-break: break-word;
+    font-size: 0.9rem;
 }
 
 .checklist-item .btn-group {
@@ -99,6 +107,10 @@
 .checklist-add-form {
     max-width: 600px;
     margin-top: 1rem;
+}
+
+.checklist-add-form .form-control {
+    font-size: 0.9rem;
 }
 
 /* ==========================================================================

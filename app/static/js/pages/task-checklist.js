@@ -114,11 +114,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         updateTimeHistoryHeight();
 
-        const observer = new MutationObserver(updateTimeHistoryHeight);
+        // Observer les changements de classe pour détecter l'expansion/réduction
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    // Attendre la fin de la transition CSS (300ms)
+                    setTimeout(updateTimeHistoryHeight, 300);
+                }
+            });
+        });
+
         observer.observe(checklistContainer, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        // Observer les changements de contenu
+        const contentObserver = new MutationObserver(updateTimeHistoryHeight);
+        contentObserver.observe(checklistContainer, {
             childList: true,
-            subtree: true,
-            attributes: true
+            subtree: true
         });
 
         window.addEventListener('resize', updateTimeHistoryHeight);

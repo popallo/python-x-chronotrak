@@ -394,4 +394,34 @@
         </div>
     </div>
 </div>
+
+<!-- Modal pour le shortcode -->
+<div class="modal fade" id="shortcode-modal" tabindex="-1" aria-labelledby="shortcodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="shortcodeModalLabel">
+                    <i class="fas fa-code me-2"></i>Ajouter un shortcode
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shortcode-input" class="form-label">Code à ajouter</label>
+                    <input type="text" class="form-control" id="shortcode-input" placeholder="Entrez le code...">
+                    <div class="form-text">
+                        <p class="mb-2 text-secondary">Format du shortcode :</p>
+                        <code class="d-block bg-light text-dark p-2 rounded">tasks["tâche 1", "tâche 2", "tâche 3"]</code>
+                        <p class="mt-2 mb-0 text-secondary">Exemple :</p>
+                        <code class="d-block bg-light text-dark p-2 rounded">tasks["Développer la page d'accueil", "Ajouter le formulaire de contact", "Mettre en place l'authentification"]</code>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="shortcode-submit">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

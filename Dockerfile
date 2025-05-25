@@ -8,10 +8,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_APP=run.py \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    TZ=Europe/Paris
 
 # Installer bash et les dépendances système
-RUN apk add --no-cache bash && \
+RUN apk add --no-cache bash tzdata && \
     addgroup -S chronouser && \
     adduser -S -G chronouser chronouser
 

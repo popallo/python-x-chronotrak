@@ -134,30 +134,7 @@
                     </div>
                     
                     <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
-                        {# Non cochés triés alphabétiquement #}
-                        {% for item in task.checklist_items|selectattr('is_checked', 'equalto', false)|sort(attribute='content') %}
-                        <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
-                            <div class="form-check d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
-                                        <span class="checklist-content">{{ item.content }}</span>
-                                    </label>
-                                </div>
-                                <div class="btn-group btn-group-sm ms-2">
-                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
-                                        <i class="fas fa-clock"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-
-                        {# Cochés triés alphabétiquement #}
-                        {% for item in task.checklist_items|selectattr('is_checked', 'equalto', true)|sort(attribute='content') %}
+                        {% for item in task.checklist_items|sort(attribute='position') %}
                         <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
                             <div class="form-check d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center flex-grow-1">

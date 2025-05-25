@@ -61,12 +61,22 @@
 .checklist-container {
     max-width: 600px;
     border: 1px solid var(--bs-secondary) !important;
+    transition: all 0.3s ease;
+}
+
+.checklist-container.expanded {
+    max-width: 100%;
 }
 
 .checklist-items {
     max-height: 150px;
     overflow-y: auto;
     margin-bottom: 1rem;
+    transition: max-height 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-items {
+    max-height: 500px;
 }
 
 .checklist-item {
@@ -74,6 +84,11 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
+    transition: padding 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-item {
+    padding: 0.75rem 0;
 }
 
 .checklist-item .form-check {
@@ -91,26 +106,65 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
+    transition: font-size 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-item .form-check-label {
+    font-size: 1rem;
 }
 
 .checklist-item .checklist-content {
     flex: 1;
     word-break: break-word;
     font-size: 0.9rem;
+    transition: font-size 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-item .checklist-content {
+    font-size: 1rem;
 }
 
 .checklist-item .btn-group {
     flex-shrink: 0;
     margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.checklist-item:hover .btn-group {
+    opacity: 1;
+}
+
+.checklist-container.expanded .checklist-item .btn-group {
+    opacity: 1;
 }
 
 .checklist-add-form {
     max-width: 600px;
     margin-top: 1rem;
+    transition: max-width 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-add-form {
+    max-width: 100%;
 }
 
 .checklist-add-form .form-control {
     font-size: 0.9rem;
+    transition: font-size 0.3s ease;
+}
+
+.checklist-container.expanded .checklist-add-form .form-control {
+    font-size: 1rem;
+}
+
+/* Style pour le bouton de basculement */
+.toggle-checklist-size {
+    transition: transform 0.3s ease;
+}
+
+.checklist-container.expanded .toggle-checklist-size {
+    transform: rotate(180deg);
 }
 
 /* ==========================================================================

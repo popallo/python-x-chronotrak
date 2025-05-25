@@ -147,9 +147,11 @@ class Comment(db.Model):
     # Clés étrangères
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
     
     # Relations
     user = db.relationship('User', backref='comments', lazy=True)
+    replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[id]), lazy=True)
     
     def __repr__(self):
         return f"Comment(Task: {self.task_id}, User: {self.user.name}, Date: {self.created_at})"

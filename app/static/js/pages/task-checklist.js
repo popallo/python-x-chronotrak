@@ -13,11 +13,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeModal = document.getElementById('shortcode-modal');
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
+    const toggleSizeButton = document.querySelector('.toggle-checklist-size');
 
     // Initialisation des écouteurs d'événements
     initChecklistEventListeners();
     initSortable();
     initTimeHistoryHeight();
+    initChecklistSizeToggle();
+    
+    // ==========================================================================
+    // Gestion de la taille de la checklist
+    // ==========================================================================
+    function initChecklistSizeToggle() {
+        if (toggleSizeButton) {
+            toggleSizeButton.addEventListener('click', function() {
+                checklistContainer.classList.toggle('expanded');
+                const icon = this.querySelector('i');
+                if (checklistContainer.classList.contains('expanded')) {
+                    icon.classList.replace('fa-expand-alt', 'fa-compress-alt');
+                } else {
+                    icon.classList.replace('fa-compress-alt', 'fa-expand-alt');
+                }
+            });
+        }
+    }
     
     // ==========================================================================
     // Gestion des événements de la checklist

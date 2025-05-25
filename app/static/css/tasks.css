@@ -7,6 +7,11 @@
     z-index: 1020;
 }
 
+/* S'assurer que les dropdowns de la navigation sont au-dessus de la barre d'outils */
+.navbar .dropdown-menu {
+    z-index: 1035;
+}
+
 .toolbar-spacer {
     height: 20px;
 }

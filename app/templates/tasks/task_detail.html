@@ -139,7 +139,7 @@
                             <div class="form-check d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center flex-grow-1">
                                     <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
+                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem; cursor: move;">
                                         <span class="checklist-content">{{ item.content }}</span>
                                     </label>
                                 </div>

@@ -148,7 +148,10 @@ document.addEventListener('DOMContentLoaded', function() {
             new Sortable(checklistItems, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
-                onEnd: updateItemsOrder
+                onEnd: updateItemsOrder,
+                handle: '.checklist-content',
+                preventOnFilter: true,
+                filter: '.checklist-checkbox, .btn-group'
             });
         }
     }

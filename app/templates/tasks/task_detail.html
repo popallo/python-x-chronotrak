@@ -134,7 +134,7 @@
                     </div>
                     
                     <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
-                        {% for item in task.checklist_items %}
+                        {% for item in task.checklist_items|sort(attribute='position') %}
                         <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
                             <div class="form-check d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center flex-grow-1">

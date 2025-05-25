@@ -120,6 +120,9 @@ def task_details(slug_or_id):
     # Formulaire pour ajouter un commentaire
     comment_form = CommentForm()
     
+    # Formulaire pour éditer un commentaire
+    edit_comment_form = EditCommentForm()
+    
     # Formulaire pour la suppression
     delete_form = DeleteTaskForm()
     
@@ -129,6 +132,7 @@ def task_details(slug_or_id):
                            comments=comments, 
                            time_form=time_form,
                            comment_form=comment_form,
+                           edit_comment_form=edit_comment_form,
                            form=delete_form,
                            title=task.title)
 
@@ -433,7 +437,9 @@ def edit_comment(comment_id):
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
     
     # Vérifier que le commentaire a moins de 10 minutes
-    delta = datetime.now(timezone.utc) - comment.created_at
+    now = datetime.now(timezone.utc)
+    comment_time = comment.created_at.replace(tzinfo=timezone.utc) if comment.created_at.tzinfo is None else comment.created_at
+    delta = now - comment_time
     if delta.total_seconds() > 600:  # 10 minutes = 600 secondes
         flash('Ce commentaire ne peut plus être modifié (délai de 10 minutes dépassé).', 'warning')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))

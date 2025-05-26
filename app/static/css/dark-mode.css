@@ -230,14 +230,6 @@ html:not(.theme-loaded) body {
     border-color: var(--dm-border);
   }
   
-  /* Placeholders */
-  html.dark-mode body ::placeholder,
-  html.dark-mode body :-ms-input-placeholder,
-  html.dark-mode body ::-ms-input-placeholder {
-    color: #9e9e9e;
-    opacity: 0.6;
-  }
-  
   /* Formulaire d'édition */
   html.dark-mode body .edit-comment-form {
     background-color: var(--dm-bg-elevated);

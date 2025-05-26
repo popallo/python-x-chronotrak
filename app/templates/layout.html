@@ -60,11 +60,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('tasks.my_tasks') }}">Mes tâches</a>
                     </li>
-                    {% if not current_user.is_client() %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
-                    </li>
-                    {% endif %}
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="pinnedTasksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -100,6 +95,11 @@
                                 <li><span class="dropdown-item-text text-muted">Aucune tâche épinglée</span></li>
                             {% endif %}
                         </ul>
+                    </li>
+                    {% endif %}
+                    {% if not current_user.is_client() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
                     </li>
                     {% endif %}
                 </ul>

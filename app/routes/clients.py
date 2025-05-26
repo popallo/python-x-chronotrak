@@ -103,7 +103,6 @@ def delete_client(slug_or_id):
 
 @clients.route('/clients/<slug_or_id>')
 @login_required
-@login_and_client_required
 def client_details(slug_or_id):
     client = get_client_by_slug_or_id(slug_or_id)
     # Charger les projets en une seule requête

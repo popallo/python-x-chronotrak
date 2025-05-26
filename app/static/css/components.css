@@ -555,11 +555,11 @@ html.dark-mode body .status-update-msg {
     margin-top: 1.5rem;
 }
 
-.checklist-header {
+.checklist-container .checklist-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1rem !important;
 }
 
 .checklist-title {

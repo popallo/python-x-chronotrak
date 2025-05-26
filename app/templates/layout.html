@@ -65,6 +65,43 @@
                         <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
                     </li>
                     {% endif %}
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="pinnedTasksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-thumbtack"></i>
+                            {% set pinned_tasks = current_user.pinned_tasks.all() %}
+                            {% if pinned_tasks %}
+                            <span class="badge bg-info">{{ pinned_tasks|length }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pinnedTasksDropdown">
+                            {% if pinned_tasks %}
+                                {% for task in pinned_tasks %}
+                                <li>
+                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
+                                        <div class="d-flex flex-column">
+                                            <span class="text-truncate" style="max-width: 200px;">{{ task.title }}</span>
+                                            <small class="text-muted">{{ task.project.name }}</small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-{{ task.status|status_color }}">{{ task.status }}</span>
+                                            <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Désépingler">
+                                                    <i class="fas fa-thumbtack"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-center" href="{{ url_for('tasks.my_tasks') }}">Voir toutes mes tâches</a></li>
+                            {% else %}
+                                <li><span class="dropdown-item-text text-muted">Aucune tâche épinglée</span></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <!-- Bouton Dark Mode -->

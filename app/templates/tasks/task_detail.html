@@ -34,6 +34,12 @@
                     <i class="fas fa-edit"></i>
                 </a>
                 {% if not current_user.is_client() %}
+                <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
+                    {% set is_pinned = task in current_user.pinned_tasks %}
+                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="{% if is_pinned %}Désépingler{% else %}Épingler{% endif %} la tâche">
+                        <i class="fas fa-thumbtack {% if is_pinned %}text-warning{% endif %}"></i>
+                    </button>
+                </form>
                 <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
                     <i class="fas fa-clock"></i>
                 </button>

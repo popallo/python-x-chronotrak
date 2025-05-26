@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import case
 from datetime import datetime, timezone
 from app import db
-from app.models.task import Task, TimeEntry, Comment, ChecklistItem
+from app.models.task import Task, TimeEntry, Comment, ChecklistItem, UserPinnedTask
 from app.models.project import Project
 from app.models.client import Client
 from app.models.user import User
@@ -608,3 +608,32 @@ def add_reply(comment_id):
                 flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
     
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+
+@tasks.route('/task/<slug_or_id>/toggle_pin', methods=['POST'])
+@login_required
+def toggle_pin_task(slug_or_id):
+    """Épingler ou désépingler une tâche pour l'utilisateur courant"""
+    task = get_task_by_slug_or_id(slug_or_id)
+    if not task:
+        flash('Tâche non trouvée.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Vérifier les permissions
+    if current_user.is_client() and task.project.client not in current_user.clients:
+        flash('Vous n\'avez pas la permission d\'effectuer cette action.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    pinned = UserPinnedTask.query.filter_by(user_id=current_user.id, task_id=task.id).first()
+    if pinned:
+        # Désépingler
+        db.session.delete(pinned)
+        db.session.commit()
+        flash('La tâche a été désépinglée.', 'success')
+    else:
+        # Épingler
+        new_pin = UserPinnedTask(user_id=current_user.id, task_id=task.id)
+        db.session.add(new_pin)
+        db.session.commit()
+        flash('La tâche a été épinglée.', 'success')
+
+    return redirect(request.referrer or url_for('tasks.task_details', slug_or_id=task.slug))

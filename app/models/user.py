@@ -24,6 +24,12 @@ class User(db.Model, UserMixin):
     
     # Relations
     assigned_tasks = db.relationship('Task', backref='assigned_to', lazy=True)
+    pinned_tasks = db.relationship(
+        'Task',
+        secondary='user_pinned_task',
+        backref=db.backref('pinned_by_users', lazy='dynamic'),
+        lazy='dynamic'
+    )
     
     # Nouvelle relation pour les utilisateurs de type client
     clients = db.relationship('Client', 

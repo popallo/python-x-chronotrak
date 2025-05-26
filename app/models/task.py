@@ -31,6 +31,7 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
+    is_pinned = db.Column(db.Boolean, nullable=False, default=False)  # Pour épingler les tâches importantes
     
     # Clés étrangères
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
@@ -173,3 +174,9 @@ class Comment(db.Model):
     @property
     def safe_content(self):
         return self.decrypt_content()
+
+class UserPinnedTask(db.Model):
+    __tablename__ = 'user_pinned_task'
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

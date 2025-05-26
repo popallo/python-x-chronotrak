@@ -71,9 +71,15 @@ def new_client():
     return render_template('clients/client_form.html', form=form, title='Nouveau client')
 
 @clients.route('/clients/<slug_or_id>/edit', methods=['GET', 'POST'])
-@login_and_admin_required
+@login_required
 def edit_client(slug_or_id):
     client = get_client_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si l'utilisateur a le droit de modifier ce client
+    if current_user.is_client() and not current_user.has_access_to_client(client.id):
+        flash("Vous n'avez pas les permissions nécessaires pour modifier cette société.", "danger")
+        return redirect(url_for('clients.client_details', slug_or_id=client.slug))
+    
     form = ClientForm(obj=client)
     
     if form.validate_on_submit():

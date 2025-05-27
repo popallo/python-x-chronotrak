@@ -19,6 +19,7 @@ from app.utils.route_utils import (
     apply_sorting
 )
 from flask_wtf import FlaskForm
+import json
 
 tasks = Blueprint('tasks', __name__)
 
@@ -390,6 +391,14 @@ def add_comment(slug_or_id):
     form = CommentForm()
     
     if form.validate_on_submit():
+        # Récupérer les mentions depuis le champ caché
+        mentioned_users = []
+        try:
+            mentions_data = request.form.get('mentions', '[]')
+            mentioned_users = json.loads(mentions_data)
+        except json.JSONDecodeError:
+            current_app.logger.warning("Erreur lors du décodage des mentions")
+        
         comment = Comment(
             content=form.content.data,
             task_id=task.id,
@@ -397,17 +406,24 @@ def add_comment(slug_or_id):
         )
         save_to_db(comment)
         
-        # Envoyer une notification par email seulement si l'option est cochée
-        if form.send_notification.data:
-            send_task_notification(task, 'comment_added', current_user, {'comment': comment})
+        # Envoyer une notification en fonction des paramètres
+        send_task_notification(
+            task=task,
+            event_type='comment_added',
+            user=current_user,
+            additional_data={'comment': comment},
+            notify_all=form.notify_all.data,
+            mentioned_users=mentioned_users
+        )
         
-        flash('Votre commentaire a été ajouté!', 'success')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
+        flash('Votre commentaire a été ajouté.', 'success')
+        return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
     
-    return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f'Erreur dans le champ {getattr(form, field).label.text} : {error}', 'danger')
+    
+    return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
 
 @tasks.route('/comments/<int:comment_id>/delete', methods=['POST'])
 @login_required

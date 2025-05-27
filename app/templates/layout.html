@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <!-- Composants (fichier consolidé) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <!-- Menu prismatique -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/prismatic-nav.css') }}">
     
     <!-- Chargeur de thème précoce -->
     <script src="{{ url_for('static', filename='js/theme-loader.js') }}" defer></script>
@@ -35,129 +37,132 @@
 <body>
     {% if current_user.is_authenticated %}
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark {{ request.path|nav_bg_color }}">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
-                <i class="fas fa-clock me-2"></i>ChronoTrak
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Tableau de bord</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('clients.list_clients') }}">
-                            {% set entity_type = 'Sociétés' if current_user.is_client() else 'Clients' %}
-                            {{ entity_type }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('projects.list_projects') }}">Projets</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('tasks.my_tasks') }}">Mes tâches</a>
-                    </li>
-                    {% if current_user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="pinnedTasksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-thumbtack"></i>
-                            {% set pinned_tasks = current_user.pinned_tasks.all() %}
-                            {% if pinned_tasks %}
-                            <span class="badge bg-info">{{ pinned_tasks|length }}</span>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pinnedTasksDropdown">
-                            {% if pinned_tasks %}
-                                {% for task in pinned_tasks %}
-                                <li>
-                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
-                                        <div class="d-flex flex-column">
-                                            <span class="text-truncate" style="max-width: 200px;">{{ task.title }}</span>
-                                            <small class="text-muted">{{ task.project.name }}</small>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-{{ task.status|status_color }}">{{ task.status }}</span>
-                                            <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
-                                                <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Désépingler">
-                                                    <i class="fas fa-thumbtack"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </a>
-                                </li>
-                                {% endfor %}
+    <div class="prismatic-nav">
+        <nav class="navbar navbar-expand-lg navbar-dark {{ request.path|nav_bg_color }}">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                    <i class="fas fa-clock me-2"></i>ChronoTrak
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">Tableau de bord</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('clients.list_clients') }}">
+                                {% set entity_type = 'Sociétés' if current_user.is_client() else 'Clients' %}
+                                {{ entity_type }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('projects.list_projects') }}">Projets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('tasks.my_tasks') }}">Mes tâches</a>
+                        </li>
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="pinnedTasksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-thumbtack"></i>
+                                {% set pinned_tasks = current_user.pinned_tasks.all() %}
+                                {% if pinned_tasks %}
+                                <span class="badge bg-info">{{ pinned_tasks|length }}</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pinnedTasksDropdown">
+                                {% if pinned_tasks %}
+                                    {% for task in pinned_tasks %}
+                                    <li>
+                                        <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-truncate" style="max-width: 200px;">{{ task.title }}</span>
+                                                <small class="text-muted">{{ task.project.name }}</small>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-{{ task.status|status_color }}">{{ task.status }}</span>
+                                                <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Désépingler">
+                                                        <i class="fas fa-thumbtack"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-center" href="{{ url_for('tasks.my_tasks') }}">Voir toutes mes tâches</a></li>
+                                {% else %}
+                                    <li><span class="dropdown-item-text text-muted">Aucune tâche épinglée</span></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                        {% if not current_user.is_client() %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    <ul class="navbar-nav ms-auto">
+                        <!-- Bouton Dark Mode -->
+                        <li class="nav-item me-2">
+                            <div class="dark-mode-toggle" id="darkModeToggle">
+                                <i class="fas fa-sun" id="darkModeIcon"></i>
+                            </div>
+                        </li>
+                        {% if current_user.is_admin() %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i>Administration
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.users') }}">👥 Gestion des utilisateurs</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.list_tasks') }}">✅ Gestion des tâches</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.time_transfer') }}">⏱️ Transfert de temps</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('communications.list_communications') }}">📨 Suivi des communications</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-center" href="{{ url_for('tasks.my_tasks') }}">Voir toutes mes tâches</a></li>
-                            {% else %}
-                                <li><span class="dropdown-item-text text-muted">Aucune tâche épinglée</span></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-                    {% if not current_user.is_client() %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.reports') }}">Rapports</a>
-                    </li>
-                    {% endif %}
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <!-- Bouton Dark Mode -->
-                    <li class="nav-item me-2">
-                        <div class="dark-mode-toggle" id="darkModeToggle">
-                            <i class="fas fa-sun" id="darkModeIcon"></i>
-                        </div>
-                    </li>
-                    {% if current_user.is_admin() %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-cog me-1"></i>Administration
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('auth.users') }}">👥 Gestion des utilisateurs</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin.list_tasks') }}">✅ Gestion des tâches</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin.time_transfer') }}">⏱️ Transfert de temps</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('communications.list_communications') }}">📨 Suivi des communications</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin.test_email') }}">📧 Test SMTP</a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user me-1"></i>{{ current_user.name }}
-                            {% if session.get('original_user_id') %}
-                                <span class="badge bg-warning">Mode impersonation</span>
-                            {% elif current_user.is_client() %}
-                                <span class="badge bg-info">Client</span>
-                            {% elif current_user.is_admin() %}
-                                <span class="badge bg-danger">Admin</span>
-                            {% else %}
-                                <span class="badge bg-success">Technicien</span>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            {% if session.get('original_user_id') %}
-                                <li><a class="dropdown-item text-warning" href="{{ url_for('auth.stop_impersonating') }}">
-                                    <i class="fas fa-user-secret me-2"></i>Revenir à mon compte
-                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.test_email') }}">📧 Test SMTP</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user me-1"></i>{{ current_user.name }}
+                                {% if session.get('original_user_id') %}
+                                    <span class="badge bg-warning">Mode impersonation</span>
+                                {% elif current_user.is_client() %}
+                                    <span class="badge bg-info">Client</span>
+                                {% elif current_user.is_admin() %}
+                                    <span class="badge bg-danger">Admin</span>
+                                {% else %}
+                                    <span class="badge bg-success">Technicien</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                {% if session.get('original_user_id') %}
+                                    <li><a class="dropdown-item text-warning" href="{{ url_for('auth.stop_impersonating') }}">
+                                        <i class="fas fa-user-secret me-2"></i>Revenir à mon compte
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Déconnexion</a></li>
-                        </ul>
-                    </li>
-                </ul>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Déconnexion</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
+    <div class="prismatic-bar"></div>
     {% endif %}
     {% if current_user.is_authenticated and request.path == url_for('main.dashboard') %}
     <!-- Rappel des couleurs thématiques -->
-    <div class="color-reminder-bar">
+    {# <div class="color-reminder-bar">
         <div class="container">
             <div class="d-flex justify-content-center">
                 <div class="color-item bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{% if current_user.is_client() %}Sociétés{% else %}Clients{% endif %}"></div>
@@ -168,7 +173,7 @@
                 <div class="color-item bg-reports" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Rapports"></div>
             </div>
         </div>
-    </div>
+    </div> #}
     {% endif %}
 
     <main class="container py-4">
@@ -219,5 +224,7 @@
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     <!-- Scripts spécifiques à chaque page -->
     {% block scripts %}{% endblock %}
+    <!-- Scripts pour le menu prismatique -->
+    <script src="{{ url_for('static', filename='js/prismatic-nav.js') }}"></script>
 </body>
 </html>

@@ -73,7 +73,7 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
     
     return success
 
-def send_task_notification(task, event_type, user=None, additional_data=None):
+def send_task_notification(task, event_type, user=None, additional_data=None, notify_all=False, mentioned_users=None):
     """
     Envoie une notification concernant une tâche
     
@@ -81,32 +81,41 @@ def send_task_notification(task, event_type, user=None, additional_data=None):
     :param event_type: Type d'événement ('status_change', 'comment_added', 'time_logged')
     :param user: L'utilisateur qui a effectué l'action
     :param additional_data: Données supplémentaires (commentaire, temps, etc.)
+    :param notify_all: Si True, notifie tous les participants
+    :param mentioned_users: Liste des utilisateurs mentionnés dans le commentaire
     """
     # Déterminer les destinataires
-    recipients = []
+    recipients = set()  # Utiliser un set pour éviter les doublons
     
-    # Toujours notifier l'utilisateur assigné à la tâche (s'il existe)
-    if task.user_id:
-        assigned_user = User.query.get(task.user_id)
-        if assigned_user and assigned_user.notification_preferences:
-            prefs = assigned_user.notification_preferences
-            if prefs.email_notifications_enabled:
-                if (event_type == 'status_change' and prefs.task_status_change) or \
-                   (event_type == 'comment_added' and prefs.task_comment_added) or \
-                   (event_type == 'time_logged' and prefs.task_time_logged):
-                    recipients.append(assigned_user.email)
+    if notify_all:
+        # Notifier l'utilisateur assigné à la tâche (s'il existe)
+        if task.user_id:
+            assigned_user = User.query.get(task.user_id)
+            if assigned_user and assigned_user.notification_preferences:
+                prefs = assigned_user.notification_preferences
+                if prefs.email_notifications_enabled:
+                    if (event_type == 'status_change' and prefs.task_status_change) or \
+                       (event_type == 'comment_added' and prefs.task_comment_added) or \
+                       (event_type == 'time_logged' and prefs.task_time_logged):
+                        recipients.add(assigned_user.email)
+        
+        # Notifier tous les clients du projet
+        client_users = User.query.filter_by(role='client').all()
+        for client_user in client_users:
+            if client_user.has_access_to_client(task.project.client_id):
+                if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
+                    prefs = client_user.notification_preferences
+                    if (event_type == 'status_change' and prefs.task_status_change) or \
+                       (event_type == 'comment_added' and prefs.task_comment_added) or \
+                       (event_type == 'time_logged' and prefs.task_time_logged):
+                        recipients.add(client_user.email)
     
-    # Notifier le client (si applicable)
-    # Nous devons trouver les utilisateurs de type client associés au client de ce projet
-    client_users = User.query.filter_by(role='client').all()
-    for client_user in client_users:
-        if client_user.has_access_to_client(task.project.client_id):
-            if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
-                prefs = client_user.notification_preferences
-                if (event_type == 'status_change' and prefs.task_status_change) or \
-                   (event_type == 'comment_added' and prefs.task_comment_added) or \
-                   (event_type == 'time_logged' and prefs.task_time_logged):
-                    recipients.append(client_user.email)
+    # Ajouter les utilisateurs mentionnés
+    if mentioned_users:
+        for mentioned_user in mentioned_users:
+            user_obj = User.query.get(mentioned_user['id'])
+            if user_obj and user_obj.email:
+                recipients.add(user_obj.email)
     
     # Éviter d'envoyer à l'utilisateur qui a effectué l'action
     if user and user.email in recipients:
@@ -168,7 +177,8 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
                                      user=user,
                                      notification_type=event_type,
                                      comment=comment,
-                                     url=task_url)
+                                     url=task_url,
+                                     mentioned_users=mentioned_users)
         
         text = f"""
 Bonjour,

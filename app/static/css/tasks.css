@@ -181,14 +181,14 @@
     border-radius: 20px;
     border: 1px solid var(--bs-border-color);
     transition: all 0.2s ease;
-    background-color: transparent;
-    color: inherit;
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-body-color) !important;
 }
 
 .comment-input:focus {
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
-    background-color: transparent;
+    background-color: var(--bs-dark) !important;
 }
 
 .comment-submit-container {
@@ -200,7 +200,7 @@
 }
 
 .comment-submit-container .form-check-label {
-    color: inherit;
+    color: var(--bs-light) !important;
 }
 
 .comment-submit {
@@ -221,14 +221,14 @@
     position: relative;
     width: 100%;
     padding: 1rem 1.25rem;
-    background-color: transparent;
-    color: inherit;
+    background-color: rgba(var(--bs-body-bg-rgb), 0.1);
+    color: var(--bs-body-color);
     border-radius: 12px;
     border: 1px solid var(--bs-border-color);
 }
 
 .comment-item.own-comment {
-    background-color: transparent;
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
     border-left: 3px solid var(--bs-primary);
 }
 
@@ -270,16 +270,16 @@
 }
 
 .comment-reply {
-    background-color: transparent;
+    background-color: rgba(var(--bs-body-bg-rgb), 0.05);
     color: var(--bs-body-color);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     margin-bottom: 0.75rem;
+    border: 1px solid var(--bs-border-color);
 }
 
 .comment-reply.own-comment {
-    background-color: transparent;
-    color: var(--bs-body-color);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
     border-left: 3px solid var(--bs-primary);
 }
 
@@ -324,18 +324,14 @@
 }
 
 .comment-reply-form .form-control {
-    background-color: white;
+    background-color: rgba(var(--bs-body-bg-rgb), 0.1);
     border: 1px solid var(--bs-border-color);
     color: var(--bs-body-color);
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    border-radius: 15px;
 }
 
 .comment-reply-form .form-control:focus {
-    background-color: white;
+    background-color: rgba(var(--bs-body-bg-rgb), 0.2);
     border-color: var(--bs-primary);
-    color: var(--bs-body-color);
 }
 
 .comment-reply-form .form-control::placeholder {
@@ -438,4 +434,93 @@
 
 .comment-reply.own-comment {
     border-left: 3px solid var(--bs-secondary);
+}
+
+/* Style pour la zone de texte avec mentions */
+textarea.comment-input {
+    position: relative;
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+    border-color: var(--bs-border-color) !important;
+    padding-right: 200px;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+}
+
+textarea.comment-input:focus {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25) !important;
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+}
+
+textarea.comment-input::placeholder {
+    color: var(--bs-secondary) !important;
+}
+
+/* Styles pour le dropdown des mentions */
+.mention-dropdown {
+    position: absolute;
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1050;
+    width: 250px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-top: 5px;
+}
+
+.mention-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-light);
+    background-color: transparent;
+}
+
+.mention-item:last-child {
+    border-bottom: none;
+}
+
+.mention-item:hover {
+    background-color: var(--bs-primary);
+    color: var(--bs-light);
+}
+
+.mention-item:hover strong,
+.mention-item:hover small {
+    color: var(--bs-light);
+}
+
+.mention-item strong {
+    color: var(--bs-light);
+    font-weight: 600;
+}
+
+.mention-item small {
+    color: var(--bs-secondary);
+    opacity: 0.8;
+}
+
+/* Scrollbar personnalisée pour le dropdown */
+.mention-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mention-dropdown::-webkit-scrollbar-track {
+    background: var(--bs-dark);
+    border-radius: 4px;
+}
+
+.mention-dropdown::-webkit-scrollbar-thumb {
+    background: var(--bs-secondary);
+    border-radius: 4px;
+}
+
+.mention-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-primary);
 } 

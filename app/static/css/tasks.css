@@ -175,22 +175,30 @@
 /* ==========================================================================
    Commentaires
    ========================================================================== */
-.comment-input {
+/* Zone de texte principale */
+textarea.comment-input {
+    position: relative;
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+    border-color: var(--bs-border-color) !important;
     padding-right: 200px;
     margin-bottom: 2rem;
     border-radius: 20px;
-    border: 1px solid var(--bs-border-color);
     transition: all 0.2s ease;
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-body-color) !important;
 }
 
-.comment-input:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+textarea.comment-input:focus {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25) !important;
     background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
 }
 
+textarea.comment-input::placeholder {
+    color: var(--bs-secondary) !important;
+}
+
+/* Conteneur du bouton de soumission */
 .comment-submit-container {
     position: absolute;
     right: 10px;
@@ -209,6 +217,7 @@
     font-weight: 500;
 }
 
+/* Liste des commentaires */
 .comment-list {
     margin-top: 2rem;
     display: flex;
@@ -216,7 +225,7 @@
     gap: 2rem;
 }
 
-/* Style des commentaires principaux */
+/* Commentaires principaux */
 .comment-item {
     position: relative;
     width: 100%;
@@ -261,7 +270,7 @@
     line-height: 1.6;
 }
 
-/* Style des réponses */
+/* Réponses aux commentaires */
 .comment-replies {
     margin-top: 1rem;
     margin-left: 2rem;
@@ -301,22 +310,7 @@
     font-size: 0.9rem;
 }
 
-/* Boutons et actions */
-.reply-button {
-    background: none;
-    border: none;
-    color: var(--bs-secondary);
-    font-size: 0.85rem;
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-    margin-top: 0.5rem;
-}
-
-.reply-button:hover {
-    color: var(--bs-primary);
-}
-
+/* Formulaire de réponse */
 .comment-reply-form {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -334,11 +328,22 @@
     border-color: var(--bs-primary);
 }
 
-.comment-reply-form .form-control::placeholder {
+/* Boutons et actions */
+.reply-button {
+    background: none;
+    border: none;
     color: var(--bs-secondary);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-top: 0.5rem;
 }
 
-/* Boutons d'action */
+.reply-button:hover {
+    color: var(--bs-primary);
+}
+
 .comment-item .btn-group-sm,
 .comment-reply .btn-group-sm {
     opacity: 0;
@@ -360,6 +365,74 @@
     color: var(--bs-secondary);
     border: 1px solid var(--bs-border-color);
     border-radius: 4px;
+}
+
+/* ==========================================================================
+   Mentions
+   ========================================================================== */
+.mention-dropdown {
+    position: absolute;
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1050;
+    width: 250px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-top: 5px;
+}
+
+.mention-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-light);
+    background-color: transparent;
+}
+
+.mention-item:last-child {
+    border-bottom: none;
+}
+
+.mention-item:hover {
+    background-color: var(--bs-primary);
+    color: var(--bs-light);
+}
+
+.mention-item:hover strong,
+.mention-item:hover small {
+    color: var(--bs-light);
+}
+
+.mention-item strong {
+    color: var(--bs-light);
+    font-weight: 600;
+}
+
+.mention-item small {
+    color: var(--bs-secondary);
+    opacity: 0.8;
+}
+
+/* Scrollbar personnalisée */
+.mention-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mention-dropdown::-webkit-scrollbar-track {
+    background: var(--bs-dark);
+    border-radius: 4px;
+}
+
+.mention-dropdown::-webkit-scrollbar-thumb {
+    background: var(--bs-secondary);
+    border-radius: 4px;
+}
+
+.mention-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-primary);
 }
 
 /* ==========================================================================
@@ -418,109 +491,4 @@
 
 .reply-entry {
     margin-left: 40px;
-}
-
-.comment-reply {
-    background: transparent;
-    color: white;
-    border-radius: 0 12px 12px 0;
-    border-left: 3px solid var(--bs-primary);
-    padding: 0.5rem 0 0.5rem 1rem;
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
-    box-shadow: none;
-    max-width: 100%;
-}
-
-.comment-reply.own-comment {
-    border-left: 3px solid var(--bs-secondary);
-}
-
-/* Style pour la zone de texte avec mentions */
-textarea.comment-input {
-    position: relative;
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-light) !important;
-    border-color: var(--bs-border-color) !important;
-    padding-right: 200px;
-    margin-bottom: 2rem;
-    border-radius: 20px;
-    transition: all 0.2s ease;
-}
-
-textarea.comment-input:focus {
-    border-color: var(--bs-primary) !important;
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25) !important;
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-light) !important;
-}
-
-textarea.comment-input::placeholder {
-    color: var(--bs-secondary) !important;
-}
-
-/* Styles pour le dropdown des mentions */
-.mention-dropdown {
-    position: absolute;
-    background-color: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1050;
-    width: 250px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-    margin-top: 5px;
-}
-
-.mention-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid var(--bs-border-color);
-    color: var(--bs-light);
-    background-color: transparent;
-}
-
-.mention-item:last-child {
-    border-bottom: none;
-}
-
-.mention-item:hover {
-    background-color: var(--bs-primary);
-    color: var(--bs-light);
-}
-
-.mention-item:hover strong,
-.mention-item:hover small {
-    color: var(--bs-light);
-}
-
-.mention-item strong {
-    color: var(--bs-light);
-    font-weight: 600;
-}
-
-.mention-item small {
-    color: var(--bs-secondary);
-    opacity: 0.8;
-}
-
-/* Scrollbar personnalisée pour le dropdown */
-.mention-dropdown::-webkit-scrollbar {
-    width: 8px;
-}
-
-.mention-dropdown::-webkit-scrollbar-track {
-    background: var(--bs-dark);
-    border-radius: 4px;
-}
-
-.mention-dropdown::-webkit-scrollbar-thumb {
-    background: var(--bs-secondary);
-    border-radius: 4px;
-}
-
-.mention-dropdown::-webkit-scrollbar-thumb:hover {
-    background: var(--bs-primary);
 } 

@@ -57,6 +57,18 @@ main {
     flex: 1;
 }
 
+/* Styles pour les placeholders */
+::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.8;
+}
+
+/* Mode sombre pour les placeholders */
+html.dark-mode ::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
 /* ===== COMPOSANTS DE BASE ===== */
 
 /* Cards - Base */

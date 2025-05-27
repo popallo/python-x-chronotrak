@@ -330,7 +330,11 @@
                 {% else %}
                     {{ comment_form.content(class="form-control comment-input", rows=2) }}
                 {% endif %}
-                <div class="comment-submit-container">
+                <div class="comment-submit-container d-flex align-items-center gap-3">
+                    <div class="form-check">
+                        {{ comment_form.send_notification(class="form-check-input") }}
+                        {{ comment_form.send_notification.label(class="form-check-label small") }}
+                    </div>
                     {{ comment_form.submit(class="btn btn-primary btn-sm comment-submit") }}
                 </div>
             </div>

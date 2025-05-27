@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, FloatField, SubmitField, HiddenField
+from wtforms import StringField, TextAreaField, SelectField, FloatField, SubmitField, HiddenField, BooleanField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from app.models.user import User
 from app.models.client import Client
@@ -67,6 +67,7 @@ class TimeEntryForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     content = TextAreaField('Commentaire', validators=[DataRequired(), Length(min=1, max=1000)])
+    send_notification = BooleanField('Envoyer une notification par email', default=False)
     submit = SubmitField('Publier')
 
 class EditCommentForm(FlaskForm):

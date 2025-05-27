@@ -397,8 +397,9 @@ def add_comment(slug_or_id):
         )
         save_to_db(comment)
         
-        # Envoyer une notification par email
-        send_task_notification(task, 'comment_added', current_user, {'comment': comment})
+        # Envoyer une notification par email seulement si l'option est cochée
+        if form.send_notification.data:
+            send_task_notification(task, 'comment_added', current_user, {'comment': comment})
         
         flash('Votre commentaire a été ajouté!', 'success')
     else:

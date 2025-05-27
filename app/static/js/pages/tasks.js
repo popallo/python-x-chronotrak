@@ -236,6 +236,174 @@ function updateCommentTimers() {
     });
 }
 
+function initCommentMentions() {
+    const commentInput = document.querySelector('.comment-input');
+    if (!commentInput) return;
+
+    const projectId = commentInput.getAttribute('data-project-id');
+    if (!projectId) {
+        console.error('Project ID not found on comment input');
+        return;
+    }
+
+    let mentionableUsers = [];
+    let mentionDropdown = null;
+
+    // Positionner le dropdown
+    function positionDropdown(match) {
+        if (!mentionDropdown) return;
+
+        const inputRect = commentInput.getBoundingClientRect();
+        const inputStyle = window.getComputedStyle(commentInput);
+        const lineHeight = parseInt(inputStyle.lineHeight);
+        const fontSize = parseInt(inputStyle.fontSize);
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Calculer la position du curseur
+        const textBeforeCursor = commentInput.value.substring(0, match.index);
+        const lines = textBeforeCursor.split('\n');
+        const currentLineNumber = lines.length - 1;
+        const currentLineText = lines[currentLineNumber];
+        
+        // Position horizontale basée sur la position du @
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = inputStyle.font;
+        const textWidth = context.measureText(currentLineText).width;
+        
+        // Calculer la position exacte
+        const left = inputRect.left + Math.min(textWidth, inputRect.width - mentionDropdown.offsetWidth);
+        const top = inputRect.top + scrollTop + ((currentLineNumber + 1) * lineHeight);
+
+        // Positionner le dropdown
+        mentionDropdown.style.position = 'absolute';
+        mentionDropdown.style.left = `${left}px`;
+        mentionDropdown.style.top = `${top}px`;
+        
+        // S'assurer que le dropdown est visible dans la fenêtre
+        const viewportHeight = window.innerHeight;
+        const dropdownHeight = mentionDropdown.offsetHeight;
+        const dropdownBottom = top + dropdownHeight - scrollTop;
+
+        if (dropdownBottom > viewportHeight) {
+            // Si le dropdown dépasse en bas, le placer au-dessus du curseur
+            mentionDropdown.style.top = `${top - dropdownHeight - 5}px`;
+        }
+    }
+
+    // Créer le dropdown pour les mentions
+    function createMentionDropdown() {
+        if (document.querySelector('.mention-dropdown')) {
+            document.querySelector('.mention-dropdown').remove();
+        }
+        const dropdown = document.createElement('div');
+        dropdown.className = 'mention-dropdown';
+        dropdown.style.display = 'none';
+        document.body.appendChild(dropdown);
+        return dropdown;
+    }
+
+    // Charger les utilisateurs mentionnables
+    async function loadMentionableUsers() {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/mentionable-users`);
+            if (!response.ok) throw new Error('Erreur lors du chargement des utilisateurs');
+            mentionableUsers = await response.json();
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    }
+
+    // Gérer la saisie dans le champ de commentaire
+    commentInput.addEventListener('input', function(e) {
+        const cursorPosition = this.selectionStart;
+        const textBeforeCursor = this.value.substring(0, cursorPosition);
+        const match = textBeforeCursor.match(/@(\w*)$/);
+
+        if (match) {
+            const searchTerm = match[1].toLowerCase();
+            const filteredUsers = mentionableUsers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredUsers.length > 0) {
+                if (!mentionDropdown) {
+                    mentionDropdown = createMentionDropdown();
+                }
+                
+                mentionDropdown.innerHTML = filteredUsers.map(user => `
+                    <div class="mention-item" data-user-id="${user.id}">
+                        <strong>${user.name}</strong>
+                        <small class="text-muted d-block">${user.email}</small>
+                    </div>
+                `).join('');
+
+                mentionDropdown.style.display = 'block';
+                positionDropdown(match);
+
+                // Gérer le clic sur un utilisateur
+                mentionDropdown.querySelectorAll('.mention-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const userId = this.dataset.userId;
+                        const userName = this.querySelector('strong').textContent;
+                        insertMention(userName, userId, match);
+                        hideMentionDropdown();
+                    });
+                });
+            } else {
+                hideMentionDropdown();
+            }
+        } else {
+            hideMentionDropdown();
+        }
+    });
+
+    // Cacher le dropdown des mentions
+    function hideMentionDropdown() {
+        if (mentionDropdown) {
+            mentionDropdown.style.display = 'none';
+        }
+    }
+
+    // Insérer la mention dans le texte
+    function insertMention(userName, userId, match) {
+        const startPos = match.index;
+        const endPos = commentInput.selectionStart;
+        const beforeMention = commentInput.value.substring(0, startPos);
+        const afterMention = commentInput.value.substring(endPos);
+        
+        const newText = `${beforeMention}@${userName}${afterMention}`;
+        commentInput.value = newText;
+        
+        // Mettre à jour la liste des mentions
+        const mentionsInput = commentInput.closest('form').querySelector('input[name="mentions"]');
+        const mentions = JSON.parse(mentionsInput.value || '[]');
+        mentions.push({ id: userId, name: userName });
+        mentionsInput.value = JSON.stringify(mentions);
+        
+        // Placer le curseur après la mention
+        const newCursorPos = startPos + userName.length + 1;
+        commentInput.setSelectionRange(newCursorPos, newCursorPos);
+    }
+
+    // Gérer les clics en dehors du dropdown pour le fermer
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.mention-dropdown') && !e.target.closest('.comment-input')) {
+            hideMentionDropdown();
+        }
+    });
+
+    // Initialiser
+    loadMentionableUsers();
+    mentionDropdown = createMentionDropdown();
+
+    // Nettoyer lors de la soumission du formulaire
+    commentInput.closest('form').addEventListener('submit', function() {
+        hideMentionDropdown();
+    });
+}
+
 // Initialiser la page des tâches
 export function initTasksPage() {
     if (document.querySelector('.status-btn')) {
@@ -244,6 +412,10 @@ export function initTasksPage() {
     
     if (document.querySelector('.edit-comment-btn')) {
         initCommentManagement();
+    }
+
+    if (document.querySelector('.comment-input')) {
+        initCommentMentions();
     }
     
     // Initialize tooltips

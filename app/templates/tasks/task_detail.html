@@ -318,24 +318,25 @@
         <!-- Formulaire pour ajouter un commentaire -->
         <form method="POST" action="{{ url_for('tasks.add_comment', slug_or_id=task.slug) }}" class="mb-4">
             {{ comment_form.hidden_tag() }}
+            <input type="hidden" name="mentions" value="[]">
             <div class="mb-3 position-relative">
                 {{ comment_form.content.label(class="form-label") }}
                 {% if comment_form.content.errors %}
-                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=2) }}
+                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=2, **{'data-project-id': task.project.slug}) }}
                     <div class="invalid-feedback">
                         {% for error in comment_form.content.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ comment_form.content(class="form-control comment-input", rows=2) }}
+                    {{ comment_form.content(class="form-control comment-input", rows=2, **{'data-project-id': task.project.slug}) }}
                 {% endif %}
                 <div class="comment-submit-container d-flex align-items-center gap-3">
                     <div class="form-check">
-                        {{ comment_form.send_notification(class="form-check-input") }}
-                        {{ comment_form.send_notification.label(class="form-check-label small") }}
+                        {{ comment_form.notify_all(class="form-check-input") }}
+                        {{ comment_form.notify_all.label(class="form-check-label") }}
                     </div>
-                    {{ comment_form.submit(class="btn btn-primary btn-sm comment-submit") }}
+                    {{ comment_form.submit(class="btn btn-primary") }}
                 </div>
             </div>
         </form>

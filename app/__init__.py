@@ -208,6 +208,7 @@ def create_app(config_name):
     from app.routes.main import main
     from app.routes.admin import admin
     from app.routes.communications import communications
+    from app.routes.api import api
     
     app.register_blueprint(auth)
     app.register_blueprint(clients)
@@ -216,5 +217,6 @@ def create_app(config_name):
     app.register_blueprint(main)
     app.register_blueprint(admin)
     app.register_blueprint(communications)
+    app.register_blueprint(api)
     
     return app

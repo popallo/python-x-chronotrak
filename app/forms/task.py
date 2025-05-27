@@ -67,7 +67,7 @@ class TimeEntryForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     content = TextAreaField('Commentaire', validators=[DataRequired(), Length(min=1, max=1000)])
-    send_notification = BooleanField('Envoyer une notification par email', default=False)
+    notify_all = BooleanField('Notifier tous les participants', default=False)
     submit = SubmitField('Publier')
 
 class EditCommentForm(FlaskForm):

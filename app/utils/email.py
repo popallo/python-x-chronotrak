@@ -21,13 +21,18 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
         return False
     
-    # En développement, rediriger tous les emails vers l'admin
-    if current_app.config.get('FLASK_ENV') == 'development':
-        admin_email = current_app.config.get('ADMIN_EMAIL')
-        if admin_email:
+    # En environnement non-production, rediriger tous les emails vers les administrateurs
+    if current_app.config.get('FLASK_ENV') != 'production':
+        # Récupérer tous les administrateurs
+        from app.models.user import User
+        admin_users = User.query.filter_by(role='admin').all()
+        admin_emails = [admin.email for admin in admin_users if admin.email]
+        
+        if admin_emails:
             # Ajouter des infos pour identifier les destinataires initiaux
-            subject = f"[DEV] {subject} (pour {', '.join(recipients)})"
-            recipients = [admin_email]
+            subject = f"[{current_app.config.get('FLASK_ENV', 'DEV').upper()}] {subject} (pour {', '.join(recipients)})"
+            recipients = admin_emails
+            current_app.logger.info(f"Email redirigé vers les administrateurs: {', '.join(admin_emails)}")
     
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
@@ -45,9 +50,6 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         success = False
     
     # Enregistrer la communication dans la base de données
-    # Importer Communication ici pour éviter les imports circulaires
-    from app.models.communication import Communication
-    
     try:
         for recipient in recipients:
             comm = Communication(

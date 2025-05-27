@@ -1,0 +1,143 @@
+.prismatic-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background: transparent;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prismatic-nav .navbar {
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* État initial */
+.prismatic-nav .navbar {
+    background: var(--bs-dark);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* État scrolled */
+.prismatic-nav.scrolled .navbar {
+    background: rgba(var(--bs-dark-rgb), 0.8);
+    transform: translateY(-100%);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* État visible */
+.prismatic-nav.visible .navbar {
+    transform: translateY(0);
+    background: rgba(var(--bs-dark-rgb), 0.95);
+}
+
+/* Effet de prisme */
+.prismatic-nav::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(var(--bs-primary-rgb), 0.1),
+        rgba(var(--bs-info-rgb), 0.1),
+        rgba(var(--bs-success-rgb), 0.1)
+    );
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.prismatic-nav.visible::before {
+    opacity: 1;
+}
+
+/* Indicateur de scroll */
+.scroll-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        var(--bs-primary),
+        var(--bs-info),
+        var(--bs-success)
+    );
+    transform-origin: left;
+    z-index: 1031;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.visible {
+    opacity: 1;
+}
+
+/* Ajustement du contenu principal */
+/* main {
+    padding-top: 76px;
+    transition: padding-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+} */
+
+/* Style pour le mode sombre */
+[data-bs-theme="dark"] .prismatic-nav .navbar {
+    background: rgba(33, 37, 41, 0.95);
+}
+
+[data-bs-theme="dark"] .prismatic-nav.scrolled .navbar {
+    background: rgba(33, 37, 41, 0.8);
+}
+
+/* Animation de transition */
+@keyframes prismatic-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.prismatic-nav.visible .navbar {
+    background-size: 200% 200%;
+    animation: prismatic-shift 15s ease infinite;
+}
+
+body:has(.prismatic-nav) {
+    padding-top: 76px !important;
+}
+
+.prismatic-bar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    z-index: 1032;
+    background: linear-gradient(90deg, var(--bs-primary), var(--bs-info), var(--bs-success), var(--bs-warning), var(--bs-danger));
+    transition: opacity 0.4s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.prismatic-nav.scrolled ~ .prismatic-bar {
+    display: block;
+    opacity: 1;
+}
+
+.prismatic-nav.visible ~ .prismatic-bar,
+.prismatic-nav:not(.scrolled) ~ .prismatic-bar {
+    opacity: 0;
+    transition: opacity 0.4s;
+} 

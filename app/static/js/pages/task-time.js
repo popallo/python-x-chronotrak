@@ -80,17 +80,33 @@ function showToast(type, message) {
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
     
+    // Ajouter une icône en fonction du type de message
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '<i class="fas fa-check-circle me-2"></i>';
+            break;
+        case 'warning':
+            icon = '<i class="fas fa-exclamation-triangle me-2"></i>';
+            break;
+        case 'danger':
+            icon = '<i class="fas fa-times-circle me-2"></i>';
+            break;
+    }
+    
     toast.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">
-                ${message}
+                ${icon}${message}
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
     
     toastContainer.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast);
+    const bsToast = new bootstrap.Toast(toast, {
+        delay: type === 'warning' ? 5000 : 3000 // Les avertissements restent plus longtemps
+    });
     bsToast.show();
     
     // Supprimer le toast après qu'il soit caché

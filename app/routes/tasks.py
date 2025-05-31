@@ -436,6 +436,8 @@ def add_comment(slug_or_id):
     if current_user.is_client():
         project = task.project
         if not current_user.has_access_to_client(project.client_id):
+            if request.is_json:
+                return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
@@ -467,8 +469,31 @@ def add_comment(slug_or_id):
             mentioned_users=mentioned_users
         )
         
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': 'Votre commentaire a été ajouté.',
+                'comment': {
+                    'id': comment.id,
+                    'content': comment.content,
+                    'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+                    'user_name': comment.user.name,
+                    'user_id': comment.user.id,
+                    'is_own_comment': comment.user_id == current_user.id
+                }
+            })
+            
         flash('Votre commentaire a été ajouté.', 'success')
         return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
+    
+    if request.is_json:
+        errors = {}
+        for field, field_errors in form.errors.items():
+            errors[field] = field_errors[0]
+        return jsonify({
+            'success': False,
+            'errors': errors
+        }), 400
     
     for field, errors in form.errors.items():
         for error in errors:

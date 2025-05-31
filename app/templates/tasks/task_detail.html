@@ -13,6 +13,7 @@
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/pages/task-time.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -245,6 +246,9 @@
         </div>
     </div>
 </div>
+
+<!-- Conteneur de toasts -->
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 
 <!-- Modal pour l'enregistrement du temps -->
 {% if not current_user.is_client() %}

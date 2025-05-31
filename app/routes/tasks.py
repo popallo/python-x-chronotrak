@@ -231,6 +231,8 @@ def log_time(slug_or_id):
     
     # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
     if current_user.is_client():
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Accès refusé. Les clients ne peuvent pas enregistrer de temps.'}), 403
         flash('Accès refusé. Les clients ne peuvent pas enregistrer de temps.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
     
@@ -241,6 +243,11 @@ def log_time(slug_or_id):
         if task.project.time_tracking_enabled:
             if task.project.remaining_credit < form.hours.data:
                 credit_display = str(task.project.remaining_credit).replace('.', ',')
+                if request.is_json:
+                    return jsonify({
+                        'success': False, 
+                        'error': f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)'
+                    }), 400
                 flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
                 return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
         
@@ -269,13 +276,57 @@ def log_time(slug_or_id):
         send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
         
         from app.utils.time_format import format_time
-        flash(f'{format_time(form.hours.data)} enregistrées sur la tâche!', 'success')
+        success_message = f'{format_time(form.hours.data)} enregistrées sur la tâche!'
         
         # Si le crédit devient faible, afficher une alerte uniquement si la gestion de temps est activée
+        warning_message = None
         if task.project.time_tracking_enabled and task.project.remaining_credit < 2:
-            flash(f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!', 'warning')
+            warning_message = f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!'
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': success_message,
+                'warning': warning_message,
+                'time_entry': {
+                    'id': time_entry.id,
+                    'hours': time_entry.hours,
+                    'description': time_entry.description,
+                    'created_at': time_entry.created_at.strftime('%d/%m %H:%M'),
+                    'user_name': time_entry.user.name
+                },
+                'task': {
+                    'actual_time': task.actual_time,
+                    'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+                }
+            })
+            
+        flash(success_message, 'success')
+        if warning_message:
+            flash(warning_message, 'warning')
             
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+
+@tasks.route('/tasks/<slug_or_id>/time_entries', methods=['GET'])
+@login_required
+def get_time_entries(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    time_entries = TimeEntry.query.filter_by(task_id=task.id).order_by(TimeEntry.created_at.desc()).all()
+    
+    return jsonify({
+        'success': True,
+        'time_entries': [{
+            'id': entry.id,
+            'hours': entry.hours,
+            'description': entry.description,
+            'created_at': entry.created_at.strftime('%d/%m %H:%M'),
+            'user_name': entry.user.name
+        } for entry in time_entries],
+        'task': {
+            'actual_time': task.actual_time,
+            'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+        }
+    })
 
 @tasks.route('/tasks/update_status', methods=['POST'])
 @login_required

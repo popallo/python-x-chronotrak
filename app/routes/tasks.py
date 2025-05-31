@@ -231,6 +231,8 @@ def log_time(slug_or_id):
     
     # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
     if current_user.is_client():
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Accès refusé. Les clients ne peuvent pas enregistrer de temps.'}), 403
         flash('Accès refusé. Les clients ne peuvent pas enregistrer de temps.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
     
@@ -241,6 +243,11 @@ def log_time(slug_or_id):
         if task.project.time_tracking_enabled:
             if task.project.remaining_credit < form.hours.data:
                 credit_display = str(task.project.remaining_credit).replace('.', ',')
+                if request.is_json:
+                    return jsonify({
+                        'success': False, 
+                        'error': f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)'
+                    }), 400
                 flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
                 return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
         
@@ -269,13 +276,57 @@ def log_time(slug_or_id):
         send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
         
         from app.utils.time_format import format_time
-        flash(f'{format_time(form.hours.data)} enregistrées sur la tâche!', 'success')
+        success_message = f'{format_time(form.hours.data)} enregistrées sur la tâche!'
         
         # Si le crédit devient faible, afficher une alerte uniquement si la gestion de temps est activée
+        warning_message = None
         if task.project.time_tracking_enabled and task.project.remaining_credit < 2:
-            flash(f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!', 'warning')
+            warning_message = f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!'
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': success_message,
+                'warning': warning_message,
+                'time_entry': {
+                    'id': time_entry.id,
+                    'hours': time_entry.hours,
+                    'description': time_entry.description,
+                    'created_at': time_entry.created_at.strftime('%d/%m %H:%M'),
+                    'user_name': time_entry.user.name
+                },
+                'task': {
+                    'actual_time': task.actual_time,
+                    'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+                }
+            })
+            
+        flash(success_message, 'success')
+        if warning_message:
+            flash(warning_message, 'warning')
             
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+
+@tasks.route('/tasks/<slug_or_id>/time_entries', methods=['GET'])
+@login_required
+def get_time_entries(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    time_entries = TimeEntry.query.filter_by(task_id=task.id).order_by(TimeEntry.created_at.desc()).all()
+    
+    return jsonify({
+        'success': True,
+        'time_entries': [{
+            'id': entry.id,
+            'hours': entry.hours,
+            'description': entry.description,
+            'created_at': entry.created_at.strftime('%d/%m %H:%M'),
+            'user_name': entry.user.name
+        } for entry in time_entries],
+        'task': {
+            'actual_time': task.actual_time,
+            'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+        }
+    })
 
 @tasks.route('/tasks/update_status', methods=['POST'])
 @login_required
@@ -385,6 +436,8 @@ def add_comment(slug_or_id):
     if current_user.is_client():
         project = task.project
         if not current_user.has_access_to_client(project.client_id):
+            if request.is_json:
+                return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
@@ -416,8 +469,31 @@ def add_comment(slug_or_id):
             mentioned_users=mentioned_users
         )
         
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': 'Votre commentaire a été ajouté.',
+                'comment': {
+                    'id': comment.id,
+                    'content': comment.content,
+                    'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+                    'user_name': comment.user.name,
+                    'user_id': comment.user.id,
+                    'is_own_comment': comment.user_id == current_user.id
+                }
+            })
+            
         flash('Votre commentaire a été ajouté.', 'success')
         return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
+    
+    if request.is_json:
+        errors = {}
+        for field, field_errors in form.errors.items():
+            errors[field] = field_errors[0]
+        return jsonify({
+            'success': False,
+            'errors': errors
+        }), 400
     
     for field, errors in form.errors.items():
         for error in errors:
@@ -605,6 +681,8 @@ def add_reply(comment_id):
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
         if not current_user.has_access_to_client(task.project.client_id):
+            if request.is_json:
+                return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
@@ -618,8 +696,33 @@ def add_reply(comment_id):
             parent_id=parent_comment.id
         )
         save_to_db(reply)
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': 'Réponse ajoutée avec succès!',
+                'comment': {
+                    'id': reply.id,
+                    'content': reply.content,
+                    'created_at': reply.created_at.strftime('%d/%m/%Y %H:%M'),
+                    'user_name': reply.user.name,
+                    'user_id': reply.user.id,
+                    'is_own_comment': reply.user_id == current_user.id,
+                    'parent_id': reply.parent_id
+                }
+            })
+            
         flash('Réponse ajoutée avec succès!', 'success')
     else:
+        if request.is_json:
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors[0]
+            return jsonify({
+                'success': False,
+                'errors': errors
+            }), 400
+            
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
@@ -630,27 +733,73 @@ def add_reply(comment_id):
 @login_required
 def toggle_pin_task(slug_or_id):
     """Épingler ou désépingler une tâche pour l'utilisateur courant"""
+    try:
+        task = get_task_by_slug_or_id(slug_or_id)
+        if not task:
+            if request.is_json:
+                return jsonify({'error': 'Tâche non trouvée.'}), 404
+            flash('Tâche non trouvée.', 'danger')
+            return redirect(url_for('main.dashboard'))
+
+        # Vérifier les permissions
+        if current_user.is_client() and task.project.client not in current_user.clients:
+            if request.is_json:
+                return jsonify({'error': 'Vous n\'avez pas la permission d\'effectuer cette action.'}), 403
+            flash('Vous n\'avez pas la permission d\'effectuer cette action.', 'danger')
+            return redirect(url_for('main.dashboard'))
+
+        # Vérifier si la tâche est déjà épinglée
+        is_pinned = task in current_user.pinned_tasks
+        if is_pinned:
+            # Désépingler
+            UserPinnedTask.query.filter_by(user_id=current_user.id, task_id=task.id).delete()
+            db.session.commit()
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'La tâche a été désépinglée.',
+                    'is_pinned': False
+                })
+            flash('La tâche a été désépinglée.', 'success')
+        else:
+            # Épingler
+            new_pin = UserPinnedTask(user_id=current_user.id, task_id=task.id)
+            db.session.add(new_pin)
+            db.session.commit()
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'La tâche a été épinglée.',
+                    'is_pinned': True
+                })
+            flash('La tâche a été épinglée.', 'success')
+
+        if request.is_json:
+            return jsonify({'success': True})
+        return redirect(request.referrer or url_for('tasks.task_details', slug_or_id=task.slug))
+    except Exception as e:
+        db.session.rollback()  # Annuler toute transaction en cours
+        if request.is_json:
+            return jsonify({
+                'error': 'Une erreur est survenue lors de l\'opération.',
+                'details': str(e)
+            }), 500
+        flash('Une erreur est survenue lors de l\'opération.', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+@tasks.route('/api/tasks/<slug_or_id>/remaining-credit', methods=['GET'])
+@login_required
+def get_remaining_credit(slug_or_id):
+    """Récupère le crédit restant d'une tâche"""
     task = get_task_by_slug_or_id(slug_or_id)
-    if not task:
-        flash('Tâche non trouvée.', 'danger')
-        return redirect(url_for('main.dashboard'))
-
-    # Vérifier les permissions
-    if current_user.is_client() and task.project.client not in current_user.clients:
-        flash('Vous n\'avez pas la permission d\'effectuer cette action.', 'danger')
-        return redirect(url_for('main.dashboard'))
-
-    pinned = UserPinnedTask.query.filter_by(user_id=current_user.id, task_id=task.id).first()
-    if pinned:
-        # Désépingler
-        db.session.delete(pinned)
-        db.session.commit()
-        flash('La tâche a été désépinglée.', 'success')
-    else:
-        # Épingler
-        new_pin = UserPinnedTask(user_id=current_user.id, task_id=task.id)
-        db.session.add(new_pin)
-        db.session.commit()
-        flash('La tâche a été épinglée.', 'success')
-
-    return redirect(request.referrer or url_for('tasks.task_details', slug_or_id=task.slug))
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    return jsonify({
+        'success': True,
+        'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+    })

@@ -1,9 +1,34 @@
+// Fonction pour récupérer le temps restant
+async function fetchRemainingCredit(taskSlug) {
+    try {
+        const response = await fetch(`/api/tasks/${taskSlug}/remaining-credit`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération du crédit restant');
+        }
+        
+        const data = await response.json();
+        return data.remaining_credit;
+    } catch (error) {
+        console.error('Erreur:', error);
+        return null;
+    }
+}
+
 // Fonction pour formater le temps
 function formatTime(hours) {
+    // Convertir en minutes totales
     const totalMinutes = Math.round(hours * 60);
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
     
+    // Formater le temps
     if (h > 0) {
         return `${h}h${m > 0 ? ` ${m}min` : ''}`;
     }
@@ -11,26 +36,52 @@ function formatTime(hours) {
 }
 
 // Fonction pour mettre à jour l'interface après l'ajout de temps
-function updateTimeInterface(data) {
+async function updateTimeInterface(data) {
     // Mettre à jour le temps total
     const timeBadge = document.querySelector('.badge[title="Temps total passé sur la tâche"]');
     if (timeBadge) {
         timeBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.actual_time)}`;
     }
     
-    // Mettre à jour le crédit restant si activé
-    const creditBadge = document.querySelector('.badge[title="Crédit restant du projet"]');
-    if (creditBadge && data.task.remaining_credit !== null) {
-        creditBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.remaining_credit)}`;
-        
-        // Mettre à jour la classe de couleur
-        creditBadge.className = 'badge text-white d-flex align-items-center';
-        if (data.task.remaining_credit < 2) {
-            creditBadge.classList.add('bg-danger');
-        } else if (data.task.remaining_credit < 5) {
-            creditBadge.classList.add('bg-warning');
-        } else {
-            creditBadge.classList.add('bg-success');
+    // Mettre à jour le crédit restant directement depuis les données reçues
+    if (data.task.remaining_credit !== null && data.task.remaining_credit !== undefined) {
+        const oldBadge = document.getElementById('remaining-credit-badge');
+        if (oldBadge) {
+            // Créer un nouveau badge
+            const newBadge = document.createElement('span');
+            newBadge.id = 'remaining-credit-badge';
+            newBadge.className = `badge ${data.task.remaining_credit < 2 ? 'bg-danger' : 
+                                 data.task.remaining_credit < 5 ? 'bg-warning' : 
+                                 'bg-success'} text-white d-flex align-items-center`;
+            newBadge.setAttribute('data-bs-toggle', 'tooltip');
+            newBadge.setAttribute('title', 'Crédit restant du projet');
+            newBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.remaining_credit)}`;
+            
+            // Remplacer l'ancien badge par le nouveau
+            oldBadge.parentNode.replaceChild(newBadge, oldBadge);
+            
+            // Réinitialiser le tooltip Bootstrap
+            const tooltip = bootstrap.Tooltip.getInstance(newBadge);
+            if (tooltip) {
+                tooltip.dispose();
+            }
+            new bootstrap.Tooltip(newBadge);
+
+            // Mettre à jour aussi l'alerte dans le modal si elle existe
+            const creditAlert = document.querySelector('#timeEntryModal .alert');
+            if (creditAlert) {
+                const alertClass = data.task.remaining_credit < 2 ? 'alert-danger' : 
+                                 data.task.remaining_credit < 5 ? 'alert-warning' : 
+                                 'alert-success';
+                creditAlert.className = `alert ${alertClass} mb-4 no-auto-close`;
+                const creditText = creditAlert.querySelector('strong');
+                if (creditText) {
+                    creditText.textContent = formatTime(data.task.remaining_credit);
+                    creditText.className = `${data.task.remaining_credit < 2 ? 'text-danger' : 
+                                          data.task.remaining_credit < 5 ? 'text-warning' : 
+                                          'text-success'} ms-2`;
+                }
+            }
         }
     }
     
@@ -150,6 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Retirer le focus du bouton submit avant de fermer le modal
+                document.activeElement.blur();
+                
                 // Fermer le modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
                 modal.hide();

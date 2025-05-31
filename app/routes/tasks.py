@@ -759,3 +759,20 @@ def toggle_pin_task(slug_or_id):
             }), 500
         flash('Une erreur est survenue lors de l\'opération.', 'danger')
         return redirect(request.referrer or url_for('main.dashboard'))
+
+@tasks.route('/api/tasks/<slug_or_id>/remaining-credit', methods=['GET'])
+@login_required
+def get_remaining_credit(slug_or_id):
+    """Récupère le crédit restant d'une tâche"""
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        project = task.project
+        if not current_user.has_access_to_client(project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    return jsonify({
+        'success': True,
+        'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+    })

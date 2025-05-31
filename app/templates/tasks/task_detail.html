@@ -27,7 +27,7 @@
             <h1 class="h4 mb-0">{{ task.title }}</h1>
             <div class="d-flex gap-2">
                 {% if task.project.time_tracking_enabled %}
-                <span class="badge {% if task.project.remaining_credit < 2 %}bg-danger{% elif task.project.remaining_credit < 5 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
+                <span id="remaining-credit-badge" class="badge {% if task.project.remaining_credit < 2 %}bg-danger{% elif task.project.remaining_credit < 5 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
                     <i class="fas fa-clock me-1"></i>{{ task.project.remaining_credit|format_time }}
                 </span>
                 {% endif %}

@@ -491,4 +491,35 @@ textarea.comment-input::placeholder {
 
 .reply-entry {
     margin-left: 40px;
+}
+
+/* Styles pour les toasts */
+.toast-container {
+    z-index: 1050;
+}
+
+.toast {
+    min-width: 250px;
+    opacity: 1 !important;
+}
+
+.toast.bg-success {
+    background-color: #28a745 !important;
+}
+
+.toast.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.toast.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.toast .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.toast.bg-warning .btn-close {
+    filter: none;
 } 

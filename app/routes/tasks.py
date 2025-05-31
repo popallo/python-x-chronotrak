@@ -706,27 +706,56 @@ def add_reply(comment_id):
 @login_required
 def toggle_pin_task(slug_or_id):
     """Épingler ou désépingler une tâche pour l'utilisateur courant"""
-    task = get_task_by_slug_or_id(slug_or_id)
-    if not task:
-        flash('Tâche non trouvée.', 'danger')
-        return redirect(url_for('main.dashboard'))
+    try:
+        task = get_task_by_slug_or_id(slug_or_id)
+        if not task:
+            if request.is_json:
+                return jsonify({'error': 'Tâche non trouvée.'}), 404
+            flash('Tâche non trouvée.', 'danger')
+            return redirect(url_for('main.dashboard'))
 
-    # Vérifier les permissions
-    if current_user.is_client() and task.project.client not in current_user.clients:
-        flash('Vous n\'avez pas la permission d\'effectuer cette action.', 'danger')
-        return redirect(url_for('main.dashboard'))
+        # Vérifier les permissions
+        if current_user.is_client() and task.project.client not in current_user.clients:
+            if request.is_json:
+                return jsonify({'error': 'Vous n\'avez pas la permission d\'effectuer cette action.'}), 403
+            flash('Vous n\'avez pas la permission d\'effectuer cette action.', 'danger')
+            return redirect(url_for('main.dashboard'))
 
-    pinned = UserPinnedTask.query.filter_by(user_id=current_user.id, task_id=task.id).first()
-    if pinned:
-        # Désépingler
-        db.session.delete(pinned)
-        db.session.commit()
-        flash('La tâche a été désépinglée.', 'success')
-    else:
-        # Épingler
-        new_pin = UserPinnedTask(user_id=current_user.id, task_id=task.id)
-        db.session.add(new_pin)
-        db.session.commit()
-        flash('La tâche a été épinglée.', 'success')
+        # Vérifier si la tâche est déjà épinglée
+        is_pinned = task in current_user.pinned_tasks
+        if is_pinned:
+            # Désépingler
+            UserPinnedTask.query.filter_by(user_id=current_user.id, task_id=task.id).delete()
+            db.session.commit()
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'La tâche a été désépinglée.',
+                    'is_pinned': False
+                })
+            flash('La tâche a été désépinglée.', 'success')
+        else:
+            # Épingler
+            new_pin = UserPinnedTask(user_id=current_user.id, task_id=task.id)
+            db.session.add(new_pin)
+            db.session.commit()
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'La tâche a été épinglée.',
+                    'is_pinned': True
+                })
+            flash('La tâche a été épinglée.', 'success')
 
-    return redirect(request.referrer or url_for('tasks.task_details', slug_or_id=task.slug))
+        if request.is_json:
+            return jsonify({'success': True})
+        return redirect(request.referrer or url_for('tasks.task_details', slug_or_id=task.slug))
+    except Exception as e:
+        db.session.rollback()  # Annuler toute transaction en cours
+        if request.is_json:
+            return jsonify({
+                'error': 'Une erreur est survenue lors de l\'opération.',
+                'details': str(e)
+            }), 500
+        flash('Une erreur est survenue lors de l\'opération.', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))

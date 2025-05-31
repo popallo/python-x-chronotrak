@@ -16,6 +16,7 @@
 <script src="{{ url_for('static', filename='js/pages/task-time.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/pages/task-comments.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/pages/task-status.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/pages/task-pin.js') }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -37,7 +38,7 @@
                     <i class="fas fa-edit"></i>
                 </a>
                 {% if not current_user.is_client() %}
-                <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
+                <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline menu-pin-form">
                     {% set is_pinned = task in current_user.pinned_tasks %}
                     <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="{% if is_pinned %}Désépingler{% else %}Épingler{% endif %} la tâche">
                         <i class="fas fa-thumbtack {% if is_pinned %}text-warning{% endif %}"></i>

@@ -681,6 +681,8 @@ def add_reply(comment_id):
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
         if not current_user.has_access_to_client(task.project.client_id):
+            if request.is_json:
+                return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
@@ -694,8 +696,33 @@ def add_reply(comment_id):
             parent_id=parent_comment.id
         )
         save_to_db(reply)
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': 'Réponse ajoutée avec succès!',
+                'comment': {
+                    'id': reply.id,
+                    'content': reply.content,
+                    'created_at': reply.created_at.strftime('%d/%m/%Y %H:%M'),
+                    'user_name': reply.user.name,
+                    'user_id': reply.user.id,
+                    'is_own_comment': reply.user_id == current_user.id,
+                    'parent_id': reply.parent_id
+                }
+            })
+            
         flash('Réponse ajoutée avec succès!', 'success')
     else:
+        if request.is_json:
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors[0]
+            return jsonify({
+                'success': False,
+                'errors': errors
+            }), 400
+            
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')

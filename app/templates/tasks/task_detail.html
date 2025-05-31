@@ -17,6 +17,10 @@
 <script src="{{ url_for('static', filename='js/pages/task-comments.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/pages/task-status.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/pages/task-pin.js') }}" defer></script>
+<script>
+    // Stocker le token CSRF global
+    window.csrfToken = "{{ csrf_token() }}";
+</script>
 {% endblock %}
 
 {% block content %}
@@ -387,7 +391,7 @@
                     <i class="fas fa-reply me-1"></i>Répondre
                 </button>
                 <div class="comment-reply-form" id="reply-form-{{ comment.id }}" style="display: none;">
-                    <form method="POST" action="{{ url_for('tasks.add_reply', comment_id=comment.id) }}">
+                    <form method="POST" action="{{ url_for('tasks.add_reply', comment_id=comment.id) }}" class="reply-form">
                         {{ comment_form.hidden_tag() }}
                         <div class="mb-2">
                             {{ comment_form.content(class="form-control", rows=2, placeholder="Écrivez votre réponse...") }}

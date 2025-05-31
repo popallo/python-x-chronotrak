@@ -30,7 +30,8 @@ function updateCommentsInterface(data) {
                 <i class="fas fa-reply me-1"></i>Répondre
             </button>
             <div class="comment-reply-form" id="reply-form-${data.comment.id}" style="display: none;">
-                <form method="POST" action="/comments/${data.comment.id}/reply">
+                <form method="POST" action="/comments/${data.comment.id}/reply" class="reply-form">
+                    <input type="hidden" name="csrf_token" value="${window.csrfToken}">
                     <div class="mb-2">
                         <textarea class="form-control" name="content" rows="2" placeholder="Écrivez votre réponse..."></textarea>
                     </div>
@@ -40,6 +41,7 @@ function updateCommentsInterface(data) {
                     </div>
                 </form>
             </div>
+            <div class="comment-replies" id="replies-${data.comment.id}"></div>
         </div>
     `;
     
@@ -55,6 +57,111 @@ function updateCommentsInterface(data) {
     if (commentCount) {
         const currentCount = parseInt(commentCount.textContent) || 0;
         commentCount.textContent = currentCount + 1;
+    }
+    
+    // Réinitialiser les événements pour le nouveau commentaire
+    const newComment = document.getElementById(`comment-${data.comment.id}`);
+    if (newComment) {
+        // Réinitialiser le bouton de réponse
+        const replyButton = newComment.querySelector('.reply-button');
+        if (replyButton) {
+            replyButton.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const replyForm = document.getElementById(`reply-form-${commentId}`);
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            });
+        }
+
+        // Réinitialiser le bouton d'annulation
+        const cancelButton = newComment.querySelector('.cancel-reply-btn');
+        if (cancelButton) {
+            cancelButton.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const replyForm = document.getElementById(`reply-form-${commentId}`);
+                replyForm.style.display = 'none';
+            });
+        }
+
+        // Réinitialiser le formulaire de réponse
+        const replyForm = newComment.querySelector('.reply-form');
+        if (replyForm) {
+            replyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': window.csrfToken
+                    },
+                    body: JSON.stringify({
+                        content: formData.get('content'),
+                        csrf_token: window.csrfToken
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Réinitialiser le formulaire
+                        this.reset();
+                        
+                        // Masquer le formulaire
+                        this.closest('.comment-reply-form').style.display = 'none';
+                        
+                        // Ajouter la réponse
+                        const repliesContainer = document.getElementById(`replies-${data.comment.parent_id}`);
+                        if (repliesContainer) {
+                            const replyHtml = `
+                                <div class="comment-reply ${data.comment.is_own_comment ? 'own-comment' : ''}" id="reply-${data.comment.id}">
+                                    <div class="comment-header">
+                                        <span class="comment-author">${data.comment.user_name}</span>
+                                        <div class="d-flex align-items-center">
+                                            <span class="comment-time">${data.comment.created_at}</span>
+                                            <div class="d-inline-block ms-2">
+                                                <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                                                        data-comment-id="${data.comment.id}" title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <form action="/comments/${data.comment.id}/delete" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="comment-content">
+                                        ${data.comment.content}
+                                    </div>
+                                </div>
+                            `;
+                            repliesContainer.insertAdjacentHTML('beforeend', replyHtml);
+                        }
+                        
+                        // Afficher le message de succès
+                        if (data.message) {
+                            showToast('success', data.message);
+                        }
+                    } else {
+                        if (data.errors) {
+                            // Afficher les erreurs de validation
+                            Object.entries(data.errors).forEach(([field, error]) => {
+                                showToast('danger', error);
+                            });
+                        } else {
+                            showToast('danger', data.error || 'Une erreur est survenue');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showToast('danger', 'Une erreur est survenue lors de l\'ajout de la réponse');
+                });
+            });
+        }
     }
     
     // Afficher le message de succès
@@ -102,6 +209,105 @@ function createToastContainer() {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les formulaires de réponse existants
+    document.querySelectorAll('.reply-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': window.csrfToken
+                },
+                body: JSON.stringify({
+                    content: formData.get('content'),
+                    csrf_token: window.csrfToken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Réinitialiser le formulaire
+                    this.reset();
+                    
+                    // Masquer le formulaire
+                    this.closest('.comment-reply-form').style.display = 'none';
+                    
+                    // Ajouter la réponse
+                    const repliesContainer = document.getElementById(`replies-${data.comment.parent_id}`);
+                    if (repliesContainer) {
+                        const replyHtml = `
+                            <div class="comment-reply ${data.comment.is_own_comment ? 'own-comment' : ''}" id="reply-${data.comment.id}">
+                                <div class="comment-header">
+                                    <span class="comment-author">${data.comment.user_name}</span>
+                                    <div class="d-flex align-items-center">
+                                        <span class="comment-time">${data.comment.created_at}</span>
+                                        <div class="d-inline-block ms-2">
+                                            <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                                                    data-comment-id="${data.comment.id}" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form action="/comments/${data.comment.id}/delete" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="comment-content">
+                                    ${data.comment.content}
+                                </div>
+                            </div>
+                        `;
+                        repliesContainer.insertAdjacentHTML('beforeend', replyHtml);
+                    }
+                    
+                    // Afficher le message de succès
+                    if (data.message) {
+                        showToast('success', data.message);
+                    }
+                } else {
+                    if (data.errors) {
+                        // Afficher les erreurs de validation
+                        Object.entries(data.errors).forEach(([field, error]) => {
+                            showToast('danger', error);
+                        });
+                    } else {
+                        showToast('danger', data.error || 'Une erreur est survenue');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showToast('danger', 'Une erreur est survenue lors de l\'ajout de la réponse');
+            });
+        });
+    });
+
+    // Initialiser les boutons de réponse existants
+    document.querySelectorAll('.reply-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+
+    // Initialiser les boutons d'annulation existants
+    document.querySelectorAll('.cancel-reply-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = 'none';
+        });
+    });
+
+    // Initialiser le formulaire de commentaire principal
     const commentForm = document.querySelector('form[action*="/add_comment"]');
     if (!commentForm) return;
     
@@ -109,20 +315,19 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const formData = new FormData(this);
-        const data = {
-            content: formData.get('content'),
-            notify_all: formData.get('notify_all') === 'on',
-            mentions: formData.get('mentions'),
-            csrf_token: formData.get('csrf_token')
-        };
         
         fetch(this.action, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': data.csrf_token
+                'X-CSRF-Token': window.csrfToken
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                content: formData.get('content'),
+                notify_all: formData.get('notify_all') === 'on',
+                mentions: formData.get('mentions'),
+                csrf_token: window.csrfToken
+            })
         })
         .then(response => response.json())
         .then(data => {

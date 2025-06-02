@@ -240,7 +240,7 @@ function updatePinInterface(data) {
             }
 
             // Vérifier s'il reste des tâches épinglées
-            const remainingTasks = dropdownMenu.querySelectorAll('li[data-task-id]');
+            const remainingTasks = dropdownMenu.querySelectorAll('.dropdown-item:not([href*="my_tasks"])');
             if (remainingTasks.length === 0) {
                 // Supprimer le séparateur et le lien "Voir toutes mes tâches"
                 if (separator) separator.closest('li').remove();

@@ -26,8 +26,8 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='à faire')  # à faire, en cours, terminé
     priority = db.Column(db.String(20), nullable=False, default='normale')  # basse, normale, haute, urgente
-    estimated_time = db.Column(db.Float, nullable=True)  # en heures
-    actual_time = db.Column(db.Float, nullable=True)  # en heures
+    estimated_minutes = db.Column(db.Integer, nullable=True)  # en minutes
+    actual_minutes = db.Column(db.Integer, nullable=True)  # en minutes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -64,26 +64,27 @@ class Task(db.Model):
             description=self.description,
             status='à faire',  # Nouvelle tâche commence toujours à "à faire"
             priority=self.priority,
-            estimated_time=self.estimated_time,
+            estimated_minutes=self.estimated_minutes,
             project_id=self.project_id,
             user_id=self.user_id
         )
         
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""
+        minutes = int(round(hours * 60))
         entry = TimeEntry(
             task_id=self.id,
             user_id=user_id,
-            hours=hours,
+            minutes=minutes,
             description=description
         )
         db.session.add(entry)
         
         # Met à jour le temps total passé sur la tâche
-        if self.actual_time is None:
-            self.actual_time = hours
+        if self.actual_minutes is None:
+            self.actual_minutes = minutes
         else:
-            self.actual_time += hours
+            self.actual_minutes += minutes
         
         # Déduit du crédit du projet
         self.project.deduct_credit(hours, self.id)
@@ -126,11 +127,31 @@ class Task(db.Model):
             return True
         return False
 
+    @property
+    def estimated_time(self):
+        """Retourne le temps estimé en heures pour la compatibilité avec l'ancien code"""
+        return self.estimated_minutes / 60 if self.estimated_minutes is not None else None
+        
+    @estimated_time.setter
+    def estimated_time(self, value):
+        """Convertit le temps estimé en minutes"""
+        self.estimated_minutes = int(round(value * 60)) if value is not None else None
+        
+    @property
+    def actual_time(self):
+        """Retourne le temps réel en heures pour la compatibilité avec l'ancien code"""
+        return self.actual_minutes / 60 if self.actual_minutes is not None else None
+        
+    @actual_time.setter
+    def actual_time(self, value):
+        """Convertit le temps réel en minutes"""
+        self.actual_minutes = int(round(value * 60)) if value is not None else None
+
 class TimeEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    hours = db.Column(db.Float, nullable=False)
+    minutes = db.Column(db.Integer, nullable=False)  # en minutes
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -138,8 +159,13 @@ class TimeEntry(db.Model):
     user = db.relationship('User', backref='time_entries', lazy=True)
     
     def __repr__(self):
-        return f"TimeEntry(Task: {self.task_id}, User: {self.user.name}, Hours: {self.hours})"
+        return f"TimeEntry(Task: {self.task_id}, User: {self.user.name}, Minutes: {self.minutes})"
     
+    @property
+    def hours(self):
+        """Retourne le temps en heures pour la compatibilité avec l'ancien code"""
+        return self.minutes / 60
+
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(EncryptedType, nullable=False)  # Contenu chiffré

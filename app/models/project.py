@@ -7,8 +7,8 @@ class Project(db.Model):
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
-    initial_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
-    remaining_credit = db.Column(db.Float, nullable=False, default=0)  # en heures
+    initial_credit = db.Column(db.Integer, nullable=False, default=0)  # en minutes
+    remaining_credit = db.Column(db.Integer, nullable=False, default=0)  # en minutes
     time_tracking_enabled = db.Column(db.Boolean, nullable=True, default=True)  # Indique si le projet utilise la gestion de temps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -20,7 +20,7 @@ class Project(db.Model):
     credit_logs = db.relationship('CreditLog', backref='project', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f"Project('{self.name}', Client: '{self.client.name}', Credit: {self.remaining_credit}h)"
+        return f"Project('{self.name}', Client: '{self.client.name}', Credit: {self.remaining_credit}min)"
     
     def __init__(self, **kwargs):
         super(Project, self).__init__(**kwargs)
@@ -42,14 +42,14 @@ class Project(db.Model):
         if not self.time_tracking_enabled:
             return
             
-        # Arrondir le montant à 2 décimales pour éviter les erreurs de calcul
-        amount = round(amount, 2)
+        # Convertir les heures en minutes
+        amount_minutes = int(round(amount * 60))
         
-        # Met à jour le crédit restant et arrondir le résultat
-        self.remaining_credit = round(self.remaining_credit + amount, 2)
+        # Met à jour le crédit restant
+        self.remaining_credit += amount_minutes
         
         # Réinitialiser l'état d'alerte si le crédit est suffisant
-        threshold = 2  # Même seuil que dans deduct_credit
+        threshold = 120  # 2 heures en minutes
         if self.credit_alert_sent and self.remaining_credit >= threshold:
             self.credit_alert_sent = False
         
@@ -60,7 +60,7 @@ class Project(db.Model):
         # Crée une entrée dans l'historique
         log = CreditLog(
             project_id=self.id,
-            amount=amount,
+            amount=amount_minutes,
             note=note or f"Ajout de {amount}h de crédit"
         )
         db.session.add(log)
@@ -71,23 +71,23 @@ class Project(db.Model):
         if not self.time_tracking_enabled:
             return
             
-        # Arrondir le montant à 4 décimales pour éviter les erreurs de précision
-        amount = round(float(amount), 4)
+        # Convertir les heures en minutes
+        amount_minutes = int(round(amount * 60))
         
-        # Déduire le crédit et arrondir le résultat à 4 décimales
-        self.remaining_credit = round(self.remaining_credit - amount, 4)
+        # Déduire le crédit
+        self.remaining_credit -= amount_minutes
         
         # Créer l'entrée dans l'historique
         log = CreditLog(
             project_id=self.id,
-            amount=-amount,
+            amount=-amount_minutes,
             task_id=task_id,
             note=f"Déduction de {amount}h de crédit"
         )
         db.session.add(log)
         
         # Vérifier si le crédit est passé sous le seuil et envoyer une alerte si nécessaire
-        threshold = 2  # Seuil en heures
+        threshold = 120  # 2 heures en minutes
         
         # Seulement si on n'a pas déjà envoyé d'alerte pour ce passage sous le seuil
         if self.remaining_credit < threshold and not self.credit_alert_sent:

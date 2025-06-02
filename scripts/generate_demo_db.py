@@ -301,16 +301,18 @@ def generate_projects(clients):
             name = selected_project_names[i]
             description = selected_project_descs[i]
             
-            # Crédit initial aléatoire
-            initial_credit = random.randint(CREDIT_INITIAL[0], CREDIT_INITIAL[1])
+            # Crédit initial aléatoire (en heures, convertir en minutes)
+            initial_credit_hours = random.randint(CREDIT_INITIAL[0], CREDIT_INITIAL[1])
+            initial_credit = initial_credit_hours * 60
             
             # Date de création aléatoire (entre 1 et 180 jours dans le passé)
             days_ago = random.randint(1, 180)
             created_at = datetime.now() - timedelta(days=days_ago)
             
             # Créer un projet avec une partie du crédit utilisé
-            used_credit = random.uniform(0, initial_credit * 0.9)  # Entre 0% et 90% du crédit utilisé
-            remaining_credit = round(initial_credit - used_credit, 2)
+            used_credit_hours = random.uniform(0, initial_credit_hours * 0.9)
+            used_credit = int(round(used_credit_hours * 60))
+            remaining_credit = initial_credit - used_credit
             
             project = Project(
                 name=name,
@@ -382,8 +384,9 @@ def generate_tasks(projects, users):
             assigned_to = random.choice([None] + users) if status != 'terminé' else random.choice(users)
             user_id = assigned_to.id if assigned_to else None
             
-            # Temps estimé aléatoire entre 0.5h et 8h
-            estimated_time = round(random.uniform(0.5, 8), 2)
+            # Temps estimé aléatoire entre 0.5h et 8h (convertir en minutes)
+            estimated_time_hours = round(random.uniform(0.5, 8), 2)
+            estimated_minutes = int(round(estimated_time_hours * 60))
             
             # Date de création entre la date de création du projet et aujourd'hui
             days_since_project = (datetime.now() - project.created_at).days
@@ -397,10 +400,12 @@ def generate_tasks(projects, users):
                 completed_at = datetime.now() - timedelta(days=completed_days_ago)
             
             # Temps réel passé si la tâche est en cours ou terminée
-            actual_time = None
+            actual_time_hours = None
+            actual_minutes = None
             if status in ['en cours', 'terminé']:
                 # Entre 20% et 150% du temps estimé
-                actual_time = round(estimated_time * random.uniform(0.2, 1.5), 2)
+                actual_time_hours = estimated_time_hours * random.uniform(0.2, 1.5)
+                actual_minutes = int(round(actual_time_hours * 60))
             
             # Créer la tâche
             task = Task(
@@ -408,8 +413,8 @@ def generate_tasks(projects, users):
                 description=description,
                 status=status,
                 priority=priority,
-                estimated_time=estimated_time,
-                actual_time=actual_time,
+                estimated_minutes=estimated_minutes,
+                actual_minutes=actual_minutes,
                 project_id=project.id,
                 user_id=user_id,
                 created_at=created_at,
@@ -427,32 +432,32 @@ def generate_tasks(projects, users):
 def generate_time_entries(tasks, users):
     """Génère des entrées de temps pour les tâches"""
     for task in tasks:
-        if task.status in ['en cours', 'terminé'] and task.actual_time:
+        if task.status in ['en cours', 'terminé'] and task.actual_minutes:
             # Nombre aléatoire d'entrées de temps
             num_entries = random.randint(NUM_TIME_ENTRIES[0], NUM_TIME_ENTRIES[1])
             
-            # S'assurer que le temps total correspond à actual_time
-            total_time_needed = task.actual_time
+            # S'assurer que le temps total correspond à actual_minutes
+            total_time_needed_minutes = task.actual_minutes
             
             # Répartir le temps entre les entrées
             remaining_entries = num_entries
-            remaining_time = total_time_needed
+            remaining_time = total_time_needed_minutes
             
             for i in range(num_entries):
                 # Calculer le temps pour cette entrée
                 if remaining_entries > 1:
                     # Pour toutes les entrées sauf la dernière, prendre une portion aléatoire
-                    time_portion = min(remaining_time * random.uniform(0.1, 0.5), remaining_time)
+                    time_portion = min(int(remaining_time * random.uniform(0.1, 0.5)), remaining_time)
                 else:
                     # Pour la dernière entrée, prendre tout le temps restant
                     time_portion = remaining_time
                 
-                hours = round(time_portion, 2)
-                remaining_time -= hours
+                minutes = int(round(time_portion))
+                remaining_time -= minutes
                 remaining_entries -= 1
                 
                 # S'assurer qu'on ne dépasse pas le temps total
-                if hours <= 0:
+                if minutes <= 0:
                     continue
                 
                 # Date de création entre la date de création de la tâche et aujourd'hui ou date de complétion
@@ -473,14 +478,14 @@ def generate_time_entries(tasks, users):
                 time_entry = TimeEntry(
                     task_id=task.id,
                     user_id=user.id,
-                    hours=hours,
+                    minutes=minutes,
                     description=description,
                     created_at=created_at
                 )
                 
                 db.session.add(time_entry)
             
-            print(f"Entrées de temps générées pour la tâche {task.id}: {num_entries} entrées pour {total_time_needed}h")
+            print(f"Entrées de temps générées pour la tâche {task.id}: {num_entries} entrées pour {total_time_needed_minutes} min")
 
 def generate_comments(tasks, users, client_users):
     """Génère des commentaires pour les tâches"""

@@ -1,13 +1,10 @@
 def format_time(value):
-    """Formate un nombre d'heures en format h min"""
+    """Formate un nombre de minutes en format h min"""
     if value is None:
         return ""
     
-    # S'assurer que la valeur est un flottant et l'arrondir à 4 décimales pour éviter les erreurs de précision
-    value = round(float(value), 4)
-    
-    # Convertir en minutes totales et arrondir
-    total_minutes = round(value * 60)
+    # S'assurer que la valeur est un entier
+    total_minutes = int(round(float(value) * 60)) if isinstance(value, float) else int(value)
     
     # Calculer les heures et minutes
     hours = total_minutes // 60

@@ -255,20 +255,20 @@ def log_time(slug_or_id):
         time_entry = TimeEntry(
             task_id=task.id,
             user_id=current_user.id,
-            hours=form.hours.data,
+            minutes=int(form.hours.data * 60),  # Convertir les heures en minutes
             description=form.description.data
         )
         db.session.add(time_entry)
         
         # Mettre à jour le temps total passé sur la tâche
-        if task.actual_time is None:
-            task.actual_time = form.hours.data
+        if task.actual_minutes is None:
+            task.actual_minutes = int(form.hours.data * 60)
         else:
-            task.actual_time += form.hours.data
+            task.actual_minutes += int(form.hours.data * 60)
         
         # Déduire du crédit du projet uniquement si la gestion de temps est activée
         if task.project.time_tracking_enabled:
-            task.project.remaining_credit -= form.hours.data
+            task.project.remaining_credit -= int(form.hours.data * 60)
         
         db.session.commit()
         
@@ -280,8 +280,8 @@ def log_time(slug_or_id):
         
         # Si le crédit devient faible, afficher une alerte uniquement si la gestion de temps est activée
         warning_message = None
-        if task.project.time_tracking_enabled and task.project.remaining_credit < 2:
-            warning_message = f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit)})!'
+        if task.project.time_tracking_enabled and task.project.remaining_credit < 120:  # 2 heures en minutes
+            warning_message = f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit / 60)})!'
         
         if request.is_json:
             return jsonify({
@@ -290,14 +290,14 @@ def log_time(slug_or_id):
                 'warning': warning_message,
                 'time_entry': {
                     'id': time_entry.id,
-                    'hours': time_entry.hours,
+                    'hours': time_entry.minutes / 60,  # Convertir les minutes en heures pour l'affichage
                     'description': time_entry.description,
                     'created_at': time_entry.created_at.strftime('%d/%m %H:%M'),
                     'user_name': time_entry.user.name
                 },
                 'task': {
-                    'actual_time': task.actual_time,
-                    'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+                    'actual_time': task.actual_minutes / 60 if task.actual_minutes else None,  # Convertir en heures
+                    'remaining_credit': task.project.remaining_credit / 60 if task.project.time_tracking_enabled else None  # Convertir en heures
                 }
             })
             
@@ -317,14 +317,14 @@ def get_time_entries(slug_or_id):
         'success': True,
         'time_entries': [{
             'id': entry.id,
-            'hours': entry.hours,
+            'hours': entry.minutes / 60,  # Convertir les minutes en heures pour l'affichage
             'description': entry.description,
             'created_at': entry.created_at.strftime('%d/%m %H:%M'),
             'user_name': entry.user.name
         } for entry in time_entries],
         'task': {
-            'actual_time': task.actual_time,
-            'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+            'actual_time': task.actual_minutes / 60 if task.actual_minutes else None,  # Convertir en heures
+            'remaining_credit': task.project.remaining_credit / 60 if task.project.time_tracking_enabled else None  # Convertir en heures
         }
     })
 

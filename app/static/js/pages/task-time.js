@@ -23,6 +23,11 @@ async function fetchRemainingCredit(taskSlug) {
 
 // Fonction pour formater le temps
 function formatTime(hours) {
+    // Si hours est null ou undefined, retourner '0 min'
+    if (hours === null || hours === undefined) {
+        return '0 min';
+    }
+    
     // Convertir en minutes totales
     const totalMinutes = Math.round(hours * 60);
     const h = Math.floor(totalMinutes / 60);

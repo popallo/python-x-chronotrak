@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys
 import os
 
@@ -71,4 +69,4 @@ def main():
             print(f"\nErreur lors de la sauvegarde: {str(e)}")
 
 if __name__ == '__main__':
-    main() 
+    main()

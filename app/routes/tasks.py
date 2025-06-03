@@ -799,7 +799,10 @@ def get_remaining_credit(slug_or_id):
         if not current_user.has_access_to_client(project.client_id):
             return jsonify({'error': 'Accès non autorisé'}), 403
     
+    # Convertir les minutes en heures pour l'affichage
+    remaining_credit = task.project.remaining_credit / 60 if task.project.time_tracking_enabled else None
+    
     return jsonify({
         'success': True,
-        'remaining_credit': task.project.remaining_credit if task.project.time_tracking_enabled else None
+        'remaining_credit': remaining_credit
     })

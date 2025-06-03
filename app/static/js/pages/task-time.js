@@ -35,7 +35,7 @@ function formatTime(hours) {
     
     // Formater le temps
     if (h > 0) {
-        return `${h}h${m > 0 ? ` ${m}min` : ''}`;
+        return `${h}h${m > 0 ? `${m.toString().padStart(2, '0')}min` : ''}`;
     }
     return `${m}min`;
 }

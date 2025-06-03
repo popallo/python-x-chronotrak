@@ -239,65 +239,105 @@ def log_time(slug_or_id):
     form = TimeEntryForm()
     
     if form.validate_on_submit():
+        # Convertir le temps en minutes
+        time_in_minutes = int(form.hours.data * 60)
+        
         # Vérifier s'il reste assez de crédit uniquement si la gestion de temps est activée
         if task.project.time_tracking_enabled:
-            if task.project.remaining_credit < form.hours.data:
-                credit_display = str(task.project.remaining_credit).replace('.', ',')
+            # Si remaining_credit est inférieur à 100, on considère que c'est en heures
+            current_credit = task.project.remaining_credit
+            if current_credit < 100:  # Probablement en heures
+                current_credit = current_credit * 60  # Convertir en minutes
+            
+            if current_credit < time_in_minutes:
+                # Formater le temps restant en heures et minutes
+                remaining_hours = current_credit // 60
+                remaining_minutes = current_credit % 60
+                if remaining_hours > 0:
+                    credit_display = f"{remaining_hours}h{remaining_minutes:02d}min"
+                else:
+                    credit_display = f"{remaining_minutes}min"
+                
                 if request.is_json:
                     return jsonify({
                         'success': False, 
-                        'error': f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)'
+                        'error': f'Pas assez de crédit restant sur le projet! ({credit_display} disponibles)'
                     }), 400
-                flash(f'Pas assez de crédit restant sur le projet! ({credit_display}h disponibles)', 'danger')
+                flash(f'Pas assez de crédit restant sur le projet! ({credit_display} disponibles)', 'danger')
                 return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
         
         # Créer l'entrée de temps
         time_entry = TimeEntry(
             task_id=task.id,
             user_id=current_user.id,
-            minutes=int(form.hours.data * 60),  # Convertir les heures en minutes
+            minutes=time_in_minutes,
             description=form.description.data
         )
         db.session.add(time_entry)
         
         # Mettre à jour le temps total passé sur la tâche
         if task.actual_minutes is None:
-            task.actual_minutes = int(form.hours.data * 60)
+            task.actual_minutes = time_in_minutes
         else:
-            task.actual_minutes += int(form.hours.data * 60)
+            task.actual_minutes += time_in_minutes
         
         # Déduire du crédit du projet uniquement si la gestion de temps est activée
         if task.project.time_tracking_enabled:
-            task.project.remaining_credit -= int(form.hours.data * 60)
+            # Si remaining_credit est inférieur à 100, on considère que c'est en heures
+            if task.project.remaining_credit < 100:  # Probablement en heures
+                task.project.remaining_credit = task.project.remaining_credit * 60  # Convertir en minutes
+            task.project.remaining_credit -= time_in_minutes
         
         db.session.commit()
         
         # Envoyer une notification par email
         send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
         
-        from app.utils.time_format import format_time
-        success_message = f'{format_time(form.hours.data)} enregistrées sur la tâche!'
+        # Formater le temps enregistré en heures et minutes
+        hours = time_in_minutes // 60
+        minutes = time_in_minutes % 60
+        if hours > 0:
+            time_display = f"{hours}h{minutes:02d}min"
+        else:
+            time_display = f"{minutes}min"
+        success_message = f'{time_display} enregistrées sur la tâche!'
         
         # Si le crédit devient faible, afficher une alerte uniquement si la gestion de temps est activée
         warning_message = None
-        if task.project.time_tracking_enabled and task.project.remaining_credit < 120:  # 2 heures en minutes
-            warning_message = f'Attention: le crédit du projet est très bas ({format_time(task.project.remaining_credit / 60)})!'
+        if task.project.time_tracking_enabled:
+            current_credit = task.project.remaining_credit
+            if current_credit < 120:  # 2 heures en minutes
+                remaining_hours = current_credit // 60
+                remaining_minutes = current_credit % 60
+                if remaining_hours > 0:
+                    credit_display = f"{remaining_hours}h{remaining_minutes:02d}min"
+                else:
+                    credit_display = f"{remaining_minutes}min"
+                warning_message = f'Attention: le crédit du projet est très bas ({credit_display})!'
         
         if request.is_json:
+            # Formater le temps restant pour l'affichage
+            remaining_hours = task.project.remaining_credit // 60
+            remaining_minutes = task.project.remaining_credit % 60
+            if remaining_hours > 0:
+                remaining_display = f"{remaining_hours}h{remaining_minutes:02d}min"
+            else:
+                remaining_display = f"{remaining_minutes}min"
+                
             return jsonify({
                 'success': True,
                 'message': success_message,
                 'warning': warning_message,
                 'time_entry': {
                     'id': time_entry.id,
-                    'hours': time_entry.minutes / 60,  # Convertir les minutes en heures pour l'affichage
+                    'hours': time_entry.minutes / 60,  # Garder en décimal pour le calcul
                     'description': time_entry.description,
                     'created_at': time_entry.created_at.strftime('%d/%m %H:%M'),
                     'user_name': time_entry.user.name
                 },
                 'task': {
-                    'actual_time': task.actual_minutes / 60 if task.actual_minutes else None,  # Convertir en heures
-                    'remaining_credit': task.project.remaining_credit / 60 if task.project.time_tracking_enabled else None  # Convertir en heures
+                    'actual_time': task.actual_minutes / 60 if task.actual_minutes else None,  # Garder en décimal pour le calcul
+                    'remaining_credit': remaining_display if task.project.time_tracking_enabled else None  # Afficher en format humain
                 }
             })
             
@@ -799,8 +839,18 @@ def get_remaining_credit(slug_or_id):
         if not current_user.has_access_to_client(project.client_id):
             return jsonify({'error': 'Accès non autorisé'}), 403
     
-    # Convertir les minutes en heures pour l'affichage
-    remaining_credit = task.project.remaining_credit / 60 if task.project.time_tracking_enabled else None
+    # Si le temps est inférieur à 100, on considère que c'est en heures
+    # Sinon, on considère que c'est en minutes
+    remaining_credit = task.project.remaining_credit
+    if task.project.time_tracking_enabled and remaining_credit is not None:
+        if remaining_credit < 100:  # Probablement en heures
+            # Convertir en minutes (en gardant la précision de 15 minutes)
+            remaining_credit = remaining_credit * 60
+        # Maintenant remaining_credit est en minutes
+        # On arrondit à la tranche de 15 minutes la plus proche
+        remaining_credit = round(remaining_credit / 15) * 15
+        # On convertit en heures pour l'affichage
+        remaining_credit = remaining_credit / 60
     
     return jsonify({
         'success': True,

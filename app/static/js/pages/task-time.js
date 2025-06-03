@@ -21,22 +21,46 @@ async function fetchRemainingCredit(taskSlug) {
     }
 }
 
+// Fonction pour convertir le format "XhYmin" en nombre décimal
+function parseTimeString(timeStr) {
+    if (!timeStr) return 0;
+    
+    // Si c'est déjà un nombre, le retourner
+    if (typeof timeStr === 'number') return timeStr;
+    
+    // Extraire les heures et les minutes
+    const hoursMatch = timeStr.match(/(\d+)h/);
+    const minutesMatch = timeStr.match(/(\d+)min/);
+    
+    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+    
+    // Convertir en nombre décimal (heures)
+    return hours + (minutes / 60);
+}
+
 // Fonction pour formater le temps
 function formatTime(hours) {
-    // Si hours est null ou undefined, retourner '0 min'
-    if (hours === null || hours === undefined) {
+    // Si hours est null, undefined, NaN ou non numérique, retourner '0 min'
+    if (hours === null || hours === undefined || isNaN(hours) || typeof hours !== 'number') {
         return '0 min';
     }
     
-    // Convertir en minutes totales
+    // Convertir en minutes totales en préservant les décimales
     const totalMinutes = Math.round(hours * 60);
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
     
     // Formater le temps
     if (h > 0) {
-        return `${h}h${m > 0 ? `${m.toString().padStart(2, '0')}min` : ''}`;
+        // Si on a des minutes, on les affiche toujours avec 2 chiffres
+        if (m > 0) {
+            return `${h}h${m.toString().padStart(2, '0')}min`;
+        }
+        // Si pas de minutes, on affiche juste les heures
+        return `${h}h`;
     }
+    // Si moins d'une heure, on affiche juste les minutes
     return `${m}min`;
 }
 
@@ -52,39 +76,44 @@ async function updateTimeInterface(data) {
     if (data.task.remaining_credit !== null && data.task.remaining_credit !== undefined) {
         const oldBadge = document.getElementById('remaining-credit-badge');
         if (oldBadge) {
-            // Créer un nouveau badge
-            const newBadge = document.createElement('span');
-            newBadge.id = 'remaining-credit-badge';
-            newBadge.className = `badge ${data.task.remaining_credit < 2 ? 'bg-danger' : 
-                                 data.task.remaining_credit < 5 ? 'bg-warning' : 
-                                 'bg-success'} text-white d-flex align-items-center`;
-            newBadge.setAttribute('data-bs-toggle', 'tooltip');
-            newBadge.setAttribute('title', 'Crédit restant du projet');
-            newBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.remaining_credit)}`;
+            // Convertir le temps restant en nombre décimal
+            const remainingCredit = parseTimeString(data.task.remaining_credit);
             
-            // Remplacer l'ancien badge par le nouveau
-            oldBadge.parentNode.replaceChild(newBadge, oldBadge);
-            
-            // Réinitialiser le tooltip Bootstrap
-            const tooltip = bootstrap.Tooltip.getInstance(newBadge);
-            if (tooltip) {
-                tooltip.dispose();
-            }
-            new bootstrap.Tooltip(newBadge);
+            if (!isNaN(remainingCredit)) {
+                // Créer un nouveau badge
+                const newBadge = document.createElement('span');
+                newBadge.id = 'remaining-credit-badge';
+                newBadge.className = `badge ${remainingCredit < 2 ? 'bg-danger' : 
+                                     remainingCredit < 5 ? 'bg-warning' : 
+                                     'bg-success'} text-white d-flex align-items-center`;
+                newBadge.setAttribute('data-bs-toggle', 'tooltip');
+                newBadge.setAttribute('title', 'Crédit restant du projet');
+                newBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(remainingCredit)}`;
+                
+                // Remplacer l'ancien badge par le nouveau
+                oldBadge.parentNode.replaceChild(newBadge, oldBadge);
+                
+                // Réinitialiser le tooltip Bootstrap
+                const tooltip = bootstrap.Tooltip.getInstance(newBadge);
+                if (tooltip) {
+                    tooltip.dispose();
+                }
+                new bootstrap.Tooltip(newBadge);
 
-            // Mettre à jour aussi l'alerte dans le modal si elle existe
-            const creditAlert = document.querySelector('#timeEntryModal .alert');
-            if (creditAlert) {
-                const alertClass = data.task.remaining_credit < 2 ? 'alert-danger' : 
-                                 data.task.remaining_credit < 5 ? 'alert-warning' : 
-                                 'alert-success';
-                creditAlert.className = `alert ${alertClass} mb-4 no-auto-close`;
-                const creditText = creditAlert.querySelector('strong');
-                if (creditText) {
-                    creditText.textContent = formatTime(data.task.remaining_credit);
-                    creditText.className = `${data.task.remaining_credit < 2 ? 'text-danger' : 
-                                          data.task.remaining_credit < 5 ? 'text-warning' : 
-                                          'text-success'} ms-2`;
+                // Mettre à jour aussi l'alerte dans le modal si elle existe
+                const creditAlert = document.querySelector('#timeEntryModal .alert');
+                if (creditAlert) {
+                    const alertClass = remainingCredit < 2 ? 'alert-danger' : 
+                                     remainingCredit < 5 ? 'alert-warning' : 
+                                     'alert-success';
+                    creditAlert.className = `alert ${alertClass} mb-4 no-auto-close`;
+                    const creditText = creditAlert.querySelector('strong');
+                    if (creditText) {
+                        creditText.textContent = formatTime(remainingCredit);
+                        creditText.className = `${remainingCredit < 2 ? 'text-danger' : 
+                                              remainingCredit < 5 ? 'text-warning' : 
+                                              'text-success'} ms-2`;
+                    }
                 }
             }
         }

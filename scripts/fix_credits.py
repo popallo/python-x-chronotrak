@@ -1,13 +1,35 @@
-from app import create_app, db
-from app.models.project import Project
+#!/usr/bin/env python
+
+import sys
+import os
+
+# Déterminer le chemin absolu du répertoire racine de l'application
+# Le script est supposé être dans scripts/ qui est dans le répertoire racine
+script_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(script_dir)  # Remonter d'un niveau
+
+# Ajouter le répertoire racine au chemin de recherche Python
+sys.path.insert(0, root_dir)
+
+try:
+    from app import create_app, db
+    from app.models.project import Project
+except ImportError as e:
+    print(f"Erreur d'importation: {e}")
+    print(f"Vérifiez que vous exécutez ce script depuis le répertoire racine du projet.")
+    print(f"Chemin racine actuel: {root_dir}")
+    sys.exit(1)
 
 def convert_hours_to_minutes(hours):
     """Convertit les heures en minutes et arrondit à l'entier le plus proche"""
     return round(hours * 60)
 
 def main():
-    # Créer l'application Flask
-    app = create_app()
+    # Détecter l'environnement à partir d'une variable d'env ou utiliser development par défaut
+    env = os.environ.get('FLASK_ENV', 'development')
+    
+    # Créer l'application Flask avec l'environnement spécifié
+    app = create_app(env)
     
     # Liste des projets à mettre à jour avec leurs crédits initiaux et restants
     projects_data = [

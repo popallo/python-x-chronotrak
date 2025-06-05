@@ -375,7 +375,8 @@
                                 </button>
                             {% endif %}
                             {% if comment.user_id == current_user.id or current_user.is_admin() %}
-                                <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline">
+                                <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline delete-comment-form">
+                                    {{ comment_form.hidden_tag() }}
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -422,7 +423,8 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         {% endif %}
-                                        <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline">
+                                        <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline delete-comment-form">
+                                            {{ comment_form.hidden_tag() }}
                                             <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>

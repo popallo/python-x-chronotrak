@@ -12,11 +12,11 @@
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
-<script src="{{ url_for('static', filename='js/pages/task-checklist.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/pages/task-time.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/pages/task-comments.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/pages/task-status.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/pages/task-pin.js') }}" defer></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-time.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-status.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script>
     // Stocker le token CSRF global
     window.csrfToken = "{{ csrf_token() }}";

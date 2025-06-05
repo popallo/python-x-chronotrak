@@ -1,6 +1,8 @@
 /**
  * Gestion des checklists pour les tâches
  */
+import { CONFIG, utils } from '../utils.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialisation des éléments DOM
     const checklistContainer = document.getElementById('checklist-container');
@@ -66,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (addItemForm) {
             addItemForm.addEventListener('submit', e => {
                 e.preventDefault();
-                addChecklistItem();
+                addChecklistItem(taskId);
             });
         }
         
@@ -75,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addItemInput.addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    addChecklistItem();
+                    addChecklistItem(taskId);
                 }
             });
         }
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 shortcodeSubmit.addEventListener('click', () => {
                     const shortcode = shortcodeInput.value.trim();
                     if (shortcode) {
-                        addChecklistItem(shortcode, true);
+                        addChecklistItem(taskId, shortcode, true);
                         shortcodeInput.value = '';
                         modal.hide();
                     }
@@ -166,12 +168,12 @@ document.addEventListener('DOMContentLoaded', function() {
         copyButton.classList.toggle('disabled', !this.checked);
         copyButton.disabled = !this.checked;
         
-        updateChecklistItem(itemId, { is_checked: this.checked });
+        toggleChecklistItem(taskId, itemId);
     }
     
     function handleDeleteClick() {
         const itemId = this.closest('.checklist-item').dataset.id;
-        deleteChecklistItem(itemId, this.closest('.checklist-item'));
+        deleteChecklistItem(taskId, itemId);
     }
     
     function handleCopyToTime() {
@@ -191,85 +193,64 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================================================
     // Opérations CRUD
     // ==========================================================================
-    function addChecklistItem(content = null, isShortcode = false) {
+    async function addChecklistItem(taskId, content = null, isShortcode = false) {
         if (!content && addItemInput) {
             content = addItemInput.value.trim();
         }
         
         if (!content) return;
         
-        fetch(`/tasks/${taskId}/checklist`, {
+        const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': getCsrfToken()
-            },
             body: JSON.stringify({
                 content: content,
-                is_shortcode: isShortcode
+                is_shortcode: isShortcode,
+                csrf_token: CONFIG.csrfToken
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (isShortcode) {
-                    window.location.reload();
-                } else {
-                    addItemToList(data.item);
-                    if (addItemInput) {
-                        addItemInput.value = '';
-                    }
+        });
+
+        if (data.success) {
+            if (isShortcode) {
+                window.location.reload();
+            } else {
+                updateChecklist(data.checklist);
+                if (addItemInput) {
+                    addItemInput.value = '';
                 }
-            } else {
-                showError(data.error || 'Erreur lors de l\'ajout de l\'élément');
             }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de l\'ajout de l\'élément');
-        });
+        } else {
+            showError(data.error || 'Erreur lors de l\'ajout de l\'élément');
+        }
     }
     
-    function updateChecklistItem(itemId, data) {
-        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
+    async function toggleChecklistItem(taskId, itemId) {
+        const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': getCsrfToken()
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                showError(data.error || 'Erreur lors de la mise à jour de l\'élément');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la mise à jour de l\'élément');
+            body: JSON.stringify({
+                csrf_token: CONFIG.csrfToken
+            })
         });
+
+        if (data.success) {
+            updateChecklist(data.checklist);
+        }
     }
     
-    function deleteChecklistItem(itemId, element) {
-        fetch(`/tasks/${taskId}/checklist/${itemId}`, {
+    async function deleteChecklistItem(taskId, itemId) {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+            return;
+        }
+
+        const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
             method: 'DELETE',
-            headers: {
-                'X-CSRF-Token': getCsrfToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                element.remove();
-            } else {
-                showError(data.error || 'Erreur lors de la suppression de l\'élément');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la suppression de l\'élément');
+            body: JSON.stringify({
+                csrf_token: CONFIG.csrfToken
+            })
         });
+
+        if (data.success) {
+            updateChecklist(data.checklist);
+        }
     }
     
     function updateItemsOrder() {
@@ -279,23 +260,17 @@ document.addEventListener('DOMContentLoaded', function() {
             position: index
         }));
         
-        fetch(`/tasks/${taskId}/checklist/reorder`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': getCsrfToken()
-            },
-            body: JSON.stringify({ items: itemsData })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                showError(data.error || 'Erreur lors de la réorganisation des éléments');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showError('Erreur lors de la réorganisation des éléments');
+        reorderChecklist(taskId, itemsData);
+    }
+    
+    function updateChecklist(checklist) {
+        const checklistItems = document.getElementById('checklist-items');
+        if (!checklistItems) return;
+        
+        checklistItems.innerHTML = '';
+        
+        checklist.forEach(item => {
+            addItemToList(item);
         });
     }
     
@@ -356,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newContent = this.value.trim();
             if (newContent && newContent !== currentContent) {
                 const itemId = element.closest('.checklist-item').dataset.id;
-                updateChecklistItem(itemId, { content: newContent });
+                toggleChecklistItem(taskId, itemId);
                 element.textContent = newContent;
             } else {
                 element.textContent = currentContent;
@@ -372,9 +347,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function getCsrfToken() {
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        return metaTag ? metaTag.getAttribute('content') : '';
+    function reorderChecklist(taskId, items) {
+        fetch(`/tasks/${taskId}/checklist/reorder`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CONFIG.csrfToken
+            },
+            body: JSON.stringify({ items: items })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                showError(data.error || 'Erreur lors de la réorganisation des éléments');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showError('Erreur lors de la réorganisation des éléments');
+        });
     }
     
     function showError(message) {

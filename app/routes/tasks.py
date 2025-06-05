@@ -231,7 +231,7 @@ def log_time(slug_or_id):
     
     # Vérifier si le client a accès à ce projet et interdire l'enregistrement de temps
     if current_user.is_client():
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'error': 'Accès refusé. Les clients ne peuvent pas enregistrer de temps.'}), 403
         flash('Accès refusé. Les clients ne peuvent pas enregistrer de temps.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
@@ -258,7 +258,7 @@ def log_time(slug_or_id):
                 else:
                     credit_display = f"{remaining_minutes}min"
                 
-                if request.is_json:
+                if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({
                         'success': False, 
                         'error': f'Pas assez de crédit restant sur le projet! ({credit_display} disponibles)'
@@ -291,7 +291,7 @@ def log_time(slug_or_id):
         db.session.commit()
         
         # Envoyer une notification par email
-        send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
+        send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry}, notify_all=True)
         
         # Formater le temps enregistré en heures et minutes
         hours = time_in_minutes // 60
@@ -315,7 +315,7 @@ def log_time(slug_or_id):
                     credit_display = f"{remaining_minutes}min"
                 warning_message = f'Attention: le crédit du projet est très bas ({credit_display})!'
         
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             # Formater le temps restant pour l'affichage
             remaining_hours = task.project.remaining_credit // 60
             remaining_minutes = task.project.remaining_credit % 60
@@ -476,7 +476,7 @@ def add_comment(slug_or_id):
     if current_user.is_client():
         project = task.project
         if not current_user.has_access_to_client(project.client_id):
-            if request.is_json:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
@@ -509,7 +509,7 @@ def add_comment(slug_or_id):
             mentioned_users=mentioned_users
         )
         
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': True,
                 'message': 'Votre commentaire a été ajouté.',
@@ -526,7 +526,7 @@ def add_comment(slug_or_id):
         flash('Votre commentaire a été ajouté.', 'success')
         return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
     
-    if request.is_json:
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         errors = {}
         for field, field_errors in form.errors.items():
             errors[field] = field_errors[0]
@@ -541,7 +541,7 @@ def add_comment(slug_or_id):
     
     return redirect(url_for('tasks.task_details', slug_or_id=slug_or_id))
 
-@tasks.route('/comments/<int:comment_id>/delete', methods=['POST'])
+@tasks.route('/tasks/comment/<int:comment_id>/delete', methods=['POST'])
 @login_required
 def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
@@ -549,14 +549,14 @@ def delete_comment(comment_id):
     
     # Vérifier que l'utilisateur est l'auteur du commentaire ou un administrateur
     if comment.user_id != current_user.id and not current_user.is_admin():
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'error': 'Vous n\'êtes pas autorisé à supprimer ce commentaire.'}), 403
         flash('Vous n\'êtes pas autorisé à supprimer ce commentaire.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
     
     delete_from_db(comment)
     
-    if request.is_json:
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'success': True,
             'message': 'Commentaire supprimé avec succès!'

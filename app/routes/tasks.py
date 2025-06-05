@@ -291,7 +291,7 @@ def log_time(slug_or_id):
         db.session.commit()
         
         # Envoyer une notification par email
-        send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry})
+        send_task_notification(task, 'time_logged', current_user, {'time_entry': time_entry}, notify_all=True)
         
         # Formater le temps enregistré en heures et minutes
         hours = time_in_minutes // 60

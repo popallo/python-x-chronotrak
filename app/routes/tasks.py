@@ -549,10 +549,19 @@ def delete_comment(comment_id):
     
     # Vérifier que l'utilisateur est l'auteur du commentaire ou un administrateur
     if comment.user_id != current_user.id and not current_user.is_admin():
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Vous n\'êtes pas autorisé à supprimer ce commentaire.'}), 403
         flash('Vous n\'êtes pas autorisé à supprimer ce commentaire.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
     
     delete_from_db(comment)
+    
+    if request.is_json:
+        return jsonify({
+            'success': True,
+            'message': 'Commentaire supprimé avec succès!'
+        })
+        
     flash('Commentaire supprimé avec succès!', 'success')
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
 

@@ -1,3 +1,5 @@
+import { CONFIG, utils } from '../utils.js';
+
 // Fonction pour mettre à jour l'interface après le changement de statut
 function updateStatusInterface(data) {
     // Mettre à jour les boutons de statut
@@ -87,6 +89,25 @@ function createToastContainer() {
     container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
     document.body.appendChild(container);
     return container;
+}
+
+async function handleStatusUpdate(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const data = await utils.fetchWithCsrf('/tasks/update_status', {
+        method: 'POST',
+        body: JSON.stringify({
+            task_id: formData.get('task_id'),
+            status: formData.get('status'),
+            csrf_token: CONFIG.csrfToken
+        })
+    });
+
+    if (data.success) {
+        updateTaskStatus(data.task_id, data.status);
+    }
 }
 
 // Initialisation

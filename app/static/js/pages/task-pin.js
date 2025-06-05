@@ -1,3 +1,5 @@
+import { CONFIG, utils } from '../utils.js';
+
 // Fonction pour mettre à jour le menu de navigation
 function updateNavigationMenu(data) {
     const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
@@ -334,4 +336,38 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-}); 
+});
+
+async function handlePinSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const data = await utils.fetchWithCsrf(form.action, {
+        method: 'POST',
+        body: JSON.stringify({
+            csrf_token: CONFIG.csrfToken
+        })
+    });
+
+    if (data.success) {
+        updatePinStatus(data.is_pinned);
+    }
+}
+
+async function handleUnpinSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const data = await utils.fetchWithCsrf(form.action, {
+        method: 'POST',
+        body: JSON.stringify({
+            csrf_token: CONFIG.csrfToken
+        })
+    });
+
+    if (data.success) {
+        updatePinStatus(data.is_pinned);
+    }
+} 

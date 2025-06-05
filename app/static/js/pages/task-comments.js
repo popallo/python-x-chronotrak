@@ -1,357 +1,256 @@
-// Configuration globale
-const CONFIG = {
-    csrfToken: window.csrfToken,
-    headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': window.csrfToken
-    }
-};
+// Fonction utilitaire pour afficher les toasts
+function showToast(message, type = 'success') {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
 
-// Fonctions utilitaires
-const utils = {
-    showToast(type, message) {
-        const toastContainer = document.getElementById('toast-container') || this.createToastContainer();
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
             </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => toast.remove());
-    },
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
 
-    createToastContainer() {
-        const container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(container);
-        return container;
-    },
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
 
-    handleApiResponse(data) {
-        if (data.success) {
-            if (data.message) {
-                this.showToast('success', data.message);
-            }
-            return true;
-        } else {
-            if (data.errors) {
-                Object.entries(data.errors).forEach(([field, error]) => {
-                    this.showToast('danger', error);
-                });
-            } else {
-                this.showToast('danger', data.error || 'Une erreur est survenue');
-            }
-            return false;
-        }
-    }
-};
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
 
-// Gestionnaire de commentaires
-const CommentManager = {
-    // Templates HTML
-    templates: {
-        comment: (data) => `
-            <div class="comment-item ${data.is_own_comment ? 'own-comment' : ''}" id="comment-${data.id}">
-                <div class="comment-header">
-                    <span class="comment-author">${data.user_name}</span>
-                    <div class="d-flex align-items-center">
-                        <span class="comment-time">${data.created_at}</span>
-                        <div class="d-inline-block ms-2">
-                            <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
-                                    data-comment-id="${data.id}" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <form action="/comments/${data.id}/delete" method="POST" class="d-inline delete-comment-form">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="comment-content">${data.content}</div>
-                <button type="button" class="reply-button" data-comment-id="${data.id}">
-                    <i class="fas fa-reply me-1"></i>Répondre
-                </button>
-                <div class="comment-reply-form" id="reply-form-${data.id}" style="display: none;">
-                    <form method="POST" action="/comments/${data.id}/reply" class="reply-form">
-                        <input type="hidden" name="csrf_token" value="${CONFIG.csrfToken}">
-                        <div class="mb-2">
-                            <textarea class="form-control" name="content" rows="2" placeholder="Écrivez votre réponse..."></textarea>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-light cancel-reply-btn" data-comment-id="${data.id}">Annuler</button>
-                            <button type="submit" class="btn btn-sm btn-light">Répondre</button>
-                        </div>
+// Fonction pour créer un élément de commentaire
+function createCommentElement(comment) {
+    const div = document.createElement('div');
+    div.className = `comment-item ${comment.is_own_comment ? 'own-comment' : ''}`;
+    div.id = `comment-${comment.id}`;
+    
+    div.innerHTML = `
+        <div class="comment-header">
+            <span class="comment-author">${comment.user_name}</span>
+            <div class="d-flex align-items-center">
+                <span class="comment-time">${comment.created_at}</span>
+                <div class="d-inline-block ms-2">
+                    <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                            data-comment-id="${comment.id}" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="/tasks/comment/${comment.id}/delete" method="POST" class="d-inline delete-comment-form">
+                        <input type="hidden" name="csrf_token" value="${window.csrfToken}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </form>
                 </div>
-                <div class="comment-replies" id="replies-${data.id}"></div>
             </div>
-        `,
+        </div>
+        <div class="comment-content">${comment.content}</div>
+        <button type="button" class="reply-button" data-comment-id="${comment.id}">
+            <i class="fas fa-reply me-1"></i>Répondre
+        </button>
+    `;
 
-        reply: (data) => `
-            <div class="comment-reply ${data.is_own_comment ? 'own-comment' : ''}" id="reply-${data.id}">
-                <div class="comment-header">
-                    <span class="comment-author">${data.user_name}</span>
-                    <div class="d-flex align-items-center">
-                        <span class="comment-time">${data.created_at}</span>
-                        <div class="d-inline-block ms-2">
-                            <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
-                                    data-comment-id="${data.id}" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <form action="/comments/${data.id}/delete" method="POST" class="d-inline delete-comment-form">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="comment-content">${data.content}</div>
-            </div>
-        `
-    },
+    // Ajouter les gestionnaires d'événements
+    const deleteForm = div.querySelector('.delete-comment-form');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', handleDeleteSubmit);
+    }
 
-    // Méthodes
-    updateInterface(data) {
-        // Trouver ou créer le conteneur de commentaires
-        let commentList = document.querySelector('.comment-list');
-        if (!commentList) {
-            // Si la div.comment-list n'existe pas, on la crée
-            const textMuted = document.querySelector('.card-body > p.text-muted');
-            if (textMuted) {
+    const replyButton = div.querySelector('.reply-button');
+    if (replyButton) {
+        replyButton.addEventListener('click', handleReplyButtonClick);
+    }
+
+    return div;
+}
+
+// Gestionnaire de clic sur le bouton d'édition
+function handleEditButtonClick(e) {
+    const commentId = e.currentTarget.dataset.commentId;
+    const commentElement = document.getElementById(`comment-${commentId}`);
+    const contentElement = commentElement.querySelector('.comment-content');
+    const editForm = document.getElementById(`edit-form-${commentId}`);
+    
+    if (editForm) {
+        // Afficher le formulaire d'édition
+        contentElement.style.display = 'none';
+        editForm.style.display = 'block';
+        
+        // Remplir le contenu actuel
+        const textarea = editForm.querySelector('textarea');
+        if (textarea) {
+            textarea.value = contentElement.textContent.trim();
+        }
+        
+        // Gérer l'annulation
+        const cancelButton = editForm.querySelector('.cancel-edit-btn');
+        if (cancelButton) {
+            cancelButton.onclick = () => {
+                contentElement.style.display = 'block';
+                editForm.style.display = 'none';
+            };
+        }
+    }
+}
+
+// Gestionnaire de soumission de formulaire de commentaire
+async function handleCommentSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': window.csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'ajout du commentaire');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            // Ajouter le nouveau commentaire à la liste
+            let commentList = document.querySelector('.comment-list');
+            if (!commentList) {
+                // Si c'est le premier commentaire, créer la liste
+                const cardBody = form.closest('.card-body');
+                cardBody.querySelector('p.text-muted')?.remove();
                 commentList = document.createElement('div');
                 commentList.className = 'comment-list';
-                textMuted.parentNode.replaceChild(commentList, textMuted);
-            } else {
-                return; // Si on ne trouve pas le message "Aucun commentaire", on sort
+                cardBody.appendChild(commentList);
             }
-        }
 
-        // Ajouter le nouveau commentaire
-        commentList.insertAdjacentHTML('afterbegin', this.templates.comment(data.comment));
+            // Créer et ajouter le commentaire
+            const commentElement = createCommentElement(data.comment);
+            commentList.insertBefore(commentElement, commentList.firstChild);
 
-        // Mettre à jour le compteur
-        const commentCount = document.querySelector('.card-header .badge');
-        if (commentCount) {
-            const currentCount = parseInt(commentCount.textContent) || 0;
-            commentCount.textContent = currentCount + 1;
-        }
-
-        // Initialiser les événements pour le nouveau commentaire
-        this.initializeCommentEvents(document.getElementById(`comment-${data.comment.id}`));
-    },
-
-    initializeCommentEvents(commentElement) {
-        if (!commentElement) return;
-
-        // Bouton de réponse
-        const replyButton = commentElement.querySelector('.reply-button');
-        if (replyButton) {
-            replyButton.addEventListener('click', () => {
-                const replyForm = document.getElementById(`reply-form-${replyButton.dataset.commentId}`);
-                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-            });
-        }
-
-        // Bouton d'annulation
-        const cancelButton = commentElement.querySelector('.cancel-reply-btn');
-        if (cancelButton) {
-            cancelButton.addEventListener('click', () => {
-                const replyForm = document.getElementById(`reply-form-${cancelButton.dataset.commentId}`);
-                replyForm.style.display = 'none';
-            });
-        }
-
-        // Formulaire de réponse
-        const replyForm = commentElement.querySelector('.reply-form');
-        if (replyForm) {
-            replyForm.addEventListener('submit', this.handleReplySubmit.bind(this));
-        }
-
-        // Formulaire de suppression
-        const deleteForm = commentElement.querySelector('.delete-comment-form');
-        if (deleteForm) {
-            deleteForm.addEventListener('submit', this.handleDeleteSubmit.bind(this));
-        }
-    },
-
-    async handleReplySubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: CONFIG.headers,
-                body: JSON.stringify({
-                    content: formData.get('content'),
-                    csrf_token: CONFIG.csrfToken
-                })
-            });
-
-            const data = await response.json();
-            if (utils.handleApiResponse(data)) {
-                form.reset();
-                form.closest('.comment-reply-form').style.display = 'none';
-
-                const repliesContainer = document.getElementById(`replies-${data.comment.parent_id}`);
-                if (repliesContainer) {
-                    repliesContainer.insertAdjacentHTML('beforeend', this.templates.reply(data.comment));
-                }
+            // Réinitialiser le formulaire
+            form.reset();
+            const commentInput = form.querySelector('.comment-input');
+            if (commentInput) {
+                commentInput.value = '';
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            utils.showToast('danger', 'Une erreur est survenue lors de l\'ajout de la réponse');
-        }
-    },
 
-    async handleCommentSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: CONFIG.headers,
-                body: JSON.stringify({
-                    content: formData.get('content'),
-                    notify_all: formData.get('notify_all') === 'on',
-                    mentions: formData.get('mentions'),
-                    csrf_token: CONFIG.csrfToken
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                form.reset();
-                this.updateInterface(data);
-                // Afficher le message de succès
-                if (data.message) {
-                    utils.showToast('success', data.message);
-                }
-            } else {
-                if (data.errors) {
-                    Object.entries(data.errors).forEach(([field, error]) => {
-                        utils.showToast('danger', error);
-                    });
-                } else {
-                    utils.showToast('danger', data.error || 'Une erreur est survenue');
-                }
+            // Mettre à jour le compteur
+            const badge = document.querySelector('.card-header .badge');
+            if (badge) {
+                const currentCount = parseInt(badge.textContent);
+                badge.textContent = currentCount + 1;
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            utils.showToast('danger', 'Une erreur est survenue lors de l\'ajout du commentaire');
+
+            showToast('Commentaire ajouté avec succès', 'success');
+        } else {
+            throw new Error(data.error || 'Erreur lors de l\'ajout du commentaire');
         }
-    },
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast(error.message, 'error');
+    }
+}
 
-    async handleDeleteSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const commentElement = form.closest('.comment-item, .comment-reply');
-        const commentId = commentElement.id.split('-')[1];
+// Gestionnaire de suppression de commentaire
+async function handleDeleteSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
 
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-            return;
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': window.csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erreur lors de la suppression du commentaire');
         }
 
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: CONFIG.headers,
-                body: JSON.stringify({
-                    csrf_token: CONFIG.csrfToken
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                // Supprimer l'élément du DOM
+        const data = await response.json();
+        if (data.success) {
+            // Supprimer l'élément du DOM
+            const commentElement = form.closest('.comment-item, .comment-reply');
+            if (commentElement) {
                 commentElement.remove();
 
                 // Mettre à jour le compteur
-                const commentCount = document.querySelector('.card-header .badge');
-                if (commentCount) {
-                    const currentCount = parseInt(commentCount.textContent) || 0;
-                    commentCount.textContent = Math.max(0, currentCount - 1);
+                const badge = document.querySelector('.card-header .badge');
+                if (badge) {
+                    const currentCount = parseInt(badge.textContent);
+                    badge.textContent = Math.max(0, currentCount - 1);
                 }
 
                 // Si c'était le dernier commentaire, afficher le message "Aucun commentaire"
                 const commentList = document.querySelector('.comment-list');
                 if (commentList && !commentList.children.length) {
+                    commentList.remove();
                     const cardBody = document.querySelector('.card-body');
-                    if (cardBody) {
-                        const noCommentMessage = document.createElement('p');
-                        noCommentMessage.className = 'text-muted';
-                        noCommentMessage.textContent = 'Aucun commentaire pour le moment.';
-                        commentList.replaceWith(noCommentMessage);
-                    }
+                    const noCommentMessage = document.createElement('p');
+                    noCommentMessage.className = 'text-muted';
+                    noCommentMessage.textContent = 'Aucun commentaire pour le moment.';
+                    cardBody.appendChild(noCommentMessage);
                 }
 
-                // Afficher le message de succès
-                if (data.message) {
-                    utils.showToast('success', data.message);
-                }
-            } else {
-                utils.showToast('danger', data.error || 'Une erreur est survenue lors de la suppression');
+                showToast('Commentaire supprimé avec succès', 'success');
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            utils.showToast('danger', 'Une erreur est survenue lors de la suppression du commentaire');
+        } else {
+            throw new Error(data.error || 'Erreur lors de la suppression du commentaire');
         }
-    },
-
-    initialize() {
-        // Initialiser les formulaires de réponse existants
-        document.querySelectorAll('.reply-form').forEach(form => {
-            form.addEventListener('submit', this.handleReplySubmit.bind(this));
-        });
-
-        // Initialiser les boutons de réponse existants
-        document.querySelectorAll('.reply-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const replyForm = document.getElementById(`reply-form-${button.dataset.commentId}`);
-                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-            });
-        });
-
-        // Initialiser les boutons d'annulation existants
-        document.querySelectorAll('.cancel-reply-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const replyForm = document.getElementById(`reply-form-${button.dataset.commentId}`);
-                replyForm.style.display = 'none';
-            });
-        });
-
-        // Initialiser le formulaire de commentaire principal
-        const commentForm = document.querySelector('form[action*="/add_comment"]');
-        if (commentForm) {
-            commentForm.addEventListener('submit', this.handleCommentSubmit.bind(this));
-        }
-
-        // Initialiser les formulaires de suppression existants
-        document.querySelectorAll('.delete-comment-form').forEach(form => {
-            form.addEventListener('submit', this.handleDeleteSubmit.bind(this));
-        });
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast(error.message, 'error');
     }
-};
+}
 
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', () => CommentManager.initialize()); 
+// Gestionnaire de clic sur le bouton de réponse
+function handleReplyButtonClick(e) {
+    const button = e.target;
+    const commentId = button.dataset.commentId;
+    const replyForm = document.getElementById(`reply-form-${commentId}`);
+    
+    if (replyForm) {
+        replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialiser le formulaire de commentaire principal
+    const commentForm = document.querySelector('form[action*="add_comment"]');
+    if (commentForm) {
+        commentForm.addEventListener('submit', handleCommentSubmit);
+    }
+
+    // Initialiser les formulaires de suppression existants
+    document.querySelectorAll('.delete-comment-form').forEach(form => {
+        form.addEventListener('submit', handleDeleteSubmit);
+    });
+
+    // Initialiser les boutons de réponse existants
+    document.querySelectorAll('.reply-button').forEach(button => {
+        button.addEventListener('click', handleReplyButtonClick);
+    });
+}); 

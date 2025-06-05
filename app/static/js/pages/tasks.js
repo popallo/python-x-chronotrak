@@ -2,6 +2,8 @@
  * Script pour la gestion des tâches
  */
 
+import { CONFIG, utils } from '../utils.js';
+
 // Gestionnaire pour les boutons de changement de statut
 function initStatusToggle() {
     const statusButtons = document.querySelectorAll('.status-btn');
@@ -431,4 +433,34 @@ export function initTasksPage() {
             trigger: 'hover'
         });
     }
+}
+
+async function handleStatusUpdate(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const data = await utils.fetchWithCsrf('/tasks/update_status', {
+        method: 'POST',
+        body: JSON.stringify({
+            task_id: formData.get('task_id'),
+            status: formData.get('status'),
+            csrf_token: CONFIG.csrfToken
+        })
+    });
+
+    if (data.success) {
+        updateTaskStatus(data.task_id, data.status);
+    }
+}
+
+async function getMentionableUsers(projectId) {
+    const data = await utils.fetchWithCsrf(`/api/projects/${projectId}/mentionable-users`, {
+        method: 'GET'
+    });
+
+    if (data.success) {
+        return data.users;
+    }
+    return [];
 }

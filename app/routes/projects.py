@@ -91,7 +91,12 @@ def project_details(slug_or_id):
     # Trier les tâches par statut
     tasks_todo = [task for task in tasks if task.status == 'à faire']
     tasks_in_progress = [task for task in tasks if task.status == 'en cours']
-    tasks_done = [task for task in tasks if task.status == 'terminé']
+    # Trier les tâches terminées par date de clôture décroissante
+    tasks_done = sorted(
+        [task for task in tasks if task.status == 'terminé'],
+        key=lambda x: x.completed_at if x.completed_at else datetime.min,
+        reverse=True
+    )
     
     return render_template('projects/project_detail.html',
                          project=project,

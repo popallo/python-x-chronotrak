@@ -91,14 +91,22 @@ def project_details(slug_or_id):
     # Trier les tâches par statut
     tasks_todo = [task for task in tasks if task.status == 'à faire']
     tasks_in_progress = [task for task in tasks if task.status == 'en cours']
-    tasks_done = [task for task in tasks if task.status == 'terminé']
+    # Trier les tâches terminées par date de clôture décroissante
+    tasks_done = sorted(
+        [task for task in tasks if task.status == 'terminé'],
+        key=lambda x: x.completed_at if x.completed_at else datetime.min,
+        reverse=True
+    )
+    
+    # Trier les logs de crédit par date de création décroissante
+    credit_logs = sorted(project.credit_logs, key=lambda x: x.created_at, reverse=True)
     
     return render_template('projects/project_detail.html',
                          project=project,
                          tasks_todo=tasks_todo,
                          tasks_in_progress=tasks_in_progress,
                          tasks_done=tasks_done,
-                         credit_logs=project.credit_logs,
+                         credit_logs=credit_logs,
                          form=form,
                          title=project.name)
 

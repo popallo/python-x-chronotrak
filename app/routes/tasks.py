@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import case
 from datetime import datetime, timezone
@@ -374,43 +374,60 @@ def update_status():
     """Route pour mettre à jour le statut d'une tâche (via drag & drop du kanban)"""
     from app.utils.email import send_task_notification
     
-    data = request.get_json()
-    task_id = data.get('task_id')
-    new_status = data.get('status')
-    
-    if not task_id or not new_status:
-        return jsonify({'error': 'Paramètres manquants'}), 400
+    try:
+        data = request.get_json()
+        current_app.logger.info(f"Données reçues: {data}")
         
-    task = Task.query.get_or_404(task_id)
-    
-    # Vérifier les permissions
-    if current_user.is_client():
-        if not current_user.has_access_to_client(task.project.client_id):
-            return jsonify({'error': 'Accès non autorisé'}), 403
-    
-    old_status = task.status
-    task.status = new_status
-    
-    # Si la tâche est marquée comme terminée
-    if new_status == 'terminé' and not task.completed_at:
-        task.completed_at = get_utc_now()
-    elif new_status != 'terminé':
-        task.completed_at = None
+        task_id = data.get('task_id')
+        new_status = data.get('status')
         
-    db.session.commit()
-    
-    # Envoyer une notification par email
-    additional_data = {
-        'old_status': old_status,
-        'new_status': new_status
-    }
-    send_task_notification(task, 'status_change', current_user, additional_data)
-    
-    return jsonify({
-        'success': True, 
-        'status': new_status,
-        'completed_at': task.completed_at.strftime('%d/%m/%Y') if task.completed_at else None
-    })
+        if not task_id or not new_status:
+            current_app.logger.error(f"Paramètres manquants: task_id={task_id}, status={new_status}")
+            return jsonify({'success': False, 'error': 'Paramètres manquants'}), 400
+            
+        task = Task.query.get_or_404(task_id)
+        
+        # Vérifier les permissions
+        if current_user.is_client():
+            if not current_user.has_access_to_client(task.project.client_id):
+                current_app.logger.error(f"Accès non autorisé pour l'utilisateur {current_user.id} à la tâche {task_id}")
+                return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
+        
+        old_status = task.status
+        task.status = new_status
+        
+        # Si la tâche est marquée comme terminée
+        if new_status == 'terminé' and not task.completed_at:
+            task.completed_at = get_utc_now()
+        elif new_status != 'terminé':
+            task.completed_at = None
+            
+        db.session.commit()
+        
+        # Envoyer une notification par email
+        additional_data = {
+            'old_status': old_status,
+            'new_status': new_status
+        }
+        send_task_notification(
+            task=task,
+            event_type='status_change',
+            user=current_user,
+            additional_data=additional_data,
+            notify_all=True  # Activer les notifications pour tous les participants
+        )
+        
+        current_app.logger.info(f"Statut de la tâche {task_id} mis à jour de '{old_status}' à '{new_status}'")
+        
+        return jsonify({
+            'success': True, 
+            'status': new_status,
+            'completed_at': task.completed_at.strftime('%d/%m/%Y') if task.completed_at else None
+        })
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de la mise à jour du statut: {str(e)}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @tasks.route('/my_tasks')
 @login_required

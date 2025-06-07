@@ -131,7 +131,7 @@ def reports():
     # Temps total enregistré par projet
     project_times = db.session.query(
         Project.name, 
-        func.sum(TimeEntry.hours).label('total_hours')
+        func.sum(TimeEntry.minutes / 60.0).label('total_hours')
     ).join(
         Task, Task.project_id == Project.id
     ).join(
@@ -141,7 +141,7 @@ def reports():
     # Temps enregistré par utilisateur
     user_times = db.session.query(
         User.name,
-        func.sum(TimeEntry.hours).label('total_hours')
+        func.sum(TimeEntry.minutes / 60.0).label('total_hours')
     ).join(
         TimeEntry, TimeEntry.user_id == User.id
     ).group_by(User.name).all()
@@ -149,7 +149,7 @@ def reports():
     # Temps enregistré par mois
     monthly_times = db.session.query(
         func.strftime('%Y-%m', TimeEntry.created_at).label('month'),
-        func.sum(TimeEntry.hours).label('total_hours')
+        func.sum(TimeEntry.minutes / 60.0).label('total_hours')
     ).group_by('month').order_by('month').all()
     
     return render_template('reports.html',

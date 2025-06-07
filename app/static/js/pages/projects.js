@@ -6,93 +6,65 @@ import { CONFIG, utils } from '../utils.js';
 
 // Initialise le système de drag & drop pour le kanban
 function initKanban() {
-    const kanbanTasks = document.querySelectorAll('.kanban-task');
     const kanbanColumns = document.querySelectorAll('.kanban-column');
     
-    if (!kanbanTasks.length || !kanbanColumns.length) {
-        return; // Sortir si les éléments du kanban n'existent pas
+    if (!kanbanColumns.length) {
+        return;
     }
     
-    // Configuration du drag and drop
-    kanbanTasks.forEach(task => {
-        task.setAttribute('draggable', true);
-        
-        task.addEventListener('dragstart', function(e) {
-            e.dataTransfer.setData('text/plain', task.dataset.taskId);
-            task.classList.add('dragging');
-        });
-        
-        task.addEventListener('dragend', function() {
-            task.classList.remove('dragging');
-        });
-    });
-    
+    // Configuration de Sortable pour chaque colonne
     kanbanColumns.forEach(column => {
-        column.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            column.classList.add('drag-over');
-        });
-        
-        column.addEventListener('dragleave', function() {
-            column.classList.remove('drag-over');
-        });
-        
-        column.addEventListener('drop', function(e) {
-            e.preventDefault();
-            column.classList.remove('drag-over');
-            
-            const taskId = e.dataTransfer.getData('text/plain');
-            const newStatus = column.dataset.status;
-            
-            updateTaskStatus(taskId, newStatus);
+        new Sortable(column.querySelector('.kanban-items'), {
+            group: 'tasks',
+            animation: 150,
+            ghostClass: 'kanban-ghost',
+            dragClass: 'kanban-drag',
+            onEnd: function(evt) {
+                const taskCard = evt.item.querySelector('.kanban-task');
+                const taskId = taskCard?.getAttribute('data-task-id');
+                const newStatus = evt.to.closest('.kanban-column').getAttribute('data-status');
+                
+                if (!taskId) {
+                    return;
+                }
+                
+                updateTaskStatus(taskId, newStatus);
+                updateColumnCounters();
+            }
         });
     });
 }
 
 // Effectue l'appel AJAX pour mettre à jour le statut d'une tâche
-function updateTaskStatus(taskId, newStatus) {
-    fetch('/tasks/update_status', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            task_id: taskId,
-            status: newStatus
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Recharger la page pour refléter les changements
-            location.reload();
-        } else {
-            alert('Erreur lors de la mise à jour du statut: ' + data.error);
+async function updateTaskStatus(taskId, newStatus) {
+    try {
+        const data = await utils.fetchWithCsrf('/tasks/update_status', {
+            method: 'POST',
+            body: JSON.stringify({
+                task_id: taskId,
+                status: newStatus
+            })
+        });
+
+        if (!data.success) {
+            throw new Error(data.error || 'Erreur lors de la mise à jour du statut');
         }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
+    } catch (error) {
         alert('Une erreur est survenue lors de la mise à jour');
-    });
+        location.reload();
+    }
 }
 
-async function handleStatusUpdate(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-
-    const data = await utils.fetchWithCsrf('/tasks/update_status', {
-        method: 'POST',
-        body: JSON.stringify({
-            task_id: formData.get('task_id'),
-            status: formData.get('status'),
-            csrf_token: CONFIG.csrfToken
-        })
+// Met à jour les compteurs de tâches dans chaque colonne
+function updateColumnCounters() {
+    const columns = document.querySelectorAll('.kanban-column');
+    columns.forEach(column => {
+        const counter = column.querySelector('.badge');
+        const count = column.querySelector('.kanban-items').children.length;
+        if (counter) {
+            counter.textContent = count;
+        }
     });
-
-    if (data.success) {
-        updateTaskStatus(data.task_id, data.status);
-    }
 }
 
 // Initialise la page de projets

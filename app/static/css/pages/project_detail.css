@@ -79,4 +79,81 @@ html.dark-mode body .task-list-item {
 .action-buttons .btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* Styles pour le Kanban */
+.kanban-container {
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    min-width: min-content;
+}
+
+.kanban-column {
+    min-width: 300px;
+    width: 300px;
+    background: var(--bs-light);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+
+.kanban-title {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kanban-items {
+    min-height: 100px;
+}
+
+/* Styles pour le drag & drop */
+.kanban-ghost {
+    opacity: 0.5;
+    background: var(--bs-light);
+    border: 2px dashed var(--bs-primary);
+}
+
+.kanban-drag {
+    cursor: grabbing;
+    transform: rotate(2deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+/* Animation de transition pour les tâches */
+.kanban-task {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-task:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Styles pour les colonnes pendant le drag */
+.kanban-column.sortable-ghost {
+    background: var(--bs-light);
+    border: 2px dashed var(--bs-primary);
+}
+
+/* Ajustements pour le mode sombre */
+[data-bs-theme="dark"] .kanban-column {
+    background: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] .kanban-ghost {
+    background: var(--bs-dark);
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .kanban-column.sortable-ghost {
+    background: var(--bs-dark);
+    border-color: var(--bs-primary);
 } 

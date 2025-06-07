@@ -1,12 +1,17 @@
 {% extends 'layout.html' %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script type="module">
     import { initProjectsPage } from "{{ url_for('static', filename='js/pages/projects.js') }}";
     
     document.addEventListener('DOMContentLoaded', function() {
         initProjectsPage();
     });
+</script>
+<script>
+    // Stocker le token CSRF global
+    window.csrfToken = "{{ csrf_token() }}";
 </script>
 {% endblock %}
 

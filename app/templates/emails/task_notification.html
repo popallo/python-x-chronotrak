@@ -105,7 +105,7 @@
             {% if notification_type == 'time_logged' and time_entry %}
             <div class="time-entry">
                 <h3>Temps enregistré</h3>
-                <p><strong>Durée:</strong> {{ time_entry.hours }} heures</p>
+                <p><strong>Durée:</strong> {{ time_entry.minutes|format_time }}</p>
                 {% if time_entry.description %}
                 <p><strong>Description:</strong> {{ time_entry.description }}</p>
                 {% endif %}

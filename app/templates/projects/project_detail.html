@@ -61,7 +61,7 @@
                 {% if project.time_tracking_enabled %}
                 <p>
                     <strong>Crédit restant :</strong> 
-                    <span class="{% if project.remaining_credit < 2 %}text-danger fw-bold{% elif project.remaining_credit < 5 %}text-warning fw-bold{% else %}text-success{% endif %}" style="font-size: 1.2em;">
+                    <span class="{% if project.remaining_credit < 120 %}text-danger fw-bold{% elif project.remaining_credit < 300 %}text-warning fw-bold{% else %}text-success{% endif %}" style="font-size: 1.2em;">
                         {{ project.remaining_credit|format_time }}
                     </span>
                 </p>

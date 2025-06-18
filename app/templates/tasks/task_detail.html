@@ -31,7 +31,7 @@
             <h1 class="h4 mb-0">{{ task.title }}</h1>
             <div class="d-flex gap-2">
                 {% if task.project.time_tracking_enabled %}
-                <span id="remaining-credit-badge" class="badge {% if task.project.remaining_credit < 2 %}bg-danger{% elif task.project.remaining_credit < 5 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
+                <span id="remaining-credit-badge" class="badge {% if task.project.remaining_credit < 120 %}bg-danger{% elif task.project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
                     <i class="fas fa-clock me-1"></i>{{ task.project.remaining_credit|format_time }}
                 </span>
                 {% endif %}
@@ -270,10 +270,10 @@
             </div>
             <div class="modal-body">
                 {% if task.project.time_tracking_enabled %}
-                <div class="alert {% if task.project.remaining_credit < 2 %}alert-danger{% elif task.project.remaining_credit < 5 %}alert-warning{% else %}alert-success{% endif %} mb-4 no-auto-close">
+                <div class="alert {% if task.project.remaining_credit < 120 %}alert-danger{% elif task.project.remaining_credit < 300 %}alert-warning{% else %}alert-success{% endif %} mb-4 no-auto-close">
                     <div class="d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-info-circle me-2"></i>Crédit du projet:</span>
-                        <strong class="{% if task.project.remaining_credit < 2 %}text-danger{% elif task.project.remaining_credit < 5 %}text-warning{% else %}text-success{% endif %} ms-2">
+                        <strong class="{% if task.project.remaining_credit < 120 %}text-danger{% elif task.project.remaining_credit < 300 %}text-warning{% else %}text-success{% endif %} ms-2">
                             {{ task.project.remaining_credit|format_time }}
                         </strong>
                     </div>

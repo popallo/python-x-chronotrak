@@ -283,9 +283,7 @@ def log_time(slug_or_id):
         
         # Déduire du crédit du projet uniquement si la gestion de temps est activée
         if task.project.time_tracking_enabled:
-            # Si remaining_credit est inférieur à 100, on considère que c'est en heures
-            if task.project.remaining_credit < 100:  # Probablement en heures
-                task.project.remaining_credit = task.project.remaining_credit * 60  # Convertir en minutes
+            # Le crédit est toujours stocké en minutes dans la base de données
             task.project.remaining_credit -= time_in_minutes
         
         db.session.commit()
@@ -865,17 +863,10 @@ def get_remaining_credit(slug_or_id):
         if not current_user.has_access_to_client(project.client_id):
             return jsonify({'error': 'Accès non autorisé'}), 403
     
-    # Si le temps est inférieur à 100, on considère que c'est en heures
-    # Sinon, on considère que c'est en minutes
+    # Le crédit est toujours stocké en minutes dans la base de données
     remaining_credit = task.project.remaining_credit
     if task.project.time_tracking_enabled and remaining_credit is not None:
-        if remaining_credit < 100:  # Probablement en heures
-            # Convertir en minutes (en gardant la précision de 15 minutes)
-            remaining_credit = remaining_credit * 60
-        # Maintenant remaining_credit est en minutes
-        # On arrondit à la tranche de 15 minutes la plus proche
-        remaining_credit = round(remaining_credit / 15) * 15
-        # On convertit en heures pour l'affichage
+        # Convertir en heures pour l'affichage
         remaining_credit = remaining_credit / 60
     
     return jsonify({

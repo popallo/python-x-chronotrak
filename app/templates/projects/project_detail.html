@@ -25,9 +25,11 @@
     <h1>{{ project.name }}</h1>
     <div>
         {% if not current_user.is_client() %}
+        {% if project.time_tracking_enabled %}
         <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-success">
             <i class="fas fa-plus me-1"></i>Ajouter du crédit
         </a>
+        {% endif %}
         <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-primary">
             <i class="fas fa-edit me-1"></i>Modifier
         </a>

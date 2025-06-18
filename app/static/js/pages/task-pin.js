@@ -1,5 +1,29 @@
 import { CONFIG, utils } from '../utils.js';
 
+// Fonction pour récupérer le nom du projet de manière robuste
+function getProjectName() {
+    // Essayer plusieurs sélecteurs pour trouver le nom du projet
+    const projectNameElement = document.querySelector('.project-name') || 
+                              document.querySelector('a[href*="/projects/"]') ||
+                              document.querySelector('.d-flex.align-items-center a[href*="/projects/"]');
+    
+    return projectNameElement?.textContent?.trim() || '';
+}
+
+// Fonction pour extraire le slug de la tâche depuis l'URL
+function getTaskSlug() {
+    // L'URL peut être /task/slug ou /tasks/slug
+    const pathParts = window.location.pathname.split('/');
+    // Chercher le slug après /task/ ou /tasks/
+    for (let i = 0; i < pathParts.length - 1; i++) {
+        if (pathParts[i] === 'task' || pathParts[i] === 'tasks') {
+            return pathParts[i + 1];
+        }
+    }
+    // Fallback: prendre le dernier segment de l'URL
+    return pathParts[pathParts.length - 1];
+}
+
 // Fonction pour mettre à jour le menu de navigation
 function updateNavigationMenu(data) {
     const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
@@ -23,11 +47,11 @@ function updateNavigationMenu(data) {
                 <a class="dropdown-item d-flex justify-content-between align-items-center" href="${window.location.pathname}">
                     <div class="d-flex flex-column">
                         <span class="text-truncate" style="max-width: 200px;">${document.title}</span>
-                        <small class="text-muted">${document.querySelector('.project-name')?.textContent || ''}</small>
+                        <small class="text-muted">${getProjectName()}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-${document.querySelector('.status-btn.active')?.dataset.status || 'info'}">${document.querySelector('.status-btn.active')?.dataset.status || ''}</span>
-                        <form action="${window.location.pathname}/toggle_pin" method="POST" class="d-inline menu-pin-form">
+                        <form action="/task/${getTaskSlug()}/toggle_pin" method="POST" class="d-inline menu-pin-form">
                             <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Désépingler">
                                 <i class="fas fa-thumbtack"></i>
                             </button>
@@ -71,24 +95,7 @@ function updateNavigationMenu(data) {
     }
     
     // Mettre à jour le compteur dans le menu déroulant
-    const pinnedCount = document.querySelector('#pinnedTasksDropdown .badge');
-    if (pinnedCount) {
-        const currentCount = parseInt(pinnedCount.textContent) || 0;
-        const newCount = data.is_pinned ? currentCount + 1 : currentCount - 1;
-        
-        if (newCount > 0) {
-            pinnedCount.textContent = newCount;
-        } else {
-            pinnedCount.remove();
-        }
-    } else if (data.is_pinned) {
-        // Si le badge n'existe pas et qu'on ajoute une tâche, le créer
-        const dropdownToggle = document.querySelector('#pinnedTasksDropdown');
-        const badge = document.createElement('span');
-        badge.className = 'badge bg-info';
-        badge.textContent = '1';
-        dropdownToggle.appendChild(badge);
-    }
+    updatePinnedCount();
 }
 
 // Fonction pour configurer un formulaire d'épinglage
@@ -99,14 +106,22 @@ function setupPinForm(form) {
         const button = form.querySelector('button');
         button.disabled = true;
         
+        // Récupérer le token CSRF depuis window.csrfToken ou depuis un élément meta
+        const csrfToken = window.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content;
+        
         fetch(form.action, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-Token': csrfToken
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 updatePinInterface(data);
@@ -115,7 +130,7 @@ function setupPinForm(form) {
             }
         })
         .catch(error => {
-            console.error('Erreur:', error);
+            console.error('Erreur lors de l\'épinglage/désépinglage:', error);
             showToast('danger', 'Une erreur est survenue lors de l\'épinglage/désépinglage');
         })
         .finally(() => {
@@ -157,7 +172,14 @@ function updatePinInterface(data) {
     const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
     if (dropdownMenu) {
         // Trouver l'élément du menu qui correspond à la tâche actuelle
-        const taskItem = dropdownMenu.querySelector(`.dropdown-item[href="${window.location.pathname}"]`)?.closest('li');
+        // Utiliser l'ID de la tâche si disponible, sinon utiliser le pathname
+        let taskItem;
+        if (data.task_id) {
+            taskItem = dropdownMenu.querySelector(`li[data-task-id="${data.task_id}"]`);
+        }
+        if (!taskItem) {
+            taskItem = dropdownMenu.querySelector(`.dropdown-item[href="${window.location.pathname}"]`)?.closest('li');
+        }
         const noTasksMessage = dropdownMenu.querySelector('.dropdown-item-text');
         const separator = dropdownMenu.querySelector('.dropdown-divider');
         const viewAllLink = dropdownMenu.querySelector('.dropdown-item.text-center');
@@ -185,11 +207,11 @@ function updatePinInterface(data) {
                 <a class="dropdown-item d-flex justify-content-between align-items-center" href="${window.location.pathname}">
                     <div class="d-flex flex-column">
                         <span class="text-truncate" style="max-width: 200px;">${document.title}</span>
-                        <small class="text-muted">${document.querySelector('.project-name')?.textContent || ''}</small>
+                        <small class="text-muted">${getProjectName()}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-${statusColor}">${status}</span>
-                        <form action="${window.location.pathname}/toggle_pin" method="POST" class="d-inline menu-pin-form">
+                        <form action="/task/${getTaskSlug()}/toggle_pin" method="POST" class="d-inline menu-pin-form">
                             <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Désépingler">
                                 <i class="fas fa-thumbtack"></i>
                             </button>
@@ -207,18 +229,6 @@ function updatePinInterface(data) {
                 dropdownMenu.appendChild(newTaskItem);
             }
 
-            // Mettre à jour le compteur
-            const badge = document.querySelector('#pinnedTasksDropdown .badge');
-            if (badge) {
-                const count = parseInt(badge.textContent) + 1;
-                badge.textContent = count;
-            } else {
-                const newBadge = document.createElement('span');
-                newBadge.className = 'badge bg-info';
-                newBadge.textContent = '1';
-                document.querySelector('#pinnedTasksDropdown').appendChild(newBadge);
-            }
-
             // Ajouter le gestionnaire d'événements au nouveau formulaire
             const newForm = newTaskItem.querySelector('.menu-pin-form');
             if (newForm) {
@@ -229,35 +239,77 @@ function updatePinInterface(data) {
             if (taskItem) {
                 taskItem.remove();
             }
-
-            // Mettre à jour le compteur
-            const badge = document.querySelector('#pinnedTasksDropdown .badge');
-            if (badge) {
-                const count = parseInt(badge.textContent) - 1;
-                if (count > 0) {
-                    badge.textContent = count;
-                } else {
-                    badge.remove();
-                }
-            }
-
-            // Vérifier s'il reste des tâches épinglées
-            const remainingTasks = dropdownMenu.querySelectorAll('.dropdown-item:not([href*="my_tasks"])');
-            if (remainingTasks.length === 0) {
-                // Supprimer le séparateur et le lien "Voir toutes mes tâches"
-                if (separator) separator.closest('li').remove();
-                if (viewAllLink) viewAllLink.closest('li').remove();
-                
-                // Ajouter le message "aucune tâche épinglée"
-                const noTasksItem = document.createElement('li');
-                noTasksItem.innerHTML = '<span class="dropdown-item-text text-muted">Aucune tâche épinglée</span>';
-                dropdownMenu.appendChild(noTasksItem);
-            }
         }
+        
+        // Mettre à jour le compteur de manière robuste
+        updatePinnedCount();
     }
 
     // Afficher la notification
     showToast('success', data.message);
+}
+
+// Fonction pour mettre à jour le compteur des tâches épinglées
+function updatePinnedCount() {
+    const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
+    if (!dropdownMenu) return;
+    
+    // Compter les tâches épinglées (exclure les éléments spéciaux)
+    const pinnedTasks = dropdownMenu.querySelectorAll('li[data-task-id]');
+    const count = pinnedTasks.length;
+    
+    const badge = document.querySelector('#pinnedTasksDropdown .badge');
+    
+    if (count > 0) {
+        if (badge) {
+            badge.textContent = count;
+        } else {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'badge bg-info';
+            newBadge.textContent = count;
+            document.querySelector('#pinnedTasksDropdown').appendChild(newBadge);
+        }
+    } else {
+        if (badge) {
+            badge.remove();
+        }
+    }
+    
+    // Gérer l'affichage du message "aucune tâche épinglée"
+    const noTasksMessage = dropdownMenu.querySelector('.dropdown-item-text.text-muted');
+    const separator = dropdownMenu.querySelector('.dropdown-divider');
+    const viewAllLink = dropdownMenu.querySelector('.dropdown-item.text-center');
+    
+    if (count === 0) {
+        // Supprimer le séparateur et le lien "Voir toutes mes tâches"
+        if (separator) separator.closest('li').remove();
+        if (viewAllLink) viewAllLink.closest('li').remove();
+        
+        // Ajouter le message "aucune tâche épinglée" s'il n'existe pas déjà
+        if (!noTasksMessage) {
+            const noTasksItem = document.createElement('li');
+            noTasksItem.innerHTML = '<span class="dropdown-item-text text-muted">Aucune tâche épinglée</span>';
+            dropdownMenu.appendChild(noTasksItem);
+        }
+    } else {
+        // Supprimer le message "aucune tâche épinglée" s'il existe
+        if (noTasksMessage) {
+            noTasksMessage.closest('li').remove();
+        }
+        
+        // S'assurer que le séparateur et le lien "Voir toutes mes tâches" existent
+        if (!separator) {
+            const separatorItem = document.createElement('li');
+            separatorItem.innerHTML = '<hr class="dropdown-divider">';
+            dropdownMenu.appendChild(separatorItem);
+        }
+        
+        if (!viewAllLink) {
+            const viewAllItem = document.createElement('li');
+            viewAllItem.innerHTML = '<a class="dropdown-item text-center" href="/tasks/my_tasks">Voir toutes mes tâches</a>';
+            dropdownMenu.appendChild(viewAllItem);
+        }
+    }
 }
 
 // Fonction pour afficher une notification toast
@@ -302,72 +354,16 @@ function createToastContainer() {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    // Gérer les formulaires d'épinglage
+    // Gérer les formulaires d'épinglage existants
     document.querySelectorAll('.menu-pin-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const button = this.querySelector('button');
-            const originalContent = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updatePinInterface(data);
-                } else {
-                    showToast('danger', data.error || 'Une erreur est survenue.');
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                showToast('danger', 'Une erreur est survenue lors de l\'opération.');
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = originalContent;
-            });
+        setupPinForm(form);
+    });
+    
+    // Gérer les formulaires d'épinglage dans le menu de navigation
+    const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
+    if (dropdownMenu) {
+        dropdownMenu.querySelectorAll('.menu-pin-form').forEach(form => {
+            setupPinForm(form);
         });
-    });
-});
-
-async function handlePinSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-
-    const data = await utils.fetchWithCsrf(form.action, {
-        method: 'POST',
-        body: JSON.stringify({
-            csrf_token: CONFIG.csrfToken
-        })
-    });
-
-    if (data.success) {
-        updatePinStatus(data.is_pinned);
     }
-}
-
-async function handleUnpinSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-
-    const data = await utils.fetchWithCsrf(form.action, {
-        method: 'POST',
-        body: JSON.stringify({
-            csrf_token: CONFIG.csrfToken
-        })
-    });
-
-    if (data.success) {
-        updatePinStatus(data.is_pinned);
-    }
-} 
+}); 

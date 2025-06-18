@@ -75,7 +75,7 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pinnedTasksDropdown">
                                 {% if pinned_tasks %}
                                     {% for task in pinned_tasks %}
-                                    <li>
+                                    <li data-task-id="{{ task.id }}">
                                         <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
                                             <div class="d-flex flex-column">
                                                 <span class="text-truncate" style="max-width: 200px;">{{ task.title }}</span>

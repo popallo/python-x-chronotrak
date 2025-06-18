@@ -822,7 +822,8 @@ def toggle_pin_task(slug_or_id):
                 return jsonify({
                     'success': True,
                     'message': 'La tâche a été désépinglée.',
-                    'is_pinned': False
+                    'is_pinned': False,
+                    'task_id': task.id
                 })
             flash('La tâche a été désépinglée.', 'success')
         else:
@@ -834,7 +835,8 @@ def toggle_pin_task(slug_or_id):
                 return jsonify({
                     'success': True,
                     'message': 'La tâche a été épinglée.',
-                    'is_pinned': True
+                    'is_pinned': True,
+                    'task_id': task.id
                 })
             flash('La tâche a été épinglée.', 'success')
 

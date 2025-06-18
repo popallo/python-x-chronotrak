@@ -1,7 +1,6 @@
 import traceback
 from flask import current_app
-from flask_mail import Message
-from app import mail
+from app.utils.email import send_email
 
 def send_error_email(error, request_info=None):
     """
@@ -38,13 +37,14 @@ IP: {request_info.get('ip', 'N/A')}
 User Agent: {request_info.get('user_agent', 'N/A')}
 """
 
-        msg = Message(
-            subject=subject,
-            recipients=[current_app.config['ADMIN_EMAIL']],
-            body=body
-        )
-        
-        mail.send(msg)
-        current_app.logger.info("Email d'erreur envoyé avec succès")
+        # Utiliser la logique centralisée de send_email
+        # Les emails d'erreur vont automatiquement aux administrateurs selon les règles
+        admin_email = current_app.config.get('ADMIN_EMAIL')
+        if admin_email:
+            send_email(subject, [admin_email], body, body, email_type='error')
+            current_app.logger.info("Email d'erreur envoyé avec succès")
+        else:
+            current_app.logger.warning("ADMIN_EMAIL non configuré, email d'erreur non envoyé")
+            
     except Exception as e:
         current_app.logger.error(f"Échec de l'envoi de l'email d'erreur: {str(e)}") 

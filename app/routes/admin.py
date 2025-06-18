@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
-from app import mail, db
-from flask_mail import Message
+from app import db
 from app.forms.admin import TestEmailForm, TimeTransferForm
 from app.utils.decorators import login_and_admin_required
 from app.utils.route_utils import save_to_db
+from app.utils.email import send_email
 from app.models.task import Task
 from app.models.project import Project
 from app.models.user import User
@@ -22,14 +22,17 @@ def require_admin():
 def send_test_email(recipient):
     """Envoie un email de test à l'adresse spécifiée"""
     try:
-        msg = Message(
-            subject="ChronoTrak - Test de configuration SMTP",
-            recipients=[recipient],
-            body="Ceci est un email de test envoyé depuis ChronoTrak. Si vous recevez cet email, la configuration SMTP fonctionne correctement.",
-            html="<h1>ChronoTrak - Test de configuration SMTP</h1><p>Ceci est un email de test envoyé depuis ChronoTrak. Si vous recevez cet email, la configuration SMTP fonctionne correctement.</p>"
-        )
-        mail.send(msg)
-        return True, None
+        subject = "ChronoTrak - Test de configuration SMTP"
+        text_body = "Ceci est un email de test envoyé depuis ChronoTrak. Si vous recevez cet email, la configuration SMTP fonctionne correctement."
+        html_body = "<h1>ChronoTrak - Test de configuration SMTP</h1><p>Ceci est un email de test envoyé depuis ChronoTrak. Si vous recevez cet email, la configuration SMTP fonctionne correctement.</p>"
+        
+        # Utiliser la logique centralisée de send_email
+        success = send_email(subject, [recipient], text_body, html_body, email_type='test')
+        
+        if success:
+            return True, None
+        else:
+            return False, "Échec de l'envoi de l'email"
     except Exception as e:
         return False, str(e)
 

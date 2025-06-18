@@ -21,18 +21,60 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         current_app.logger.warning("Configuration SMTP manquante - email non envoyé")
         return False
     
-    # En environnement non-production, rediriger tous les emails vers les administrateurs
-    if current_app.config.get('FLASK_ENV') != 'production':
-        # Récupérer tous les administrateurs
-        from app.models.user import User
-        admin_users = User.query.filter_by(role='admin').all()
-        admin_emails = [admin.email for admin in admin_users if admin.email]
-        
+    # Récupérer tous les administrateurs
+    admin_users = User.query.filter_by(role='admin').all()
+    admin_emails = [admin.email for admin in admin_users if admin.email]
+    
+    # Déterminer l'environnement
+    is_production = current_app.config.get('FLASK_ENV') == 'production'
+    
+    if not is_production:
+        # En environnement non-production (dev/local), rediriger tous les emails vers les administrateurs uniquement
         if admin_emails:
             # Ajouter des infos pour identifier les destinataires initiaux
             subject = f"[{current_app.config.get('FLASK_ENV', 'DEV').upper()}] {subject} (pour {', '.join(recipients)})"
             recipients = admin_emails
             current_app.logger.info(f"Email redirigé vers les administrateurs: {', '.join(admin_emails)}")
+    else:
+        # En production, appliquer les règles spécifiques
+        final_recipients = set(recipients)  # Utiliser un set pour éviter les doublons
+        
+        # Règle 1: Ajouter les administrateurs en copie sauf s'ils sont les seuls destinataires initiaux
+        if admin_emails and set(recipients) != set(admin_emails):
+            final_recipients.update(admin_emails)
+            current_app.logger.info(f"Administrateurs ajoutés en copie: {', '.join(admin_emails)}")
+        
+        # Règle 2: Pour les emails liés à un projet, s'assurer que le client reçoit l'email
+        if project_id:
+            from app.models.project import Project
+            project = Project.query.get(project_id)
+            if project and project.client_id:
+                # Trouver les utilisateurs clients qui ont accès à ce projet
+                client_users = User.query.filter_by(role='client').all()
+                for client_user in client_users:
+                    if client_user.has_access_to_client(project.client_id):
+                        if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
+                            # Vérifier les préférences selon le type d'email
+                            prefs = client_user.notification_preferences
+                            should_notify = True
+                            
+                            if email_type:
+                                if email_type.startswith('task_'):
+                                    event_type = email_type.replace('task_', '')
+                                    if event_type == 'status_change' and not prefs.task_status_change:
+                                        should_notify = False
+                                    elif event_type == 'comment_added' and not prefs.task_comment_added:
+                                        should_notify = False
+                                    elif event_type == 'time_logged' and not prefs.task_time_logged:
+                                        should_notify = False
+                                elif email_type == 'project_low_credit' and not prefs.project_credit_low:
+                                    should_notify = False
+                            
+                            if should_notify and client_user.email not in final_recipients:
+                                final_recipients.add(client_user.email)
+                                current_app.logger.info(f"Client ajouté aux destinataires: {client_user.email}")
+        
+        recipients = list(final_recipients)
     
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
@@ -84,6 +126,9 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
     :param notify_all: Si True, notifie tous les participants
     :param mentioned_users: Liste des utilisateurs mentionnés dans le commentaire
     """
+    # Vérifier l'environnement
+    is_production = current_app.config.get('FLASK_ENV') == 'production'
+    
     # Déterminer les destinataires
     recipients = set()  # Utiliser un set pour éviter les doublons
     
@@ -99,16 +144,17 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                        (event_type == 'time_logged' and prefs.task_time_logged):
                         recipients.add(assigned_user.email)
         
-        # Notifier tous les clients du projet
-        client_users = User.query.filter_by(role='client').all()
-        for client_user in client_users:
-            if client_user.has_access_to_client(task.project.client_id):
-                if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
-                    prefs = client_user.notification_preferences
-                    if (event_type == 'status_change' and prefs.task_status_change) or \
-                       (event_type == 'comment_added' and prefs.task_comment_added) or \
-                       (event_type == 'time_logged' and prefs.task_time_logged):
-                        recipients.add(client_user.email)
+        # En production seulement, notifier les clients du projet
+        if is_production:
+            client_users = User.query.filter_by(role='client').all()
+            for client_user in client_users:
+                if client_user.has_access_to_client(task.project.client_id):
+                    if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
+                        prefs = client_user.notification_preferences
+                        if (event_type == 'status_change' and prefs.task_status_change) or \
+                           (event_type == 'comment_added' and prefs.task_comment_added) or \
+                           (event_type == 'time_logged' and prefs.task_time_logged):
+                            recipients.add(client_user.email)
     
     # Ajouter les utilisateurs mentionnés
     if mentioned_users:
@@ -386,26 +432,11 @@ Pour toute question, veuillez contacter votre administrateur.
         """
     
     try:
-        # Déterminer les destinataires
-        if current_app.config.get('FLASK_ENV') == 'development':
-            # En développement, rediriger tous les emails vers l'admin
-            admin_email = current_app.config.get('ADMIN_EMAIL')
-            if admin_email:
-                # Ajouter des infos pour identifier le destinataire initial
-                subject = f"[DEV] {subject} (pour {user.email})"
-                recipients = [admin_email]
-            else:
-                # Utiliser l'email de l'utilisateur en absence d'admin configuré
-                recipients = [user.email]
-        else:
-            # En production, envoyer à l'utilisateur concerné
-            recipients = [user.email]
-        
-        # Envoyer l'email
-        send_email(subject, recipients, text, html,
+        # Envoyer l'email en utilisant la logique centralisée de send_email
+        send_email(subject, [user.email], text, html,
                email_type='password_reset',
                user_id=user.id)
-        current_app.logger.info(f"Email de réinitialisation envoyé à {recipients}")
+        current_app.logger.info(f"Email de réinitialisation envoyé à {user.email}")
         return True
     except Exception as e:
         current_app.logger.error(f"Erreur lors de l'envoi de l'email de réinitialisation: {e}")

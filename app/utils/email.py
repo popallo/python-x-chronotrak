@@ -6,6 +6,7 @@ from app import db
 from app.models.notification import NotificationPreference
 from app.models.user import User
 from app.models.communication import Communication
+from app.utils.time_format import format_time
 
 def send_async_email(app, msg):
     """Envoie un email de façon asynchrone"""
@@ -253,6 +254,9 @@ Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre p
         # Construire l'URL de la tâche
         task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
         
+        # Formater la durée en minutes/h min
+        formatted_time = format_time(time_entry.minutes)
+        
         # Préparer le contenu HTML
         html_content = render_template('emails/task_notification.html',
                                      task=task,
@@ -268,7 +272,7 @@ Du temps a été enregistré sur la tâche "{task.title}":
 
 - Projet: {task.project.name}
 - Client: {task.project.client.name}
-- Temps: {time_entry.hours} heures
+- Temps: {formatted_time}
 - Enregistré par: {user.name if user else 'Système'}
 - Description: {time_entry.description if time_entry.description else 'N/A'}
 

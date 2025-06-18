@@ -129,11 +129,11 @@ def apply_filters(query, model, filters):
                 filters_active = True
             elif field == 'credit_status' and hasattr(model, 'remaining_credit'):
                 if value == 'critical':
-                    query = query.filter(model.remaining_credit < 2)
+                    query = query.filter(model.remaining_credit < 120)
                 elif value == 'low':
-                    query = query.filter(model.remaining_credit < 5, model.remaining_credit >= 2)
+                    query = query.filter(model.remaining_credit < 300, model.remaining_credit >= 120)
                 elif value == 'normal':
-                    query = query.filter(model.remaining_credit >= 5)
+                    query = query.filter(model.remaining_credit >= 300)
                 filters_active = True
             elif field == 'type' and hasattr(model, 'type'):
                 query = query.filter(model.type == value)

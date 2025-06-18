@@ -175,9 +175,11 @@
                             <i class="fas fa-eye me-1"></i>Détails
                         </a>
                         {% if not current_user.is_client() %}
+                        {% if project.time_tracking_enabled %}
                         <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-secondary">
                             <i class="fas fa-plus me-1"></i>Ajouter du crédit
                         </a>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>

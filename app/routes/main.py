@@ -17,6 +17,9 @@ main = Blueprint('main', __name__)
 
 def get_dashboard_stats():
     """Récupère les statistiques du tableau de bord"""
+    # Convertir le seuil de crédit en minutes (il est configuré en heures)
+    credit_threshold_minutes = current_app.config['CREDIT_THRESHOLD'] * 60
+    
     if current_user.is_client():
         # Pour les clients, montrer uniquement les données de leurs clients associés
         clients_query = get_accessible_clients()
@@ -26,7 +29,7 @@ def get_dashboard_stats():
         stats = db.session.query(
             func.count(Client.id).label('total_clients'),
             func.count(Project.id).label('total_projects'),
-            func.sum(case((Project.remaining_credit < current_app.config['CREDIT_THRESHOLD'], 1), else_=0)).label('projects_low_credit')
+            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit')
         ).join(Project, Project.client_id == Client.id, isouter=True).filter(Client.id.in_(client_ids)).first()
         
         total_clients = stats.total_clients or 0
@@ -36,7 +39,7 @@ def get_dashboard_stats():
         # Récupérer les projets avec crédit faible en une seule requête
         low_credit_projects = Project.query.filter(
             Project.client_id.in_(client_ids),
-            Project.remaining_credit < current_app.config['CREDIT_THRESHOLD'],
+            Project.remaining_credit < credit_threshold_minutes,
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         
@@ -80,10 +83,10 @@ def get_dashboard_stats():
         total_clients = Client.query.count()
         total_projects = Project.query.count()
         
-        projects_low_credit = Project.query.filter(Project.remaining_credit < current_app.config['CREDIT_THRESHOLD']).count()
+        projects_low_credit = Project.query.filter(Project.remaining_credit < credit_threshold_minutes).count()
         
         low_credit_projects = Project.query.filter(
-            Project.remaining_credit < current_app.config['CREDIT_THRESHOLD'], 
+            Project.remaining_credit < credit_threshold_minutes, 
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         

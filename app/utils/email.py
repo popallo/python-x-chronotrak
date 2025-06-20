@@ -27,7 +27,11 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
     admin_emails = [admin.email for admin in admin_users if admin.email]
     
     # Déterminer l'environnement
-    is_production = current_app.config.get('FLASK_ENV') == 'production'
+    flask_env = current_app.config.get('FLASK_ENV')
+    is_production = flask_env == 'production'
+    
+    # Log pour déboguer
+    current_app.logger.info(f"Email - FLASK_ENV: {flask_env}, is_production: {is_production}")
     
     if not is_production:
         # En environnement non-production (dev/local), rediriger tous les emails vers les administrateurs uniquement

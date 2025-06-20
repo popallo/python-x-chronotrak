@@ -9,6 +9,7 @@ from config import config
 from datetime import datetime, timezone
 from flask_mail import Mail
 from werkzeug.exceptions import HTTPException
+import os
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -25,6 +26,9 @@ csrf = CSRFProtect()
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    
+    # Ajouter FLASK_ENV à la configuration de l'application
+    app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', config_name)
 
     # Configuration de sécurité
     app.config['SESSION_COOKIE_SECURE'] = True

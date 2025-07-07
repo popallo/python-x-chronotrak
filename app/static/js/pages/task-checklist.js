@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         copyButton.classList.toggle('disabled', !this.checked);
         copyButton.disabled = !this.checked;
         
-        toggleChecklistItem(taskId, itemId);
+        toggleChecklistItem(taskId, itemId, this.checked);
     }
     
     function handleDeleteClick() {
@@ -223,10 +223,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    async function toggleChecklistItem(taskId, itemId) {
+    async function toggleChecklistItem(taskId, itemId, isChecked = null) {
         const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
             method: 'PUT',
             body: JSON.stringify({
+                is_checked: isChecked,
                 csrf_token: CONFIG.csrfToken
             })
         });
@@ -253,6 +254,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    async function updateChecklistItemContent(taskId, itemId, content) {
+        const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                content: content,
+                csrf_token: CONFIG.csrfToken
+            })
+        });
+
+        if (data.success) {
+            updateChecklist(data.checklist);
+        }
+    }
+    
     function updateItemsOrder() {
         const items = Array.from(document.querySelectorAll('.checklist-item'));
         const itemsData = items.map((item, index) => ({
@@ -266,6 +281,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateChecklist(checklist) {
         const checklistItems = document.getElementById('checklist-items');
         if (!checklistItems) return;
+        
+        // Vérifier que checklist est défini et est un tableau
+        if (!checklist || !Array.isArray(checklist)) {
+            console.error('Checklist invalide reçue:', checklist);
+            return;
+        }
         
         checklistItems.innerHTML = '';
         
@@ -331,7 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const newContent = this.value.trim();
             if (newContent && newContent !== currentContent) {
                 const itemId = element.closest('.checklist-item').dataset.id;
-                toggleChecklistItem(taskId, itemId);
+                // Pour l'édition de contenu, on envoie le nouveau contenu au lieu de l'état de la checkbox
+                updateChecklistItemContent(taskId, itemId, newContent);
                 element.textContent = newContent;
             } else {
                 element.textContent = currentContent;

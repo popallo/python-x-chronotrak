@@ -640,14 +640,17 @@ def add_checklist_item(slug_or_id):
     # Sinon, ajouter un élément normal
     item = task.add_checklist_item(data['content'])
     
+    # Retourner la checklist complète mise à jour
+    checklist = [{
+        'id': item.id,
+        'content': item.content,
+        'is_checked': item.is_checked,
+        'position': item.position
+    } for item in task.checklist_items]
+    
     return jsonify({
         'success': True,
-        'item': {
-            'id': item.id,
-            'content': item.content,
-            'is_checked': item.is_checked,
-            'position': item.position
-        }
+        'checklist': checklist
     }), 201
 
 @tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['PUT'])
@@ -679,14 +682,17 @@ def update_checklist_item(slug_or_id, item_id):
     
     db.session.commit()
     
+    # Retourner la checklist complète mise à jour
+    checklist = [{
+        'id': item.id,
+        'content': item.content,
+        'is_checked': item.is_checked,
+        'position': item.position
+    } for item in task.checklist_items]
+    
     return jsonify({
         'success': True,
-        'item': {
-            'id': item.id,
-            'content': item.content,
-            'is_checked': item.is_checked,
-            'position': item.position
-        }
+        'checklist': checklist
     })
 
 @tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['DELETE'])
@@ -708,7 +714,18 @@ def delete_checklist_item(slug_or_id, item_id):
     db.session.delete(item)
     db.session.commit()
     
-    return jsonify({'success': True})
+    # Retourner la checklist complète mise à jour
+    checklist = [{
+        'id': item.id,
+        'content': item.content,
+        'is_checked': item.is_checked,
+        'position': item.position
+    } for item in task.checklist_items]
+    
+    return jsonify({
+        'success': True,
+        'checklist': checklist
+    })
 
 @tasks.route('/tasks/<slug_or_id>/checklist/reorder', methods=['POST'])
 @login_required

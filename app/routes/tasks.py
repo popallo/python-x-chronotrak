@@ -140,6 +140,8 @@ def task_details(slug_or_id):
 @tasks.route('/tasks/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_client_required
 def edit_task(slug_or_id):
+    from app.utils.email import send_task_notification
+    
     task = get_task_by_slug_or_id(slug_or_id)
     
     # Vérifier si le client a accès à ce projet
@@ -155,6 +157,9 @@ def edit_task(slug_or_id):
     if form.validate_on_submit():
         user_id = form.user_id.data if form.user_id.data != 0 else None
         
+        # Capturer l'ancien statut avant modification
+        old_status = task.status
+        
         task.title = form.title.data
         task.description = form.description.data
         task.status = form.status.data
@@ -169,6 +174,21 @@ def edit_task(slug_or_id):
             task.completed_at = None
             
         save_to_db(task)
+        
+        # Envoyer une notification si le statut a changé
+        if old_status != task.status:
+            additional_data = {
+                'old_status': old_status,
+                'new_status': task.status
+            }
+            send_task_notification(
+                task=task,
+                event_type='status_change',
+                user=current_user,
+                additional_data=additional_data,
+                notify_all=True
+            )
+        
         flash(f'Tâche "{task.title}" mise à jour!', 'success')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
         

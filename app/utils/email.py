@@ -286,6 +286,29 @@ Ceci est un message automatique envoyé par ChronoTrak.
 Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
         """
     
+    elif event_type == 'task_created':
+        subject = f"[ChronoTrak] Nouvelle tâche assignée: {task.title}"
+        # Construire l'URL de la tâche
+        task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
+        html_content = render_template('emails/task_notification.html',
+                                     task=task,
+                                     user=user,
+                                     notification_type=event_type,
+                                     url=task_url)
+        text = f"""
+Bonjour,
+
+Une nouvelle tâche vous a été assignée : "{task.title}"
+
+- Projet: {task.project.name}
+- Client: {task.project.client.name}
+- Créée par: {user.name if user else 'Système'}
+
+Voir la tâche: {task_url}
+
+Ceci est un message automatique envoyé par ChronoTrak.
+Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
+        """
     else:
         # Type d'événement non pris en charge
         current_app.logger.warning(f"Type d'événement non pris en charge: {event_type}")

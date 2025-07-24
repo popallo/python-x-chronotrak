@@ -93,6 +93,17 @@ def new_task(slug_or_id):
         )
         save_to_db(task)
         
+        # Notifier l'assigné si la tâche est assignée
+        if user_id:
+            from app.utils.email import send_task_notification
+            send_task_notification(
+                task=task,
+                event_type='task_created',
+                user=current_user,
+                additional_data=None,
+                notify_all=True
+            )
+        
         flash(f'Tâche "{form.title.data}" créée avec succès!', 'success')
         return redirect(url_for('projects.project_details', slug_or_id=project.slug))
         

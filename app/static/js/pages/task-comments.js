@@ -113,7 +113,7 @@ async function handleCommentSubmit(e) {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': window.csrfToken,
+                'X-CSRF-Token': window.csrfToken,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -177,7 +177,7 @@ async function handleDeleteSubmit(e) {
         const response = await fetch(form.action, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': window.csrfToken,
+                'X-CSRF-Token': window.csrfToken,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },

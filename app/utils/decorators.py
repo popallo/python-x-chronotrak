@@ -69,9 +69,14 @@ def login_and_client_required(f):
         
         # Pour les projets, vérifier si le projet appartient à un client auquel l'utilisateur a accès
         project_id = kwargs.get('project_id')
-        if project_id and current_user.is_client():
+        slug_or_id = kwargs.get('slug_or_id')
+        if (project_id or slug_or_id) and current_user.is_client():
             from app.models.project import Project
-            project = Project.query.get_or_404(project_id)
+            if slug_or_id:
+                from app.utils.route_utils import get_project_by_slug_or_id
+                project = get_project_by_slug_or_id(slug_or_id)
+            else:
+                project = Project.query.get_or_404(project_id)
             if current_user.has_access_to_client(project.client_id):
                 return f(*args, **kwargs)
             else:

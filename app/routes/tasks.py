@@ -433,18 +433,19 @@ def update_status():
             
         db.session.commit()
         
-        # Envoyer une notification par email
-        additional_data = {
-            'old_status': old_status,
-            'new_status': new_status
-        }
-        send_task_notification(
-            task=task,
-            event_type='status_change',
-            user=current_user,
-            additional_data=additional_data,
-            notify_all=True  # Activer les notifications pour tous les participants
-        )
+        # Envoyer une notification par email uniquement si le statut a changé
+        if old_status != new_status:
+            additional_data = {
+                'old_status': old_status,
+                'new_status': new_status
+            }
+            send_task_notification(
+                task=task,
+                event_type='status_change',
+                user=current_user,
+                additional_data=additional_data,
+                notify_all=True  # Activer les notifications pour tous les participants
+            )
         
         current_app.logger.info(f"Statut de la tâche {task_id} mis à jour de '{old_status}' à '{new_status}'")
         

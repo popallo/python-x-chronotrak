@@ -230,7 +230,7 @@ async function handleTimeSubmit(e) {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': window.csrfToken,
+                'X-CSRF-Token': window.csrfToken,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },

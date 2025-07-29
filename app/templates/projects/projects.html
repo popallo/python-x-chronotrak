@@ -152,6 +152,12 @@
                     <div class="card-body">
                         {% if project.time_tracking_enabled %}
                         <p>
+                            <strong>Crédit initial :</strong> 
+                            <span class="text-info">
+                                {{ project.initial_credit|format_time }}
+                            </span>
+                        </p>
+                        <p>
                             <strong>Crédit restant :</strong> 
                             <span class="{% if project.remaining_credit < 120 %}text-danger fw-bold{% elif project.remaining_credit < 300 %}text-warning fw-bold{% else %}text-success{% endif %}">
                                 {{ project.remaining_credit|format_time }}

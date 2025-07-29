@@ -10,12 +10,23 @@ class ProjectForm(FlaskForm):
     time_tracking_enabled = BooleanField('Activer la gestion de temps', default=True)
     submit = SubmitField('Enregistrer')
 
+    def __init__(self, *args, **kwargs):
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        # Si un objet project est passé, convertir les minutes en heures
+        if 'obj' in kwargs and kwargs['obj']:
+            project = kwargs['obj']
+            if hasattr(project, 'initial_credit') and project.initial_credit is not None:
+                # Convertir les minutes en heures pour l'affichage initial
+                # (seulement si pas de données POST)
+                if self.initial_credit.data is None:
+                    self.initial_credit.data = project.initial_credit / 60.0
+
     def validate(self, extra_validators=None):
         if not super().validate():
             return False
         
         # Si la gestion de temps est activée, le crédit initial est requis
-        if self.time_tracking_enabled.data and not self.initial_credit.data:
+        if self.time_tracking_enabled.data and (self.initial_credit.data is None or self.initial_credit.data == 0):
             self.initial_credit.errors.append('Le crédit initial est requis quand la gestion de temps est activée')
             return False
             

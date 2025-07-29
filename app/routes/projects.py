@@ -182,11 +182,22 @@ def edit_project(slug_or_id):
         if form.time_tracking_enabled.data:
             # Convertir les heures en minutes
             new_initial_credit = int(round(form.initial_credit.data * 60))
+            print(f"DEBUG: form.initial_credit.data = {form.initial_credit.data}")
+            print(f"DEBUG: new_initial_credit = {new_initial_credit} minutes")
+            print(f"DEBUG: project.initial_credit avant = {project.initial_credit} minutes")
             
             # Calculer la différence pour ajuster le crédit restant
             credit_difference = new_initial_credit - project.initial_credit
+            print(f"DEBUG: credit_difference = {credit_difference} minutes")
+            
+            # Mettre à jour le crédit initial
             project.initial_credit = new_initial_credit
+            print(f"DEBUG: project.initial_credit après = {project.initial_credit} minutes")
+            
+            # Ajuster le crédit restant de la même différence
             project.remaining_credit += credit_difference
+            print(f"DEBUG: project.remaining_credit avant ajustement = {project.remaining_credit - credit_difference} minutes")
+            print(f"DEBUG: project.remaining_credit après ajustement = {project.remaining_credit} minutes")
             
             # Créer un log si le crédit initial a été modifié
             if credit_difference != 0:

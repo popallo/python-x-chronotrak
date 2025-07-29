@@ -58,21 +58,24 @@
                         <span class="badge bg-secondary">Désactivée</span>
                     {% endif %}
                 </p>
-            </div>
-            <div class="col-md-6">
                 {% if project.time_tracking_enabled %}
-                <p>
-                    <strong>Crédit initial :</strong> 
-                    <span class="text-info fw-bold" style="font-size: 1.1em;">
-                        {{ project.initial_credit|format_time }}
-                    </span>
-                </p>
                 <p>
                     <strong>Crédit restant :</strong> 
                     <span class="{% if project.remaining_credit < 120 %}text-danger fw-bold{% elif project.remaining_credit < 300 %}text-warning fw-bold{% else %}text-success{% endif %}" style="font-size: 1.2em;">
                         {{ project.remaining_credit|format_time }}
                     </span>
                 </p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <p><strong>Nombre de tâches :</strong> <span class="badge bg-info text-white">{{ project.tasks|length }}</span></p>
+                {% if project.tasks %}
+                <p><strong>Répartition :</strong></p>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-info">À faire: {{ project.tasks|selectattr('status', 'equalto', 'à faire')|list|length }}</span>
+                    <span class="badge bg-warning text-dark">En cours: {{ project.tasks|selectattr('status', 'equalto', 'en cours')|list|length }}</span>
+                    <span class="badge bg-success">Terminé: {{ project.tasks|selectattr('status', 'equalto', 'terminé')|list|length }}</span>
+                </div>
                 {% endif %}
             </div>
             {% if project.description %}

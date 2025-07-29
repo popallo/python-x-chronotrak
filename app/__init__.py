@@ -101,13 +101,18 @@ def create_app(config_name):
     @app.errorhandler(500)
     def internal_error(error):
         # Envoyer l'email d'erreur dans tous les cas
-        request_info = {
-            'url': request.url,
-            'method': request.method,
-            'ip': request.remote_addr,
-            'user_agent': request.user_agent.string
-        }
-        send_error_email(error, request_info)
+        try:
+            request_info = {
+                'url': request.url,
+                'method': request.method,
+                'ip': request.remote_addr,
+                'user_agent': request.user_agent.string
+            }
+            send_error_email(error, request_info)
+        except Exception as email_error:
+            # Si l'envoi d'email échoue, on log mais on ne fait pas planter la page d'erreur
+            app.logger.error(f"Échec de l'envoi d'email d'erreur: {email_error}")
+        
         return render_template('errors/error.html'), 500
 
     @app.errorhandler(Exception)
@@ -118,13 +123,18 @@ def create_app(config_name):
                                  error_message=error.description), error.code
 
         # Envoyer l'email d'erreur dans tous les cas
-        request_info = {
-            'url': request.url,
-            'method': request.method,
-            'ip': request.remote_addr,
-            'user_agent': request.user_agent.string
-        }
-        send_error_email(error, request_info)
+        try:
+            request_info = {
+                'url': request.url,
+                'method': request.method,
+                'ip': request.remote_addr,
+                'user_agent': request.user_agent.string
+            }
+            send_error_email(error, request_info)
+        except Exception as email_error:
+            # Si l'envoi d'email échoue, on log mais on ne fait pas planter la page d'erreur
+            app.logger.error(f"Échec de l'envoi d'email d'erreur: {email_error}")
+        
         return render_template('errors/error.html'), 500
     
     # Contexte global pour les templates

@@ -359,21 +359,16 @@ def send_low_credit_notification(project):
                           url=url_for('projects.project_details', project_id=project.id, _external=True))
     
     text = f"""
-ALERTE: Crédit de projet faible
-
-Le crédit du projet "{project.name}" est très bas!
-
-- Client: {project.client.name}
-- Crédit restant: {format_time(project.remaining_credit)}
-- Crédit initial: {format_time(project.initial_credit)}
-
-Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.
-
-Voir le projet: {url_for('projects.project_details', project_id=project.id, _external=True)}
-
-Ceci est un message automatique envoyé par ChronoTrak.
-Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
-    """
+        Alerte de crédit faible pour le projet "{project.name}"
+        
+        Détails du projet:
+        - Client: {project.client.name}
+        - Crédit restant: {format_time(project.remaining_credit)}
+        
+        Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.
+        
+        Voir le projet: {url_for('projects.project_details', project_id=project.id, _external=True)}
+        """
     
     # Envoyer l'email
     send_email(subject, recipients, text, html,

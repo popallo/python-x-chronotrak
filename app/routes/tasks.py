@@ -270,8 +270,8 @@ def log_time(slug_or_id):
     form = TimeEntryForm()
     
     if form.validate_on_submit():
-        # Convertir le temps en minutes
-        time_in_minutes = int(form.hours.data * 60)
+        # Convertir le temps en minutes avec arrondi approprié
+        time_in_minutes = round(form.hours.data * 60)
         
         # Vérifier s'il reste assez de crédit uniquement si la gestion de temps est activée
         if task.project.time_tracking_enabled:

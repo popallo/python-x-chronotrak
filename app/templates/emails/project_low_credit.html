@@ -19,13 +19,13 @@
         <div class="content">
             <div class="alert-box">
                 <p>Le crédit du projet "{{ project.name }}" est très bas!</p>
-                <p class="credit-info">Crédit restant: {{ project.remaining_credit }} heures</p>
+                <p class="credit-info">Crédit restant: {{ project.remaining_credit|format_time }}</p>
             </div>
             
             <h3>Détails du projet:</h3>
             <ul>
                 <li><strong>Client:</strong> {{ project.client.name }}</li>
-                <li><strong>Crédit initial:</strong> {{ project.initial_credit }} heures</li>
+                <li><strong>Crédit initial:</strong> {{ project.initial_credit|format_time }}</li>
                 <li><strong>Pourcentage restant:</strong> 
                     {% if project.initial_credit > 0 %}
                         {{ (project.remaining_credit / project.initial_credit * 100) | round(1) }}%

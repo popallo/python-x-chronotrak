@@ -3,8 +3,19 @@ def format_time(value):
     if value is None:
         return ""
     
+    # Gérer les valeurs négatives
+    is_negative = value < 0
+    abs_value = abs(value)
+    
     # S'assurer que la valeur est un entier
-    total_minutes = int(round(float(value) * 60)) if isinstance(value, float) else int(value)
+    # Si la valeur est un float et > 100, c'est probablement déjà en minutes
+    # Sinon, c'est probablement en heures
+    if isinstance(abs_value, float) and abs_value > 100:
+        total_minutes = int(round(abs_value))
+    elif isinstance(abs_value, float):
+        total_minutes = int(round(abs_value * 60))
+    else:
+        total_minutes = int(abs_value)
     
     # Calculer les heures et minutes
     hours = total_minutes // 60
@@ -13,11 +24,14 @@ def format_time(value):
     # Formater selon le cas
     if hours > 0:
         if minutes > 0:
-            return f"{hours}h{minutes}min"
+            result = f"{hours}h{minutes}min"
         else:
-            return f"{hours}h"
+            result = f"{hours}h"
     else:
-        return f"{minutes}min"
+        result = f"{minutes}min"
+    
+    # Ajouter le signe négatif si nécessaire
+    return f"-{result}" if is_negative else result
 
 def generate_hour_options(extra_blocks=None, include_undefined=False):
     """

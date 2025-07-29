@@ -364,8 +364,8 @@ ALERTE: Crédit de projet faible
 Le crédit du projet "{project.name}" est très bas!
 
 - Client: {project.client.name}
-- Crédit restant: {project.remaining_credit} heures
-- Crédit initial: {project.initial_credit} heures
+- Crédit restant: {format_time(project.remaining_credit)}
+- Crédit initial: {format_time(project.initial_credit)}
 
 Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.
 

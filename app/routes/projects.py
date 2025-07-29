@@ -66,16 +66,31 @@ def new_project(client_id):
     form = ProjectForm()
     if form.validate_on_submit():
         # Si la gestion de temps est désactivée, on met le crédit à 0
-        initial_credit = form.initial_credit.data if form.time_tracking_enabled.data else 0
+        if form.time_tracking_enabled.data:
+            # Convertir les heures en minutes
+            initial_credit_minutes = int(round(form.initial_credit.data * 60))
+        else:
+            initial_credit_minutes = 0
         
         project = Project(
             name=form.name.data,
             description=form.description.data,
-            initial_credit=initial_credit,
+            initial_credit=initial_credit_minutes,
+            remaining_credit=initial_credit_minutes,  # Initialiser le crédit restant avec le crédit initial
             time_tracking_enabled=form.time_tracking_enabled.data,
             client_id=client_id
         )
         save_to_db(project)
+        
+        # Créer un log pour le crédit initial si le projet utilise la gestion de temps
+        if form.time_tracking_enabled.data and initial_credit_minutes > 0:
+            credit_log = CreditLog(
+                project_id=project.id,
+                amount=initial_credit_minutes,
+                note="Crédit initial"
+            )
+            save_to_db(credit_log)
+        
         flash(f'Projet "{form.name.data}" créé avec succès!', 'success')
         return redirect(url_for('projects.project_details', slug_or_id=project.slug))
         
@@ -84,6 +99,7 @@ def new_project(client_id):
 @projects.route('/projects/<slug_or_id>')
 @login_required
 def project_details(slug_or_id):
+    from app.models.task import TimeEntry, Task
     project = get_project_by_slug_or_id(slug_or_id)
     tasks = project.tasks
     form = DeleteProjectForm()
@@ -98,32 +114,88 @@ def project_details(slug_or_id):
         reverse=True
     )
     
-    # Trier les logs de crédit par date de création décroissante
-    credit_logs = sorted(project.credit_logs, key=lambda x: x.created_at, reverse=True)
+    # Créer un historique unifié avec crédits et temps consommés
+    history_items = []
+    
+    # Ajouter les logs de crédit
+    for log in project.credit_logs:
+        history_items.append({
+            'type': 'credit',
+            'amount': log.amount,
+            'note': log.note,
+            'created_at': log.created_at,
+            'task': log.task if log.task_id else None,
+            'user': None  # Les logs de crédit n'ont pas d'utilisateur associé
+        })
+    
+    # Ajouter les temps consommés
+    time_entries = (
+        db.session.query(TimeEntry)
+        .join(Task)
+        .filter(Task.project_id == project.id)
+        .all()
+    )
+    
+    for entry in time_entries:
+        history_items.append({
+            'type': 'time',
+            'amount': -entry.minutes,  # Négatif car c'est une consommation
+            'note': f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
+            'created_at': entry.created_at,
+            'task': entry.task,
+            'user': entry.user
+        })
+    
+    # Trier par date de création décroissante
+    history_items.sort(key=lambda x: x['created_at'], reverse=True)
     
     return render_template('projects/project_detail.html',
                          project=project,
                          tasks_todo=tasks_todo,
                          tasks_in_progress=tasks_in_progress,
                          tasks_done=tasks_done,
-                         credit_logs=credit_logs,
+                         history_items=history_items,
                          form=form,
                          title=project.name)
 
 @projects.route('/projects/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_admin_required
 def edit_project(slug_or_id):
+    from app.models.task import TimeEntry, Task
     project = get_project_by_slug_or_id(slug_or_id)
     form = ProjectForm(obj=project)
-    
-    if form.validate_on_submit():
+
+    # Vérifier s'il existe des temps enregistrés sur ce projet
+    any_time_logged = (
+        db.session.query(TimeEntry)
+        .join(Task)
+        .filter(Task.project_id == project.id)
+        .count() > 0
+    )
+
+    if form.validate_on_submit() and not any_time_logged:
         project.name = form.name.data
         project.description = form.description.data
         project.time_tracking_enabled = form.time_tracking_enabled.data
         
         # Si on active la gestion de temps, on met à jour le crédit initial
         if form.time_tracking_enabled.data:
-            project.initial_credit = form.initial_credit.data
+            # Convertir les heures en minutes
+            new_initial_credit = int(round(form.initial_credit.data * 60))
+            
+            # Calculer la différence pour ajuster le crédit restant
+            credit_difference = new_initial_credit - project.initial_credit
+            project.initial_credit = new_initial_credit
+            project.remaining_credit += credit_difference
+            
+            # Créer un log si le crédit initial a été modifié
+            if credit_difference != 0:
+                credit_log = CreditLog(
+                    project_id=project.id,
+                    amount=credit_difference,
+                    note=f"Modification du crédit initial: {credit_difference/60:.1f}h"
+                )
+                save_to_db(credit_log)
         else:
             # Si on désactive la gestion de temps, on met le crédit à 0
             project.initial_credit = 0
@@ -133,8 +205,10 @@ def edit_project(slug_or_id):
         
         flash(f'Projet "{project.name}" mis à jour!', 'success')
         return redirect(url_for('projects.project_details', slug_or_id=project.slug))
-    
-    return render_template('projects/project_form.html', form=form, project=project, title='Modifier le projet')
+    elif form.validate_on_submit() and any_time_logged:
+        flash("Impossible de modifier le crédit initial : des temps ont déjà été enregistrés sur ce projet.", "warning")
+
+    return render_template('projects/project_form.html', form=form, project=project, title='Modifier le projet', any_time_logged=any_time_logged)
 
 @projects.route('/projects/<slug_or_id>/add_credit', methods=['GET', 'POST'])
 @login_and_admin_required
@@ -143,12 +217,15 @@ def add_credit(slug_or_id):
     form = AddCreditForm()
     
     if form.validate_on_submit():
+        # Convertir les heures en minutes
+        amount_minutes = int(round(form.amount.data * 60))
+        
         credit_log = CreditLog(
             project_id=project.id,
-            amount=form.amount.data,
+            amount=amount_minutes,
             note=form.note.data
         )
-        project.remaining_credit += form.amount.data
+        project.remaining_credit += amount_minutes
         save_to_db(credit_log)
         save_to_db(project)
         

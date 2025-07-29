@@ -40,22 +40,30 @@ def generate_hour_options(extra_blocks=None, include_undefined=False):
     :param include_undefined: si True, ajoute '-- Non défini --' au début
     """
     hours_options = []
+    
     # Ajouter les options de 1 à 5 minutes
     for minutes in range(1, 6):
-        decimal_value = round(minutes / 60, 2)
+        decimal_value = minutes / 60  # Pas de round() pour éviter les erreurs d'arrondi
         hours_options.append((decimal_value, f"{minutes} min"))
-    # Ajouter les options par tranches de 5 minutes
-    for i in range(2, 13):  # Commence à 2 car on a déjà ajouté 5 minutes
-        minutes = i * 5
-        decimal_value = round(minutes / 60, 2)
-        label = f"{minutes} min" if minutes < 60 else "1h"
-        hours_options.append((decimal_value, label))
-    for i in range(5, 32):
-        hour = i // 4
-        minute = (i % 4) * 15
-        decimal_value = round(hour + minute / 60, 2)
-        label = f"{hour}h {minute}min" if minute > 0 else f"{hour}h"
-        hours_options.append((decimal_value, label))
+    
+    # Ajouter les options par tranches de 5 minutes (10, 15, 20, 25, 30, 35, 40, 45, 50, 55)
+    for minutes in range(10, 60, 5):
+        decimal_value = minutes / 60
+        hours_options.append((decimal_value, f"{minutes} min"))
+    
+    # Ajouter les options par tranches de 15 minutes pour les heures (1h, 1h15, 1h30, 1h45, 2h, etc.)
+    for hour in range(1, 9):  # 1h à 8h
+        for quarter in range(4):  # 0, 15, 30, 45 minutes
+            total_minutes = hour * 60 + quarter * 15
+            decimal_value = total_minutes / 60
+            
+            if quarter == 0:
+                label = f"{hour}h"
+            else:
+                label = f"{hour}h{quarter * 15}min"
+            
+            hours_options.append((decimal_value, label))
+    
     if extra_blocks:
         hours_options.extend(extra_blocks)
     if include_undefined:

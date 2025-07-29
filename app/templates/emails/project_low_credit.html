@@ -25,14 +25,6 @@
             <h3>Détails du projet:</h3>
             <ul>
                 <li><strong>Client:</strong> {{ project.client.name }}</li>
-                <li><strong>Crédit initial:</strong> {{ project.initial_credit|format_time }}</li>
-                <li><strong>Pourcentage restant:</strong> 
-                    {% if project.initial_credit > 0 %}
-                        {{ (project.remaining_credit / project.initial_credit * 100) | round(1) }}%
-                    {% else %}
-                        0%
-                    {% endif %}
-                </li>
             </ul>
             
             <p>Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.</p>

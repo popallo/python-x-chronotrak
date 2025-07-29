@@ -106,19 +106,6 @@ class Project(db.Model):
                 thread = Thread(target=send_low_credit_notification, args=(self,))
                 thread.start()
 
-    def get_total_credit_allocated(self):
-        """Calcule le crédit total alloué au projet au fil du temps"""
-        from sqlalchemy import func
-        
-        # Somme de tous les montants positifs dans les logs de crédit SAUF le crédit initial
-        additional_credits = db.session.query(func.sum(CreditLog.amount)).filter(
-            CreditLog.project_id == self.id,
-            CreditLog.amount > 0,
-            ~CreditLog.note.like("Crédit initial%")  # Exclusion des logs de crédit initial
-        ).scalar() or 0
-        
-        return self.initial_credit + additional_credits
-
 
 class CreditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)

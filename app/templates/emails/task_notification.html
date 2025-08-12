@@ -112,6 +112,17 @@
             </div>
             {% endif %}
 
+            {% if notification_type == 'task_created' %}
+            <div class="status-change">
+                <h3>Nouvelle tâche créée</h3>
+                <p><strong>Statut:</strong> {{ task.status }}</p>
+                <p><strong>Priorité:</strong> {{ task.priority }}</p>
+                {% if task.estimated_time %}
+                <p><strong>Temps estimé:</strong> {{ task.estimated_time|format_time }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <a href="{{ url }}" class="button">Voir la tâche</a>
         </div>
 

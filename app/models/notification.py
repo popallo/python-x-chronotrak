@@ -8,6 +8,7 @@ class NotificationPreference(db.Model):
     task_status_change = db.Column(db.Boolean, default=True)
     task_comment_added = db.Column(db.Boolean, default=True)
     task_time_logged = db.Column(db.Boolean, default=True)
+    task_created = db.Column(db.Boolean, default=True)
     project_credit_low = db.Column(db.Boolean, default=True)
     
     # Préférences générales

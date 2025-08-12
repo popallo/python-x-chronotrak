@@ -72,6 +72,8 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
                                         should_notify = False
                                     elif event_type == 'time_logged' and not prefs.task_time_logged:
                                         should_notify = False
+                                    elif event_type == 'task_created' and not prefs.task_created:
+                                        should_notify = False
                                 elif email_type == 'project_low_credit' and not prefs.project_credit_low:
                                     should_notify = False
                             
@@ -146,7 +148,8 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                 if prefs.email_notifications_enabled:
                     if (event_type == 'status_change' and prefs.task_status_change) or \
                        (event_type == 'comment_added' and prefs.task_comment_added) or \
-                       (event_type == 'time_logged' and prefs.task_time_logged):
+                       (event_type == 'time_logged' and prefs.task_time_logged) or \
+                       (event_type == 'task_created' and prefs.task_created):
                         recipients.add(assigned_user.email)
         
         # En production seulement, notifier les clients du projet
@@ -158,7 +161,8 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                         prefs = client_user.notification_preferences
                         if (event_type == 'status_change' and prefs.task_status_change) or \
                            (event_type == 'comment_added' and prefs.task_comment_added) or \
-                           (event_type == 'time_logged' and prefs.task_time_logged):
+                           (event_type == 'time_logged' and prefs.task_time_logged) or \
+                           (event_type == 'task_created' and prefs.task_created):
                             recipients.add(client_user.email)
     
     # Ajouter les utilisateurs mentionnés

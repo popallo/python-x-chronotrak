@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onEnd: updateItemsOrder,
-                handle: '.checklist-content',
+                handle: '.checklist-drag-handle',
                 preventOnFilter: true,
                 filter: '.checklist-checkbox, .btn-group'
             });
@@ -307,16 +307,21 @@ document.addEventListener('DOMContentLoaded', function() {
         itemElement.dataset.id = item.id;
         
         itemElement.innerHTML = `
-            <div class="form-check">
-                <input class="form-check-input checklist-checkbox" type="checkbox" id="checklist-item-${item.id}" ${item.is_checked ? 'checked' : ''}>
-                <label class="form-check-label" for="checklist-item-${item.id}">
-                    <span class="checklist-content">${item.content}</span>
-                </label>
-                <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-primary copy-to-time-btn ${!item.is_checked ? 'disabled' : ''}" title="Copier dans le formulaire de temps" ${!item.is_checked ? 'disabled' : ''}>
+            <div class="form-check d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center flex-grow-1">
+                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-${item.id}" ${item.is_checked ? 'checked' : ''}>
+                    <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
+                        <i class="fas fa-grip-vertical text-muted"></i>
+                    </div>
+                    <label class="form-check-label mb-0" for="checklist-item-${item.id}" style="font-size: 0.9rem;">
+                        <span class="checklist-content">${item.content}</span>
+                    </label>
+                </div>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn ${!item.is_checked ? 'disabled' : ''}" title="Copier dans le formulaire de temps" ${!item.is_checked ? 'disabled' : ''}>
                         <i class="fas fa-clock"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-danger delete-checklist-item" title="Supprimer">
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>

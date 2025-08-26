@@ -647,6 +647,30 @@ def edit_comment(comment_id):
     
     return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
 
+@tasks.route('/tasks/<slug_or_id>/checklist', methods=['GET'])
+@login_required
+def get_checklist(slug_or_id):
+    """Route pour récupérer la checklist complète d'une tâche"""
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier si le client a accès à ce projet
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    # Retourner la checklist complète
+    checklist = [{
+        'id': item.id,
+        'content': item.content,
+        'is_checked': item.is_checked,
+        'position': item.position
+    } for item in task.checklist_items.order_by(ChecklistItem.position)]
+    
+    return jsonify({
+        'success': True,
+        'checklist': checklist
+    })
+
 @tasks.route('/tasks/<slug_or_id>/checklist', methods=['POST'])
 @login_required
 def add_checklist_item(slug_or_id):

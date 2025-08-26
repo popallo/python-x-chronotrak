@@ -522,4 +522,76 @@ textarea.comment-input::placeholder {
 
 .toast.bg-warning .btn-close {
     filter: none;
-} 
+}
+
+/* ==========================================================================
+   Icône de déplacement pour la checklist
+   ========================================================================== */
+.checklist-drag-handle {
+    cursor: grab;
+    padding: 2px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+}
+
+.checklist-drag-handle:hover {
+    opacity: 1;
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    transform: scale(1.1);
+}
+
+.checklist-drag-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.checklist-drag-handle i {
+    font-size: 0.8rem;
+    color: var(--bs-secondary);
+}
+
+.checklist-drag-handle:hover i {
+    color: var(--bs-primary);
+}
+
+/* Amélioration de l'expérience de drag & drop */
+.sortable-ghost {
+    opacity: 0.5;
+    background: var(--bs-light);
+    border: 2px dashed var(--bs-primary);
+    border-radius: 4px;
+}
+
+.checklist-item.sortable-ghost .checklist-drag-handle {
+    opacity: 0.3;
+}
+
+/* Animation pour les éléments en cours de déplacement */
+.checklist-item.sortable-chosen {
+    transform: rotate(1deg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+
+/* Mode sombre */
+[data-bs-theme="dark"] .checklist-drag-handle {
+    opacity: 0.7;
+}
+
+[data-bs-theme="dark"] .checklist-drag-handle:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+[data-bs-theme="dark"] .checklist-drag-handle i {
+    color: var(--bs-secondary);
+}
+
+[data-bs-theme="dark"] .checklist-drag-handle:hover i {
+    color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .sortable-ghost {
+    background: var(--bs-dark);
+    border-color: var(--bs-primary);
+}

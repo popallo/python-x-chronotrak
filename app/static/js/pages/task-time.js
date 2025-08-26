@@ -301,6 +301,9 @@ async function handleTimeSubmit(e) {
                 showToast(data.warning, 'warning');
             }
             
+            // Réorganiser les éléments cochés en bas de la checklist
+            await reorderCheckedItemsToBottom();
+            
             // Fermer le modal et réinitialiser le formulaire
             const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
             if (modal) {
@@ -410,4 +413,160 @@ function updateRemainingCredit(remainingCredit) {
             }
         }
     }
+}
+
+async function reorderCheckedItemsToBottom() {
+    try {
+        // Récupérer l'ID de la tâche depuis l'URL ou le DOM
+        const taskId = getTaskIdFromPage();
+        if (!taskId) {
+            console.error('Impossible de récupérer l\'ID de la tâche');
+            return;
+        }
+        
+        // Récupérer tous les éléments de la checklist
+        const items = Array.from(document.querySelectorAll('.checklist-item'));
+        
+        if (items.length === 0) return;
+        
+        // Séparer les éléments cochés et non cochés
+        const uncheckedItems = [];
+        const checkedItems = [];
+        
+        items.forEach(item => {
+            const checkbox = item.querySelector('.checklist-checkbox');
+            const itemData = {
+                id: item.dataset.id,
+                is_checked: checkbox.checked
+            };
+            
+            if (checkbox.checked) {
+                checkedItems.push(itemData);
+            } else {
+                uncheckedItems.push(itemData);
+            }
+        });
+        
+        // Créer le nouvel ordre : non cochés d'abord, puis cochés
+        const newOrder = [...uncheckedItems, ...checkedItems].map((item, index) => ({
+            id: item.id,
+            position: index
+        }));
+        
+        // Envoyer le nouvel ordre au serveur
+        const response = await fetch(`/tasks/${taskId}/checklist/reorder`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ items: newOrder })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mettre à jour l'affichage avec le nouvel ordre
+            await refreshChecklistDisplay(taskId);
+        } else {
+            console.error('Erreur lors de la réorganisation:', data.error);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la réorganisation des éléments:', error);
+    }
+}
+
+function getTaskIdFromPage() {
+    // Essayer de récupérer l'ID depuis le conteneur de checklist
+    const checklistContainer = document.getElementById('checklist-container');
+    if (checklistContainer && checklistContainer.dataset.taskId) {
+        return checklistContainer.dataset.taskId;
+    }
+    
+    // Essayer de récupérer depuis l'URL
+    const urlParts = window.location.pathname.split('/');
+    const taskIndex = urlParts.indexOf('tasks');
+    if (taskIndex !== -1 && taskIndex + 1 < urlParts.length) {
+        return urlParts[taskIndex + 1];
+    }
+    
+    return null;
+}
+
+async function refreshChecklistDisplay(taskId) {
+    try {
+        // Récupérer la checklist mise à jour depuis le serveur
+        const response = await fetch(`/tasks/${taskId}/checklist`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                // Mettre à jour l'affichage de la checklist
+                updateChecklistDisplay(data.checklist);
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la checklist:', error);
+    }
+}
+
+function updateChecklistDisplay(checklist) {
+    const checklistItems = document.getElementById('checklist-items');
+    if (!checklistItems) return;
+    
+    // Vider le conteneur
+    checklistItems.innerHTML = '';
+    
+    // Ajouter chaque élément dans le nouvel ordre
+    checklist.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'checklist-item';
+        itemElement.dataset.id = item.id;
+        itemElement.style.padding = '0.25rem 0';
+        
+        itemElement.innerHTML = `
+            <div class="form-check d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center flex-grow-1">
+                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-${item.id}" ${item.is_checked ? 'checked' : ''}>
+                    <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
+                        <i class="fas fa-grip-vertical text-muted"></i>
+                    </div>
+                    <label class="form-check-label mb-0" for="checklist-item-${item.id}" style="font-size: 0.9rem;">
+                        <span class="checklist-content">${item.content}</span>
+                    </label>
+                </div>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn ${!item.is_checked ? 'disabled' : ''}" title="Copier dans le formulaire de temps" ${!item.is_checked ? 'disabled' : ''}>
+                        <i class="fas fa-clock"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        checklistItems.appendChild(itemElement);
+        
+        // Réattacher les événements
+        const checkbox = itemElement.querySelector('.checklist-checkbox');
+        const deleteButton = itemElement.querySelector('.delete-checklist-item');
+        const copyButton = itemElement.querySelector('.copy-to-time-btn');
+        const contentSpan = itemElement.querySelector('.checklist-content');
+        
+        // Réattacher les événements de la checklist
+        if (window.checklistEventHandlers) {
+            checkbox.addEventListener('change', window.checklistEventHandlers.handleCheckboxChange);
+            deleteButton.addEventListener('click', window.checklistEventHandlers.handleDeleteClick);
+            copyButton.addEventListener('click', window.checklistEventHandlers.handleCopyToTime);
+            contentSpan.addEventListener('dblclick', () => window.checklistEventHandlers.makeContentEditable(contentSpan));
+        }
+    });
 } 

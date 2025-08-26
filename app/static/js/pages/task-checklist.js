@@ -190,6 +190,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { once: true });
     }
     
+    // Exposer les gestionnaires d'événements pour qu'ils puissent être réutilisés
+    window.checklistEventHandlers = {
+        handleCheckboxChange,
+        handleDeleteClick,
+        handleCopyToTime,
+        makeContentEditable
+    };
+    
     // ==========================================================================
     // Opérations CRUD
     // ==========================================================================

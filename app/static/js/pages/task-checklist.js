@@ -313,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemElement = document.createElement('div');
         itemElement.className = 'checklist-item';
         itemElement.dataset.id = item.id;
+        itemElement.style.padding = '0.25rem 0';
         
         itemElement.innerHTML = `
             <div class="form-check d-flex align-items-center justify-content-between">

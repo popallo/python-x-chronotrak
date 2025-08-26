@@ -468,8 +468,8 @@ async function reorderCheckedItemsToBottom() {
         const data = await response.json();
         
         if (data.success) {
-            // Mettre à jour l'affichage avec le nouvel ordre
-            await refreshChecklistDisplay(taskId);
+            // Réorganiser directement dans le DOM sans recharger depuis le serveur
+            reorderChecklistInDOM(uncheckedItems, checkedItems);
         } else {
             console.error('Erreur lors de la réorganisation:', data.error);
         }
@@ -515,6 +515,32 @@ async function refreshChecklistDisplay(taskId) {
     } catch (error) {
         console.error('Erreur lors de la récupération de la checklist:', error);
     }
+}
+
+function reorderChecklistInDOM(uncheckedItems, checkedItems) {
+    const checklistItems = document.getElementById('checklist-items');
+    if (!checklistItems) return;
+    
+    // Créer un tableau avec tous les éléments dans le bon ordre
+    const allItems = [...uncheckedItems, ...checkedItems];
+    
+    // Réorganiser les éléments dans le DOM
+    allItems.forEach(itemData => {
+        const itemElement = document.querySelector(`.checklist-item[data-id="${itemData.id}"]`);
+        if (itemElement) {
+            checklistItems.appendChild(itemElement);
+        }
+    });
+    
+    // Ajouter une animation subtile pour montrer le changement
+    const movedItems = document.querySelectorAll('.checklist-item');
+    movedItems.forEach(item => {
+        item.style.transition = 'background-color 0.3s ease';
+        item.style.backgroundColor = 'rgba(var(--bs-primary-rgb), 0.05)';
+        setTimeout(() => {
+            item.style.backgroundColor = '';
+        }, 300);
+    });
 }
 
 function updateChecklistDisplay(checklist) {

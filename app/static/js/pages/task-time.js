@@ -528,6 +528,19 @@ function reorderChecklistInDOM(uncheckedItems, checkedItems) {
     allItems.forEach(itemData => {
         const itemElement = document.querySelector(`.checklist-item[data-id="${itemData.id}"]`);
         if (itemElement) {
+            // S'assurer que l'état de la checkbox correspond à l'état attendu
+            const checkbox = itemElement.querySelector('.checklist-checkbox');
+            if (checkbox) {
+                checkbox.checked = itemData.is_checked;
+                
+                // Mettre à jour l'état du bouton de copie
+                const copyButton = itemElement.querySelector('.copy-to-time-btn');
+                if (copyButton) {
+                    copyButton.classList.toggle('disabled', !itemData.is_checked);
+                    copyButton.disabled = !itemData.is_checked;
+                }
+            }
+            
             checklistItems.appendChild(itemElement);
         }
     });

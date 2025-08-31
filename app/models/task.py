@@ -52,14 +52,15 @@ class Task(db.Model):
     
     def save(self):
         """Sauvegarde l'instance et met à jour le slug si nécessaire"""
-        if self.title and (not self.slug or self.title != self.slug):
+        # Toujours mettre à jour le slug si le titre existe
+        if self.title:
             update_slug(self)
         db.session.add(self)
         db.session.commit()
         
     def clone(self):
         """Crée une copie de la tâche sans les commentaires et le temps passé"""
-        return Task(
+        cloned_task = Task(
             title=f"Copie de {self.title}",
             description=self.description,
             status='à faire',  # Nouvelle tâche commence toujours à "à faire"
@@ -68,6 +69,8 @@ class Task(db.Model):
             project_id=self.project_id,
             user_id=self.user_id
         )
+        # Le slug sera automatiquement généré dans __init__
+        return cloned_task
         
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""

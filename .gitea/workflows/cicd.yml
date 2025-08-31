@@ -55,23 +55,77 @@ jobs:
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      # Construction et push de l'image
+      # Construction et push de l'image - VERSION OPTIMISÉE
       - name: Build et push de l'image Docker
         run: |
-          docker buildx create --use
+          set -e
+          
+          # Nettoyage préventif des anciens conteneurs BuildKit
+          echo "Nettoyage préventif des conteneurs BuildKit..."
+          docker container ls -q --filter "name=buildx_buildkit" | xargs -r docker container stop || true
+          docker container ls -aq --filter "name=buildx_buildkit" | xargs -r docker container rm || true
+          
+          # Gestion intelligente du builder
+          BUILDER_NAME="chronotrak-builder"
+          
+          if docker buildx ls | grep -q "$BUILDER_NAME"; then
+            echo "Utilisation du builder existant: $BUILDER_NAME"
+            docker buildx use $BUILDER_NAME
+          else
+            echo "Création d'un nouveau builder: $BUILDER_NAME"
+            docker buildx create --name $BUILDER_NAME --use
+          fi
+          
+          # Build avec gestion d'erreurs
+          echo "Démarrage du build de l'image..."
           docker buildx build --provenance=false --push \
             --cache-from=type=local,src=/tmp/.buildx-cache \
-            --cache-to=type=local,dest=/tmp/.buildx-cache-new \
+            --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max \
             --build-arg VERSION="${{ env.VERSION }}" \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \
+            --progress=plain \
             .
+          
+          echo "Build terminé avec succès"
 
-      # Déplacer le cache
-      - name: Déplacer le cache
+      # Gestion du cache et nettoyage SÉCURISÉ
+      - name: Gestion du cache et nettoyage sécurisé
+        if: always()
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          # Gestion du cache
+          if [ -d "/tmp/.buildx-cache-new" ]; then
+            rm -rf /tmp/.buildx-cache
+            mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+            echo "Cache mis à jour"
+          fi
+          
+          # Nettoyage CIBLÉ des conteneurs BuildKit seulement
+          echo "Nettoyage ciblé des conteneurs BuildKit..."
+          BUILDKIT_CONTAINERS=$(docker container ls -aq --filter "name=buildx_buildkit" --filter "label=org.mobyproject.buildkit.worker.executor=oci" 2>/dev/null || echo "")
+          
+          if [ ! -z "$BUILDKIT_CONTAINERS" ]; then
+            echo "Suppression des conteneurs BuildKit: $BUILDKIT_CONTAINERS"
+            docker container rm -f $BUILDKIT_CONTAINERS 2>/dev/null || true
+          else
+            echo "Aucun conteneur BuildKit à supprimer"
+          fi
+          
+          # Nettoyage du cache BuildKit uniquement (pas docker system)
+          echo "Nettoyage du cache BuildKit..."
+          docker buildx prune -f --keep-storage=1GB 2>/dev/null || true
+          
+          # Nettoyage des images build temporaires sans tag (plus sûr)
+          echo "Nettoyage des images temporaires..."
+          docker image prune -f --filter "dangling=true" 2>/dev/null || true
+          
+          # Affichage des statistiques pour monitoring
+          echo "=== État final des builders ==="
+          docker buildx ls
+          echo "=== Conteneurs BuildKit restants ==="
+          docker container ls --filter "name=buildx_buildkit" --format "table {{.Names}}\t{{.Status}}\t{{.CreatedAt}}" || true
+          echo "=== Utilisation disque Docker ==="
+          docker system df || true
 
       # Analyse de sécurité avec Trivy (uniquement sur main/master)
       - name: Installation et exécution de Trivy
@@ -79,7 +133,7 @@ jobs:
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL
+          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL --exit-code 1
 
   deploy:
     needs: build-and-push
@@ -144,9 +198,17 @@ jobs:
             set -ex
             echo 'Début du déploiement'
             cd ${{ secrets.PROJECT_DIRECTORY }}
+            
+            # Login au registre
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+            
+            # Pull et déploiement
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
+            
+            # Nettoyage post-déploiement
+            docker system prune -f
             docker logout forge.apacher.eu
+            
             echo 'Déploiement terminé avec succès'
           "

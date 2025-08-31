@@ -91,7 +91,8 @@ def new_task(slug_or_id):
             project_id=project.id,
             user_id=user_id
         )
-        save_to_db(task)
+        # Utiliser la méthode save() du modèle pour générer le slug
+        task.save()
         
         # Notifier l'assigné si la tâche est assignée
         if user_id:
@@ -184,7 +185,8 @@ def edit_task(slug_or_id):
         elif task.status != 'terminé':
             task.completed_at = None
             
-        save_to_db(task)
+        # Utiliser la méthode save() du modèle pour mettre à jour le slug
+        task.save()
         
         # Envoyer une notification si le statut a changé
         if old_status != task.status:
@@ -228,7 +230,8 @@ def clone_task(slug_or_id):
     
     # Créer une copie de la tâche
     cloned_task = task.clone()
-    save_to_db(cloned_task)
+    # Utiliser la méthode save() du modèle pour générer le slug
+    cloned_task.save()
     
     flash(f'Tâche "{cloned_task.title}" créée avec succès!', 'success')
     return redirect(url_for('tasks.task_details', slug_or_id=cloned_task.slug))

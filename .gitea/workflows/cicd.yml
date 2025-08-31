@@ -113,11 +113,15 @@ jobs:
           
           # Nettoyage du cache BuildKit uniquement (pas docker system)
           echo "Nettoyage du cache BuildKit..."
-          docker buildx prune -f --keep-storage=1GB 2>/dev/null || true
+          docker buildx prune -f --reserved-space=1GB 2>/dev/null || true
           
           # Nettoyage des images build temporaires sans tag (plus sûr)
           echo "Nettoyage des images temporaires..."
           docker image prune -f --filter "dangling=true" 2>/dev/null || true
+          
+          # Nettoyage des volumes BuildKit uniquement (SÉCURISÉ)
+          echo "Nettoyage des volumes BuildKit..."
+          docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
           
           # Affichage des statistiques pour monitoring
           echo "=== État final des builders ==="
@@ -208,6 +212,8 @@ jobs:
             
             # Nettoyage post-déploiement
             docker system prune -f
+            # Nettoyage des volumes BuildKit uniquement sur le serveur de production
+            docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
             docker logout forge.apacher.eu
             
             echo 'Déploiement terminé avec succès'

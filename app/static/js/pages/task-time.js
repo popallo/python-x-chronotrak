@@ -124,23 +124,34 @@ async function updateTimeInterface(data) {
     
     // Afficher les messages de succès/alerte
     if (data.message) {
-        showToast('success', data.message);
+        showToast(data.message, 'success');
     }
     if (data.warning) {
-        showToast('warning', data.warning);
+        showToast(data.warning, 'warning');
     }
 }
 
 // Fonction pour afficher un toast
 function showToast(message, type = 'success') {
-    const toastContainer = document.getElementById('toast-container');
+    let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
-        console.error('Conteneur de toast non trouvé');
-        return;
+        toastContainer = createToastContainer();
     }
     
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.className = `toast align-items-center text-white border-0`;
+    
+    // Appliquer les bonnes classes de couleur
+    if (type === 'success') {
+        toast.classList.add('bg-success');
+    } else if (type === 'warning') {
+        toast.classList.add('bg-warning');
+    } else if (type === 'danger') {
+        toast.classList.add('bg-danger');
+    } else {
+        toast.classList.add('bg-info');
+    }
+    
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
@@ -177,6 +188,9 @@ function createToastContainer() {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
+    // Créer le conteneur de toasts
+    createToastContainer();
+    
     // Gérer la soumission du formulaire d'ajout de temps
     const timeForm = document.querySelector('#timeEntryModal form');
     if (timeForm) {
@@ -240,66 +254,8 @@ async function handleTimeSubmit(e) {
         const data = await response.json();
         
         if (data.success) {
-            // Mettre à jour la liste des temps
-            const timeHistory = document.querySelector('.time-history');
-            if (timeHistory) {
-                // Supprimer le message "Aucun temps enregistré" s'il existe
-                const noTimeMessage = timeHistory.querySelector('.text-muted.small');
-                if (noTimeMessage) {
-                    noTimeMessage.remove();
-                }
-                
-                let timeList = timeHistory.querySelector('.list-group');
-                
-                // Si la liste n'existe pas, la créer
-                if (!timeList) {
-                    timeList = document.createElement('div');
-                    timeList.className = 'list-group list-group-flush';
-                    timeHistory.appendChild(timeList);
-                }
-                
-                const timeEntry = createTimeEntryElement(data.time_entry);
-                timeList.insertBefore(timeEntry, timeList.firstChild);
-            }
-            
-            // Mettre à jour le badge de temps total
-            const totalTimeBadge = document.querySelector('.badge[data-bs-toggle="tooltip"][title="Temps total passé sur la tâche"]');
-            if (totalTimeBadge && data.task.actual_time) {
-                const hours = Math.floor(data.task.actual_time);
-                const minutes = Math.round((data.task.actual_time - hours) * 60);
-                let timeDisplay = '';
-                if (hours > 0) {
-                    timeDisplay = `${hours}h${minutes.toString().padStart(2, '0')}min`;
-                } else {
-                    timeDisplay = `${minutes}min`;
-                }
-                totalTimeBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${timeDisplay}`;
-            }
-            
-            // Mettre à jour le badge de crédit restant si présent
-            const remainingCreditBadge = document.getElementById('remaining-credit-badge');
-            if (remainingCreditBadge && data.task.remaining_credit) {
-                remainingCreditBadge.textContent = data.task.remaining_credit;
-                
-                // Mettre à jour la couleur du badge
-                const creditValue = parseFloat(data.task.remaining_credit);
-                remainingCreditBadge.className = 'badge text-white d-flex align-items-center';
-                if (creditValue < 2) {
-                    remainingCreditBadge.classList.add('bg-danger');
-                } else if (creditValue < 5) {
-                    remainingCreditBadge.classList.add('bg-warning');
-                } else {
-                    remainingCreditBadge.classList.add('bg-success');
-                }
-            }
-            
-            // Afficher le message de succès
-            showToast(data.message, 'success');
-            
-            // Afficher l'avertissement si présent
-            if (data.warning) {
-                showToast(data.warning, 'warning');
-            }
+            // Utiliser la fonction updateTimeInterface pour mettre à jour l'interface de manière cohérente
+            await updateTimeInterface(data);
             
             // Réorganiser les éléments cochés en bas de la checklist
             await reorderCheckedItemsToBottom();
@@ -328,35 +284,7 @@ async function handleTimeSubmit(e) {
     }
 }
 
-function createTimeEntryElement(timeEntry) {
-    const div = document.createElement('div');
-    div.className = 'list-group-item py-1 px-2 time-entry-item';
-    
-    const hours = Math.floor(timeEntry.hours);
-    const minutes = Math.round((timeEntry.hours - hours) * 60);
-    let timeDisplay = '';
-    if (hours > 0) {
-        timeDisplay = `${hours}h${minutes.toString().padStart(2, '0')}min`;
-    } else {
-        timeDisplay = `${minutes}min`;
-    }
-    
-    div.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-minus me-1 text-danger"></i>
-                <span class="text-danger">
-                    ${timeDisplay}
-                </span>
-            </div>
-            <small class="text-muted">${timeEntry.created_at}</small>
-        </div>
-        <small class="text-muted d-block">${timeEntry.user_name}</small>
-        ${timeEntry.description ? `<small class="text-muted d-block mt-1">${timeEntry.description}</small>` : ''}
-    `;
-    
-    return div;
-}
+
 
 function updateTimeDisplay(totalTime) {
     // Mettre à jour le temps total

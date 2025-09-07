@@ -171,7 +171,7 @@ class TimeEntry(db.Model):
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(EncryptedType, nullable=False)  # Contenu chiffré
+    _content = db.Column('content', EncryptedType, nullable=False)  # Contenu chiffré (nom interne)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Clés étrangères
@@ -185,24 +185,31 @@ class Comment(db.Model):
     
     def __repr__(self):
         return f"Comment(Task: {self.task_id}, User: {self.user.name}, Date: {self.created_at})"
-        
-    # Méthode de secours pour déchiffrer manuellement si nécessaire
-    def decrypt_content(self):
-        if not self.content or not isinstance(self.content, str) or not self.content.startswith('gAAA'):
-            return self.content
+    
+    @property
+    def content(self):
+        """Propriété pour accéder au contenu déchiffré"""
+        if not self._content or not isinstance(self._content, str) or not self._content.startswith('gAAA'):
+            return self._content
             
         try:
             key = current_app.config.get('ENCRYPTION_KEY')
+            if not key:
+                return "[Erreur: Clé de chiffrement manquante]"
             f = Fernet(key)
-            return f.decrypt(self.content.encode('utf-8')).decode('utf-8')
+            return f.decrypt(self._content.encode('utf-8')).decode('utf-8')
         except Exception as e:
             current_app.logger.error(f"Erreur lors du déchiffrement d'un commentaire: {e}")
             return "[Erreur de déchiffrement]"
     
-    # Propriété pour accéder au contenu déchiffré
-    @property
-    def safe_content(self):
-        return self.decrypt_content()
+    @content.setter
+    def content(self, value):
+        """Setter pour chiffrer automatiquement le contenu"""
+        if value is None:
+            self._content = None
+        else:
+            # Le chiffrement se fait automatiquement via EncryptedType
+            self._content = value
 
 class UserPinnedTask(db.Model):
     __tablename__ = 'user_pinned_task'

@@ -23,10 +23,10 @@ class Client(db.Model):
     name = db.Column(db.String(100), nullable=False, index=True)
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     contact_name = db.Column(db.String(100), nullable=True, index=True)
-    email = db.Column(EncryptedType, nullable=True)  # Chiffré
-    phone = db.Column(EncryptedType, nullable=True)  # Chiffré
-    address = db.Column(EncryptedType, nullable=True)  # Chiffré
-    notes = db.Column(EncryptedType, nullable=True)  # Chiffré
+    _email = db.Column('email', EncryptedType, nullable=True)  # Chiffré (nom interne)
+    _phone = db.Column('phone', EncryptedType, nullable=True)  # Chiffré (nom interne)
+    _address = db.Column('address', EncryptedType, nullable=True)  # Chiffré (nom interne)
+    _notes = db.Column('notes', EncryptedType, nullable=True)  # Chiffré (nom interne)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     
     # Relations
@@ -69,19 +69,52 @@ class Client(db.Model):
             current_app.logger.error(f"Valeur chiffrée: {encrypted_value[:20]}...")
             return "[Erreur de déchiffrement]"
     
-    # Propriétés pour accéder aux données déchiffrées
+    # Propriétés pour accéder aux données déchiffrées automatiquement
+    @property
+    def email(self):
+        return self.decrypt_data(self._email)
+    
+    @email.setter
+    def email(self, value):
+        self._email = value
+    
+    @property
+    def phone(self):
+        return self.decrypt_data(self._phone)
+    
+    @phone.setter
+    def phone(self, value):
+        self._phone = value
+    
+    @property
+    def address(self):
+        return self.decrypt_data(self._address)
+    
+    @address.setter
+    def address(self, value):
+        self._address = value
+    
+    @property
+    def notes(self):
+        return self.decrypt_data(self._notes)
+    
+    @notes.setter
+    def notes(self, value):
+        self._notes = value
+    
+    # Propriétés de compatibilité (anciennes méthodes)
     @property
     def safe_email(self):
-        return self.decrypt_data(self.email)
+        return self.email
     
     @property
     def safe_phone(self):
-        return self.decrypt_data(self.phone)
+        return self.phone
     
     @property
     def safe_address(self):
-        return self.decrypt_data(self.address)
+        return self.address
     
     @property
     def safe_notes(self):
-        return self.decrypt_data(self.notes)
+        return self.notes

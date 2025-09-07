@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from app.utils.time_format import format_time
-from app.models.client import Client
 from flask import flash
 
 def get_utc_now():
@@ -9,10 +8,12 @@ def get_utc_now():
 
 def get_client_choices():
     """Retourne la liste des clients pour un SelectField."""
+    from app.models.client import Client
     return [(client.id, client.name) for client in Client.query.order_by(Client.name).all()]
 
 def get_accessible_clients(user):
     """Retourne la liste des clients accessibles pour un utilisateur donné."""
+    from app.models.client import Client
     if user.is_admin() or user.is_technician():
         return Client.query.order_by(Client.name).all()
     return user.clients

@@ -95,8 +95,8 @@ async function updateTimeInterface(data) {
     }
     
     // Ajouter la nouvelle entrée de temps à la liste
-    const timeList = document.querySelector('.time-history .list-group');
-    if (timeList) {
+    const timeHistoryContainer = document.querySelector('.time-history');
+    if (timeHistoryContainer) {
         const timeEntry = data.time_entry;
         const entryHtml = `
             <div class="list-group-item py-1 px-2 time-entry-item">
@@ -114,10 +114,19 @@ async function updateTimeInterface(data) {
             </div>
         `;
         
-        // Si la liste est vide, remplacer le message "Aucun temps enregistré"
-        if (timeList.querySelector('.text-muted.small')) {
-            timeList.innerHTML = entryHtml;
+        // Vérifier s'il y a déjà une liste d'entrées de temps
+        let timeList = timeHistoryContainer.querySelector('.list-group');
+        
+        if (!timeList) {
+            // S'il n'y a pas de liste, créer une nouvelle liste et remplacer le message "Aucun temps enregistré"
+            const noTimeMessage = timeHistoryContainer.querySelector('.text-muted.small');
+            if (noTimeMessage) {
+                // Créer la structure de liste
+                const listGroupHtml = `<div class="list-group list-group-flush">${entryHtml}</div>`;
+                noTimeMessage.outerHTML = listGroupHtml;
+            }
         } else {
+            // S'il y a déjà une liste, ajouter la nouvelle entrée au début
             timeList.insertAdjacentHTML('afterbegin', entryHtml);
         }
     }

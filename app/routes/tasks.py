@@ -568,18 +568,16 @@ def archive_task(slug_or_id):
     # Vérifier les permissions
     if current_user.is_client():
         if not current_user.has_access_to_client(task.project.client_id):
-            flash('Accès non autorisé', 'error')
-            return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
     
     if task.status != 'terminé':
-        flash('Seules les tâches terminées peuvent être archivées', 'error')
-        return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+        return jsonify({'success': False, 'error': 'Seules les tâches terminées peuvent être archivées'}), 400
     
-    task.archive()
-    flash(f'La tâche "{task.title}" a été archivée', 'success')
-    
-    # Rediriger vers la page d'origine ou les archives
-    return redirect(request.referrer or url_for('tasks.archives'))
+    try:
+        task.archive()
+        return jsonify({'success': True, 'message': f'La tâche "{task.title}" a été archivée'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @tasks.route('/tasks/<slug_or_id>/unarchive', methods=['POST'])
 @login_required
@@ -590,14 +588,13 @@ def unarchive_task(slug_or_id):
     # Vérifier les permissions
     if current_user.is_client():
         if not current_user.has_access_to_client(task.project.client_id):
-            flash('Accès non autorisé', 'error')
-            return redirect(url_for('tasks.archives'))
+            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
     
-    task.unarchive()
-    flash(f'La tâche "{task.title}" a été désarchivée', 'success')
-    
-    # Rediriger vers la page d'origine ou le projet
-    return redirect(request.referrer or url_for('projects.project_details', slug_or_id=task.project.slug))
+    try:
+        task.unarchive()
+        return jsonify({'success': True, 'message': f'La tâche "{task.title}" a été désarchivée'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @tasks.route('/tasks/<slug_or_id>/add_comment', methods=['POST'])
 @login_required

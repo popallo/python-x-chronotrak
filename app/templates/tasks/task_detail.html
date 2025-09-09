@@ -17,6 +17,7 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-status.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
 <script>
     // Stocker le token CSRF global
     window.csrfToken = "{{ csrf_token() }}";
@@ -57,17 +58,23 @@
                     </button>
                 </form>
                 {% if task.status == 'terminé' and not task.is_archived %}
-                <form action="{{ url_for('tasks.archive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir archiver cette tâche ?')">
-                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Archiver la tâche">
-                        <i class="fas fa-archive"></i>
-                    </button>
-                </form>
+                <button type="button" class="btn btn-outline-light archive-task-btn" 
+                        data-task-id="{{ task.id }}" 
+                        data-task-title="{{ task.title }}" 
+                        data-task-slug="{{ task.slug }}"
+                        data-bs-toggle="tooltip" 
+                        title="Archiver la tâche">
+                    <i class="fas fa-archive"></i>
+                </button>
                 {% elif task.is_archived %}
-                <form action="{{ url_for('tasks.unarchive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir désarchiver cette tâche ?')">
-                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Désarchiver la tâche">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                </form>
+                <button type="button" class="btn btn-outline-light unarchive-task-btn" 
+                        data-task-id="{{ task.id }}" 
+                        data-task-title="{{ task.title }}" 
+                        data-task-slug="{{ task.slug }}"
+                        data-bs-toggle="tooltip" 
+                        title="Désarchiver la tâche">
+                    <i class="fas fa-undo"></i>
+                </button>
                 {% endif %}
                 <button type="button" class="btn btn-outline-light delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
                     <i class="fas fa-trash"></i>
@@ -494,6 +501,50 @@
                     {{ form.hidden_tag() }}
                     {{ form.submit(class="btn btn-danger") }}
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'archivage -->
+<div class="modal fade" id="archiveTaskModal" tabindex="-1" aria-labelledby="archiveTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="archiveTaskModalLabel">Confirmer l'archivage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir archiver la tâche <strong id="archiveTaskTitle"></strong> ?</p>
+                <p class="text-muted mb-0">La tâche sera déplacée vers les archives et n'apparaîtra plus dans le kanban.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" id="confirmArchiveBtn">
+                    <i class="fas fa-archive me-1"></i>Archiver
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de désarchivage -->
+<div class="modal fade" id="unarchiveTaskModal" tabindex="-1" aria-labelledby="unarchiveTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unarchiveTaskModalLabel">Confirmer le désarchivage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir désarchiver la tâche <strong id="unarchiveTaskTitle"></strong> ?</p>
+                <p class="text-muted mb-0">La tâche réapparaîtra dans le kanban du projet.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="confirmUnarchiveBtn">
+                    <i class="fas fa-undo me-1"></i>Désarchiver
+                </button>
             </div>
         </div>
     </div>

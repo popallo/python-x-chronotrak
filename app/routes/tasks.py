@@ -474,8 +474,8 @@ def my_tasks():
     page = request.args.get('page', 1, type=int)
     per_page = 10
 
-    # Construction de la requête de base
-    query = Task.query.filter_by(user_id=current_user.id)
+    # Construction de la requête de base (exclure les tâches archivées)
+    query = Task.query.filter_by(user_id=current_user.id, is_archived=False)
 
     # Filtres
     if status:
@@ -514,6 +514,90 @@ def my_tasks():
                          projects=projects,
                          query_params=query_params,
                          filters_active=filters_active)
+
+@tasks.route('/archives')
+@login_required
+def archives():
+    """Affiche les tâches archivées"""
+    # Récupération des paramètres de filtrage
+    project_id = request.args.get('project_id', type=int)
+    search = request.args.get('search')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    # Construction de la requête de base pour les tâches archivées
+    query = Task.query.filter_by(is_archived=True)
+
+    # Filtres
+    if project_id:
+        query = query.filter(Task.project_id == project_id)
+    if search:
+        query = query.filter(Task.title.ilike(f'%{search}%'))
+
+    # Tri par date d'archivage décroissante
+    query = query.order_by(Task.archived_at.desc())
+
+    # Pagination
+    archived_tasks = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    # Récupération des données pour les filtres
+    projects = Project.query.all()
+    
+    # Récupération du projet spécifique si filtré
+    current_project = None
+    if project_id:
+        current_project = Project.query.get(project_id)
+
+    # Préparation des paramètres de requête pour la pagination
+    query_params = {k: v for k, v in request.args.items() if k != 'page'}
+
+    return render_template('tasks/archives.html',
+                         archived_tasks=archived_tasks,
+                         projects=projects,
+                         current_project=current_project,
+                         query_params=query_params)
+
+@tasks.route('/tasks/<slug_or_id>/archive', methods=['POST'])
+@login_required
+def archive_task(slug_or_id):
+    """Archive une tâche"""
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier les permissions
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            flash('Accès non autorisé', 'error')
+            return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+    
+    if task.status != 'terminé':
+        flash('Seules les tâches terminées peuvent être archivées', 'error')
+        return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+    
+    task.archive()
+    flash(f'La tâche "{task.title}" a été archivée', 'success')
+    
+    # Rediriger vers la page d'origine ou les archives
+    return redirect(request.referrer or url_for('tasks.archives'))
+
+@tasks.route('/tasks/<slug_or_id>/unarchive', methods=['POST'])
+@login_required
+def unarchive_task(slug_or_id):
+    """Désarchive une tâche"""
+    task = get_task_by_slug_or_id(slug_or_id)
+    
+    # Vérifier les permissions
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            flash('Accès non autorisé', 'error')
+            return redirect(url_for('tasks.archives'))
+    
+    task.unarchive()
+    flash(f'La tâche "{task.title}" a été désarchivée', 'success')
+    
+    # Rediriger vers la page d'origine ou le projet
+    return redirect(request.referrer or url_for('projects.project_details', slug_or_id=task.project.slug))
 
 @tasks.route('/tasks/<slug_or_id>/add_comment', methods=['POST'])
 @login_required

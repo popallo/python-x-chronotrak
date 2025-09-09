@@ -32,6 +32,8 @@ class Task(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
     is_pinned = db.Column(db.Boolean, nullable=False, default=False)  # Pour épingler les tâches importantes
+    is_archived = db.Column(db.Boolean, nullable=False, default=False)  # Pour archiver les tâches terminées
+    archived_at = db.Column(db.DateTime, nullable=True)  # Date d'archivage
     
     # Clés étrangères
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
@@ -149,6 +151,39 @@ class Task(db.Model):
     def actual_time(self, value):
         """Convertit le temps réel en minutes"""
         self.actual_minutes = int(round(value * 60)) if value is not None else None
+    
+    def archive(self):
+        """Archive la tâche"""
+        self.is_archived = True
+        self.archived_at = datetime.utcnow()
+        db.session.commit()
+    
+    def unarchive(self):
+        """Désarchive la tâche"""
+        self.is_archived = False
+        self.archived_at = None
+        db.session.commit()
+    
+    @staticmethod
+    def should_be_archived():
+        """Retourne les tâches qui devraient être archivées (terminées depuis plus de 2 semaines)"""
+        from datetime import timedelta
+        two_weeks_ago = datetime.utcnow() - timedelta(weeks=2)
+        return Task.query.filter(
+            Task.status == 'terminé',
+            Task.is_archived == False,
+            Task.completed_at < two_weeks_ago
+        ).all()
+    
+    @staticmethod
+    def auto_archive_old_tasks():
+        """Archive automatiquement les tâches terminées depuis plus de 2 semaines"""
+        tasks_to_archive = Task.should_be_archived()
+        archived_count = 0
+        for task in tasks_to_archive:
+            task.archive()
+            archived_count += 1
+        return archived_count
 
 class TimeEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)

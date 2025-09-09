@@ -1,0 +1,223 @@
+{% extends "layout.html" %}
+
+{% block title %}Archives des tâches{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-archive me-2 text-secondary"></i>
+                        Archives des tâches
+                        {% if current_project %}
+                            - {{ current_project.name }}
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if current_project %}
+                            Tâches archivées du projet "{{ current_project.name }}"
+                        {% else %}
+                            Consultez les tâches archivées
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if current_project %}
+                        <a href="{{ url_for('projects.project_details', slug_or_id=current_project.slug) }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Retour au projet
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-tasks me-1"></i>Mes tâches
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Rechercher</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ request.args.get('search', '') }}" 
+                                   placeholder="Titre de la tâche...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="project_id" class="form-label">Projet</label>
+                            <select class="form-select" id="project_id" name="project_id">
+                                <option value="">Tous les projets</option>
+                                {% for project in projects %}
+                                    <option value="{{ project.id }}" 
+                                            {% if request.args.get('project_id', '') == project.id|string %}selected{% endif %}>
+                                        {{ project.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Filtrer
+                            </button>
+                            <a href="{{ url_for('tasks.archives') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Effacer
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary">{{ archived_tasks.total }}</h5>
+                            <p class="card-text text-muted">Tâches archivées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des tâches archivées -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-archive me-2"></i>
+                        Tâches archivées
+                        {% if archived_tasks.total > 0 %}
+                            <span class="badge bg-light text-dark ms-2">{{ archived_tasks.total }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if archived_tasks.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tâche</th>
+                                        <th>Projet</th>
+                                        <th>Terminée le</th>
+                                        <th>Archivée le</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in archived_tasks.items %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ task.title }}</strong>
+                                                    {% if task.description %}
+                                                        <br><small class="text-muted">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" 
+                                                   class="text-decoration-none">
+                                                    {{ task.project.name }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {% if task.completed_at %}
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                        {{ task.completed_at.strftime('%d/%m/%Y %H:%M') }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if task.archived_at %}
+                                                    <span class="text-secondary">
+                                                        <i class="fas fa-archive me-1"></i>
+                                                        {{ task.archived_at.strftime('%d/%m/%Y %H:%M') }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" 
+                                                       class="btn btn-outline-primary" title="Voir la tâche">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('tasks.unarchive_task', slug_or_id=task.slug) }}" 
+                                                          class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir désarchiver cette tâche ?')">
+                                                        <button type="submit" class="btn btn-outline-success" title="Désarchiver">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if archived_tasks.pages > 1 %}
+                            <nav aria-label="Pagination des archives">
+                                <ul class="pagination justify-content-center">
+                                    {% if archived_tasks.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('tasks.archives', page=archived_tasks.prev_num, **query_params) }}">
+                                                <i class="fas fa-chevron-left"></i> Précédent
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for page_num in archived_tasks.iter_pages() %}
+                                        {% if page_num %}
+                                            {% if page_num != archived_tasks.page %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('tasks.archives', page=page_num, **query_params) }}">
+                                                        {{ page_num }}
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ page_num }}</span>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">…</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if archived_tasks.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('tasks.archives', page=archived_tasks.next_num, **query_params) }}">
+                                                Suivant <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune tâche archivée</h5>
+                            <p class="text-muted">Les tâches terminées depuis plus de 2 semaines apparaîtront ici automatiquement.</p>
+                            <a href="{{ url_for('tasks.my_tasks') }}" class="btn btn-primary">
+                                <i class="fas fa-tasks me-1"></i>Voir mes tâches
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

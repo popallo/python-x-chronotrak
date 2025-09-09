@@ -149,14 +149,89 @@ def project_details(slug_or_id):
     # Trier par date de création décroissante
     history_items.sort(key=lambda x: x['created_at'], reverse=True)
     
+    # Limiter l'affichage à 10 éléments pour la vue kanban
+    history_items_preview = history_items[:10]
+    history_items_total = len(history_items)
+    
     return render_template('projects/project_detail.html',
                          project=project,
                          tasks_todo=tasks_todo,
                          tasks_in_progress=tasks_in_progress,
                          tasks_done=tasks_done,
-                         history_items=history_items,
+                         history_items=history_items_preview,
+                         history_items_total=history_items_total,
                          form=form,
                          title=project.name)
+
+@projects.route('/projects/<slug_or_id>/history')
+@login_required
+def project_history(slug_or_id):
+    """Affiche l'historique complet des crédits et débits d'un projet"""
+    from app.models.task import TimeEntry, Task
+    project = get_project_by_slug_or_id(slug_or_id)
+    
+    # Récupération des paramètres de filtrage
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    
+    # Créer un historique unifié avec crédits et temps consommés
+    history_items = []
+    
+    # Ajouter les logs de crédit
+    for log in project.credit_logs:
+        history_items.append({
+            'type': 'credit',
+            'amount': log.amount,
+            'note': log.note,
+            'created_at': log.created_at,
+            'task': log.task if log.task_id else None,
+            'user': None  # Les logs de crédit n'ont pas d'utilisateur associé
+        })
+    
+    # Ajouter les temps consommés
+    time_entries = (
+        db.session.query(TimeEntry)
+        .join(Task)
+        .filter(Task.project_id == project.id)
+        .all()
+    )
+    
+    for entry in time_entries:
+        history_items.append({
+            'type': 'time',
+            'amount': -entry.minutes,  # Négatif car c'est une consommation
+            'note': f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
+            'created_at': entry.created_at,
+            'task': entry.task,
+            'user': entry.user
+        })
+    
+    # Trier par date de création décroissante
+    history_items.sort(key=lambda x: x['created_at'], reverse=True)
+    
+    # Pagination manuelle
+    total_items = len(history_items)
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_items = history_items[start_idx:end_idx]
+    
+    # Calculer les informations de pagination
+    has_prev = page > 1
+    has_next = end_idx < total_items
+    prev_page = page - 1 if has_prev else None
+    next_page = page + 1 if has_next else None
+    
+    return render_template('projects/project_history.html',
+                         project=project,
+                         history_items=paginated_items,
+                         total_items=total_items,
+                         page=page,
+                         per_page=per_page,
+                         has_prev=has_prev,
+                         has_next=has_next,
+                         prev_page=prev_page,
+                         next_page=next_page,
+                         title=f"Historique - {project.name}")
 
 @projects.route('/projects/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_admin_required

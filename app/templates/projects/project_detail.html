@@ -150,11 +150,18 @@
 <div class="card mb-4">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des crédits et débits</h5>
-        <span class="badge bg-light text-secondary">{{ history_items|length }}</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-secondary">{{ history_items_total }}</span>
+            {% if history_items_total > 10 %}
+                <a href="{{ url_for('projects.project_history', slug_or_id=project.slug) }}" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-external-link-alt me-1"></i>Voir tout
+                </a>
+            {% endif %}
+        </div>
     </div>
     <div class="card-body">
         {% if history_items %}
-            <div class="history-container">
+            <div class="history-container" style="max-height: 400px; overflow-y: auto;">
                 <div class="list-group">
                     {% for item in history_items %}
                         <div class="list-group-item">
@@ -183,6 +190,13 @@
                     {% endfor %}
                 </div>
             </div>
+            {% if history_items_total > 10 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Affichage des 10 derniers éléments sur {{ history_items_total }} au total
+                    </small>
+                </div>
+            {% endif %}
         {% else %}
             <p class="text-muted">Aucun historique disponible.</p>
         {% endif %}

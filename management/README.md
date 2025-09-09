@@ -29,7 +29,7 @@ Script de configuration du cron job pour l'archivage automatique.
 
 Le cron job est configuré pour s'exécuter tous les jours à 2h du matin :
 ```
-0 2 * * * cd /app && source .venv/bin/activate && flask auto-archive >> /var/log/chronotrak_archive.log 2>&1
+0 2 * * * cd /app && flask auto-archive >> /var/log/chronotrak_archive.log 2>&1
 ```
 
 ## Logs

@@ -11,8 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_ENV=production \
     TZ=Europe/Paris
 
-# Installer bash et les dépendances système
-RUN apk add --no-cache bash tzdata && \
+# Installer bash, cron et les dépendances système
+RUN apk add --no-cache bash tzdata dcron && \
     addgroup -S chronouser && \
     adduser -S -G chronouser chronouser
 
@@ -30,7 +30,8 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # Copier les fichiers de l'application
 COPY app/ ./app/
 COPY migrations/ ./migrations/
-COPY config.py run.py wsgi.py ./
+COPY management/ ./management/
+COPY config.py run.py wsgi.py start.sh ./
 
 # Créer le fichier VERSION avec la valeur fournie
 RUN echo -n "$VERSION" > ./app/VERSION
@@ -44,14 +45,16 @@ LABEL org.opencontainers.image.title="ChronoTrak" \
       org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
 # Créer le répertoire instance et définir les permissions
-RUN mkdir -p /app/instance && \
+RUN mkdir -p /app/instance /var/log && \
     chown -R chronouser:chronouser /app && \
     chmod -R 755 /app && \
-    chmod 777 /app/instance
+    chmod 777 /app/instance && \
+    chmod +x /app/management/setup_cron.sh && \
+    chmod +x /app/start.sh
 
 # Passer à l'utilisateur non-root
 USER chronouser
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+CMD ["./start.sh"]

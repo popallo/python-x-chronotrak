@@ -44,4 +44,7 @@ Thumbs.db
 trivy-scan-chronotrak.json
 guide_dev.md
 
+# Scripts non versionnés (sécurité)
+scripts/
+
 VERSION

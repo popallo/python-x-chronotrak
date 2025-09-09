@@ -280,11 +280,13 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if task.status == 'terminé' and not task.is_archived %}
-                                        <form action="{{ url_for('tasks.archive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="return confirm('Archiver cette tâche ?')">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Archiver la tâche">
-                                                <i class="fas fa-archive"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary archive-task-btn" 
+                                                data-task-id="{{ task.id }}" 
+                                                data-task-title="{{ task.title }}" 
+                                                data-task-slug="{{ task.slug }}"
+                                                title="Archiver la tâche">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
                                         {% endif %}
                                     </div>
                                 </div>

@@ -89,10 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Supprimer ou masquer l'élément de la page
                 removeTaskFromPage(currentTaskId);
                 
-                // Recharger la page après un court délai pour mettre à jour les compteurs
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Mettre à jour les compteurs sans recharger la page
+                updateCounters();
             } else {
                 showNotification(result.error || 'Erreur lors de l\'archivage', 'error');
             }
@@ -126,10 +124,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Supprimer ou masquer l'élément de la page
                 removeTaskFromPage(currentTaskId);
                 
-                // Recharger la page après un court délai pour mettre à jour les compteurs
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Mettre à jour les compteurs sans recharger la page
+                updateCounters();
             } else {
                 showNotification(result.error || 'Erreur lors du désarchivage', 'error');
             }
@@ -154,6 +150,30 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 taskElement.remove();
             }, 300);
+        }
+    }
+
+    // Fonction pour mettre à jour les compteurs
+    function updateCounters() {
+        // Mettre à jour le compteur de la colonne "Terminé" dans le kanban
+        const doneColumn = document.querySelector('.kanban-column[data-status="terminé"] .kanban-title .badge');
+        if (doneColumn) {
+            const currentCount = parseInt(doneColumn.textContent) || 0;
+            doneColumn.textContent = Math.max(0, currentCount - 1);
+        }
+        
+        // Mettre à jour le compteur dans "Mes tâches" si présent
+        const completedBadge = document.querySelector('.card-header:has(.fa-check) .badge');
+        if (completedBadge) {
+            const currentCount = parseInt(completedBadge.textContent) || 0;
+            completedBadge.textContent = Math.max(0, currentCount - 1);
+        }
+        
+        // Mettre à jour le compteur total des archives si présent
+        const archivesBadge = document.querySelector('.card-header:has(.fa-archive) .badge');
+        if (archivesBadge) {
+            const currentCount = parseInt(archivesBadge.textContent) || 0;
+            archivesBadge.textContent = currentCount + 1;
         }
     }
 

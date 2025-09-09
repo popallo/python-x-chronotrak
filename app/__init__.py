@@ -233,4 +233,29 @@ def create_app(config_name):
     app.register_blueprint(communications)
     app.register_blueprint(api)
     
+    # Commandes CLI
+    @app.cli.command()
+    def auto_archive():
+        """Archive automatiquement les tâches terminées depuis plus de 2 semaines"""
+        from app.models.task import Task
+        
+        tasks_to_archive = Task.should_be_archived()
+        
+        if not tasks_to_archive:
+            print("Aucune tâche à archiver.")
+            return
+        
+        print(f"{len(tasks_to_archive)} tâche(s) à archiver...")
+        
+        archived_count = 0
+        for task in tasks_to_archive:
+            try:
+                task.archive()
+                archived_count += 1
+                print(f"  ✓ Archivée: {task.title} (Projet: {task.project.name})")
+            except Exception as e:
+                print(f"  ✗ Erreur lors de l'archivage de '{task.title}': {e}")
+        
+        print(f"{archived_count} tâche(s) archivée(s) avec succès.")
+    
     return app

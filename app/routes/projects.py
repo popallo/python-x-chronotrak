@@ -104,12 +104,12 @@ def project_details(slug_or_id):
     tasks = project.tasks
     form = DeleteProjectForm()
     
-    # Trier les tâches par statut
-    tasks_todo = [task for task in tasks if task.status == 'à faire']
-    tasks_in_progress = [task for task in tasks if task.status == 'en cours']
-    # Trier les tâches terminées par date de clôture décroissante
+    # Trier les tâches par statut (exclure les tâches archivées)
+    tasks_todo = [task for task in tasks if task.status == 'à faire' and not task.is_archived]
+    tasks_in_progress = [task for task in tasks if task.status == 'en cours' and not task.is_archived]
+    # Trier les tâches terminées par date de clôture décroissante (exclure les tâches archivées)
     tasks_done = sorted(
-        [task for task in tasks if task.status == 'terminé'],
+        [task for task in tasks if task.status == 'terminé' and not task.is_archived],
         key=lambda x: x.completed_at if x.completed_at else datetime.min,
         reverse=True
     )

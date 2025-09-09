@@ -56,6 +56,19 @@
                         <i class="fas fa-copy"></i>
                     </button>
                 </form>
+                {% if task.status == 'terminé' and not task.is_archived %}
+                <form action="{{ url_for('tasks.archive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir archiver cette tâche ?')">
+                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Archiver la tâche">
+                        <i class="fas fa-archive"></i>
+                    </button>
+                </form>
+                {% elif task.is_archived %}
+                <form action="{{ url_for('tasks.unarchive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir désarchiver cette tâche ?')">
+                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Désarchiver la tâche">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </form>
+                {% endif %}
                 <button type="button" class="btn btn-outline-light delete-task-btn" data-bs-target="#deleteTaskModal" data-bs-toggle="modal" title="Supprimer">
                     <i class="fas fa-trash"></i>
                 </button>

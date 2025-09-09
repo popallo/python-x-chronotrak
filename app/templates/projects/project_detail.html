@@ -127,8 +127,11 @@
                 
                 <!-- Colonne "Terminé" -->
                 <div class="kanban-column done-column" data-status="terminé">
-                    <div class="kanban-title bg-success text-white">
-                        Terminé <span class="badge bg-light text-dark">{{ tasks_done|length }}</span>
+                    <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
+                        <span>Terminé <span class="badge bg-light text-dark">{{ tasks_done|length }}</span></span>
+                        <a href="{{ url_for('tasks.archives', project_id=project.id) }}" class="text-white text-decoration-none" title="Voir les archives de ce projet">
+                            <i class="fas fa-archive"></i>
+                        </a>
                     </div>
                     <div class="kanban-items">
                         {% for task in tasks_done %}

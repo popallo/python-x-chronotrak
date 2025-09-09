@@ -224,6 +224,57 @@
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     <!-- Scripts spécifiques à chaque page -->
     {% block scripts %}{% endblock %}
+    
+    <!-- Modals globaux pour l'archivage -->
+    <div class="modal fade" id="archiveTaskModal" tabindex="-1" aria-labelledby="archiveTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="archiveTaskModalLabel">Confirmer l'archivage</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir archiver la tâche <strong id="archiveTaskTitle"></strong> ?</p>
+                    <p class="text-muted mb-0">La tâche sera déplacée vers les archives et n'apparaîtra plus dans le kanban.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-warning" id="confirmArchiveBtn">
+                        <i class="fas fa-archive me-1"></i>Archiver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="unarchiveTaskModal" tabindex="-1" aria-labelledby="unarchiveTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unarchiveTaskModalLabel">Confirmer le désarchivage</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir désarchiver la tâche <strong id="unarchiveTaskTitle"></strong> ?</p>
+                    <p class="text-muted mb-0">La tâche réapparaîtra dans le kanban du projet.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" id="confirmUnarchiveBtn">
+                        <i class="fas fa-undo me-1"></i>Désarchiver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script global pour l'archivage -->
+    <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
+    <script>
+        // Stocker le token CSRF global
+        window.csrfToken = "{{ csrf_token() }}";
+    </script>
+    
     <!-- Scripts pour le menu prismatique -->
     <script src="{{ url_for('static', filename='js/prismatic-nav.js') }}"></script>
 </body>

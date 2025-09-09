@@ -11,13 +11,16 @@
                     <span class="badge bg-{{ task.priority }} ms-2 flex-shrink-0" style="margin-top: 0.25rem;">
                         <i class="fas fa-flag me-1"></i>{{ task.priority }}
                     </span>
-                    {% if task.status == 'terminé' and not task.is_archived %}
-                    <form action="{{ url_for('tasks.archive_task', slug_or_id=task.slug) }}" method="POST" class="d-inline" onsubmit="event.stopPropagation(); return confirm('Archiver cette tâche ?')">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary p-1" title="Archiver la tâche" style="font-size: 0.7rem;">
-                            <i class="fas fa-archive"></i>
-                        </button>
-                    </form>
-                    {% endif %}
+                {% if task.status == 'terminé' and not task.is_archived %}
+                <button type="button" class="btn btn-sm btn-outline-secondary p-1 archive-task-btn" 
+                        data-task-id="{{ task.id }}" 
+                        data-task-title="{{ task.title }}" 
+                        data-task-slug="{{ task.slug }}"
+                        title="Archiver la tâche" 
+                        style="font-size: 0.7rem;">
+                    <i class="fas fa-archive"></i>
+                </button>
+                {% endif %}
                 </div>
             </div>
 

@@ -52,7 +52,7 @@
 }
 
 .card-header .badge {
-    margin-right: 20px;
+    margin-right: 0;
 }
 
 /* Système de collapse pour les cartes */

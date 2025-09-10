@@ -10,6 +10,7 @@
         overflow: hidden;
         background: #fff;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        height: auto;
     }
     
     .project-card:hover {
@@ -17,6 +18,20 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border-color: rgba(0, 0, 0, 0.1);
     }
+    
+    .project-card .card-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .project-card .card-body {
+        padding: 0.75rem;
+    }
+    
+    .project-card .card-footer {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Les tooltips utilisent maintenant le système Bootstrap existant */
     
     .bg-gradient-success {
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -234,10 +249,10 @@
 {% if projects %}
     <div class="row">
         {% for project in projects %}
-            <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="card h-100 project-card shadow-sm">
-                    <!-- En-tête de la carte -->
-                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
+            <div class="col-lg-6 col-xl-4 mb-3">
+                <div class="card project-card shadow-sm">
+                    <!-- En-tête compact -->
+                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center py-2">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-project-diagram me-2"></i>
                             <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
@@ -245,96 +260,79 @@
                         <span class="badge bg-light text-dark">{{ project.client.name }}</span>
                     </div>
                     
-                    <!-- Corps de la carte -->
-                    <div class="card-body d-flex flex-column">
-                        <!-- Description -->
+                    <!-- Corps compact -->
+                    <div class="card-body py-2">
+                        <!-- Description courte -->
                         {% if project.description %}
-                            <p class="text-muted small mb-3">{{ project.description|truncate(100) }}</p>
+                            <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
                         {% endif %}
                         
-                        <!-- Informations principales -->
-                        <div class="project-info mb-3" style="border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 0.5rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.02);">
-                            <!-- Gestion de temps -->
-                            {% if project.time_tracking_enabled %}
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-muted small">
-                                        <i class="fas fa-clock me-1"></i>Crédit restant
-                                    </span>
-                                    <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white">
-                                        {{ project.remaining_credit|format_time }}
-                                    </span>
-                                </div>
-                            {% else %}
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-muted small">
-                                        <i class="fas fa-clock me-1"></i>Gestion de temps
-                                    </span>
-                                    <span class="badge bg-secondary">Désactivée</span>
-                                </div>
-                            {% endif %}
-                            
-                            <!-- Nombre de tâches -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted small">
-                                    <i class="fas fa-tasks me-1"></i>Tâches
-                                </span>
-                                <span class="badge bg-info text-white">
-                                    {{ project.tasks|length }}
-                                </span>
-                            </div>
-                            
-                            <!-- Date de création -->
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">
-                                    <i class="fas fa-calendar me-1"></i>Créé le
-                                </span>
-                                <span class="text-muted small">
-                                    {{ project.created_at.strftime('%d/%m/%Y') }}
-                                </span>
+                        <!-- Informations essentielles en ligne -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
+                                <i class="fas fa-calendar me-1 text-muted"></i>
+                                <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
                             </div>
                         </div>
                         
-                        <!-- Statistiques des tâches -->
-                        {% if project.tasks %}
-                            <div class="task-stats mb-2" style="border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 0.5rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.02);">
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <div class="stat-number text-info">{{ project.tasks|selectattr('status', 'equalto', 'à faire')|list|length }}</div>
-                                            <div class="stat-label small text-muted">À faire</div>
-                                        </div>
+                        <!-- Crédit et statuts des tâches -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <!-- Crédit -->
+                            <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
+                                {% if project.time_tracking_enabled %}
+                                    <i class="fas fa-clock me-1 text-muted"></i>
+                                    <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
+                                        {{ project.remaining_credit|format_time }}
+                                    </span>
+                                {% else %}
+                                    <i class="fas fa-clock me-1 text-muted"></i>
+                                    <span class="badge bg-secondary small">Désactivé</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Statuts des tâches -->
+                            {% if project.tasks %}
+                                {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
+                                {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
+                                {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
+                                {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
+                                {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
+                                
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
+                                        <i class="fas fa-tasks me-1 text-muted"></i>
+                                        <span class="small text-muted">{{ total_remaining }}</span>
                                     </div>
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <div class="stat-number text-warning">{{ project.tasks|selectattr('status', 'equalto', 'en cours')|list|length }}</div>
-                                            <div class="stat-label small text-muted">En cours</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <div class="stat-number text-success">{{ project.tasks|selectattr('status', 'equalto', 'terminé')|list|length }}</div>
-                                            <div class="stat-label small text-muted">Terminé</div>
-                                        </div>
+                                    <div class="d-flex gap-1">
+                                        <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
+                                            <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                        </span>
+                                        <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
+                                            <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                        </span>
+                                        <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
+                                            <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     
-                    <!-- Actions -->
-                    <div class="card-footer bg-transparent border-top-0 pt-0">
+                    <!-- Actions compactes -->
+                    <div class="card-footer bg-transparent border-top-0 py-2">
                         <div class="d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success btn-sm">
+                            <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
                                 <i class="fas fa-eye me-1"></i>Détails
                             </a>
                             {% if not current_user.is_client() %}
-                                <div class="btn-group">
+                                <div class="d-flex gap-1">
                                     {% if project.time_tracking_enabled %}
-                                    <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm me-1" title="Ajouter du crédit">
+                                    <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
                                         <i class="fas fa-plus"></i>
                                     </a>
                                     {% endif %}
-                                    <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" title="Modifier">
+                                    <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 </div>
@@ -407,4 +405,13 @@
 
 {% block scripts %}
 <script type="module" src="{{ url_for('static', filename='js/pages/project_filters.js') }}"></script>
+<script>
+    // Initialiser les tooltips Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

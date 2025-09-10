@@ -496,7 +496,7 @@ def update_positions():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@tasks.route('/my_tasks')
+@tasks.route('/my-tasks')
 @login_required
 def my_tasks():
     """Affiche les tâches assignées à l'utilisateur courant avec filtres"""

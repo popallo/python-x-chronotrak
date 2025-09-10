@@ -32,7 +32,7 @@ function updateNavigationMenu(data) {
     const taskItem = document.querySelector(`.dropdown-item[href*="${window.location.pathname}"]`);
     const noTasksMessage = dropdownMenu.querySelector('.dropdown-item-text.text-muted');
     const separator = dropdownMenu.querySelector('.dropdown-divider');
-    const viewAllLink = dropdownMenu.querySelector('.dropdown-item[href*="my_tasks"]');
+    const viewAllLink = dropdownMenu.querySelector('.dropdown-item[href*="my-tasks"]');
     
     if (data.is_pinned) {
         // Supprimer le message "aucune tâche épinglée" s'il existe
@@ -81,7 +81,7 @@ function updateNavigationMenu(data) {
         }
         
         // Vérifier s'il reste des tâches épinglées
-        const remainingTasks = dropdownMenu.querySelectorAll('.dropdown-item:not([href*="my_tasks"])');
+        const remainingTasks = dropdownMenu.querySelectorAll('.dropdown-item:not([href*="my-tasks"])');
         if (remainingTasks.length === 0) {
             // Supprimer le séparateur et le lien "Voir toutes mes tâches"
             if (separator) separator.closest('li').remove();
@@ -306,7 +306,7 @@ function updatePinnedCount() {
         
         if (!viewAllLink) {
             const viewAllItem = document.createElement('li');
-            viewAllItem.innerHTML = '<a class="dropdown-item text-center" href="/tasks/my_tasks">Voir toutes mes tâches</a>';
+            viewAllItem.innerHTML = '<a class="dropdown-item text-center" href="/tasks/my-tasks">Voir toutes mes tâches</a>';
             dropdownMenu.appendChild(viewAllItem);
         }
     }

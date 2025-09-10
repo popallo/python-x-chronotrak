@@ -84,34 +84,7 @@ html.dark-mode body .task-list-item {
 /* Styles pour le Kanban */
 /* Styles Kanban spécifiques au projet - les styles généraux sont dans components.css */
 
-/* Styles spécifiques au drag & drop pour le projet */
-.kanban-ghost {
-    opacity: 0.5;
-    background: var(--bs-light);
-    border: 2px dashed var(--bs-primary);
-}
-
-.kanban-drag {
-    cursor: grabbing;
-    transform: rotate(2deg);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
-
-.kanban-column.sortable-ghost {
-    background: var(--bs-light);
-    border: 2px dashed var(--bs-primary);
-}
-
-/* Mode sombre pour le drag & drop */
-[data-bs-theme="dark"] .kanban-ghost {
-    background: var(--bs-dark);
-    border-color: var(--bs-primary);
-}
-
-[data-bs-theme="dark"] .kanban-column.sortable-ghost {
-    background: var(--bs-dark);
-    border-color: var(--bs-primary);
-}
+/* Les styles de drag & drop sont maintenant dans css/components/kanban.css */
 
 /* Responsive adjustments spécifiques au projet */
 @media (max-width: 768px) {

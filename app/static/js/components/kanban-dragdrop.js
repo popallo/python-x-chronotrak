@@ -1,20 +1,31 @@
 /**
- * Script pour la gestion des projets et du kanban
+ * Module commun pour le drag & drop du kanban
+ * Utilisé par my_tasks et project_details
  */
 
-import { CONFIG, utils } from '../utils.js';
-
-// Initialise le système de drag & drop pour le kanban
-function initKanban() {
+// Initialise le drag & drop pour le kanban
+function initKanbanDragDrop() {
     const kanbanColumns = document.querySelectorAll('.kanban-column');
     
     if (!kanbanColumns.length) {
         return;
     }
     
+    // Vérifier si Sortable est disponible
+    if (typeof Sortable === 'undefined') {
+        console.error('SortableJS n\'est pas chargé !');
+        return;
+    }
+    
     // Configuration de Sortable pour chaque colonne
-    kanbanColumns.forEach(column => {
-        new Sortable(column.querySelector('.kanban-items'), {
+    kanbanColumns.forEach((column) => {
+        const kanbanItems = column.querySelector('.kanban-items');
+        
+        if (!kanbanItems) {
+            return;
+        }
+        
+        new Sortable(kanbanItems, {
             group: 'tasks',
             animation: 150,
             ghostClass: 'kanban-ghost',
@@ -46,18 +57,25 @@ function initKanban() {
 // Effectue l'appel AJAX pour mettre à jour le statut d'une tâche
 async function updateTaskStatus(taskId, newStatus) {
     try {
-        const data = await utils.fetchWithCsrf('/tasks/update_status', {
+        const response = await fetch('/tasks/update_status', {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
             body: JSON.stringify({
                 task_id: taskId,
                 status: newStatus
             })
         });
-
-        if (!data.success) {
-            throw new Error(data.error || 'Erreur lors de la mise à jour du statut');
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Erreur lors de la mise à jour du statut');
         }
     } catch (error) {
+        console.error('Erreur:', error);
         alert('Une erreur est survenue lors de la mise à jour');
         location.reload();
     }
@@ -83,15 +101,21 @@ async function updateTaskPositions(column) {
     }
     
     try {
-        const data = await utils.fetchWithCsrf('/tasks/update_positions', {
+        const response = await fetch('/tasks/update_positions', {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
             body: JSON.stringify({
                 task_positions: taskPositions
             })
         });
         
-        if (!data.success) {
-            console.error('Erreur lors de la mise à jour des positions:', data.error);
+        const result = await response.json();
+        
+        if (!result.success) {
+            console.error('Erreur lors de la mise à jour des positions:', result.error);
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour des positions:', error);
@@ -110,9 +134,13 @@ function updateColumnCounters() {
     });
 }
 
-// Initialise la page de projets
-function initProjectsPage() {
-    initKanban();
-}
+// Initialise le drag & drop quand le DOM est chargé
+document.addEventListener('DOMContentLoaded', function() {
+    initKanbanDragDrop();
+});
 
-export { initProjectsPage };
+// Exporter les fonctions pour utilisation dans d'autres modules
+window.initKanbanDragDrop = initKanbanDragDrop;
+window.updateTaskStatus = updateTaskStatus;
+window.updateTaskPositions = updateTaskPositions;
+window.updateColumnCounters = updateColumnCounters;

@@ -2,17 +2,29 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/kanban.css') }}">
+<style>
+/* Styles spécifiques pour my_tasks */
+.my-tasks-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Mes tâches</h1>
-    <div>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Tableau de bord
-        </a>
+<div class="my-tasks-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Mes tâches</h1>
+            <p class="text-muted mb-0">Gérez vos tâches assignées et suivez votre progression</p>
+        </div>
+        <div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Tableau de bord
+            </a>
+        </div>
     </div>
-</div>
 
 <!-- Panneau de filtres -->
 <div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
@@ -133,176 +145,18 @@
     </div>
 </div>
 
-<!-- Sections de tâches -->
-<div class="row">
-    <div class="col-lg-6">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-list me-2"></i>À faire</h5>
-                <span class="badge bg-light text-info">{{ tasks_todo|length }}</span>
-            </div>
-            <div class="card-body">
-                {% if tasks_todo %}
-                    <div class="list-group">
-                        {% for task in tasks_todo %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small class="priority-{{ task.priority }}">
-                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        {% if task.estimated_time %}
-                                            <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">
-                        {% if filters_active %}
-                            Aucune tâche à faire ne correspond aux filtres sélectionnés.
-                        {% else %}
-                            Vous n'avez pas de tâches à faire pour le moment.
-                        {% endif %}
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-6">
-        <div class="card mb-4">
-            <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-spinner me-2"></i>En cours</h5>
-                <span class="badge bg-light text-warning">{{ tasks_in_progress|length }}</span>
-            </div>
-            <div class="card-body">
-                {% if tasks_in_progress %}
-                    <div class="list-group">
-                        {% for task in tasks_in_progress %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small class="priority-{{ task.priority }}">
-                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            {% if task.estimated_time %}
-                                                <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
-                                            {% endif %}
-                                            {% if task.actual_time %}
-                                                <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">
-                        {% if filters_active %}
-                            Aucune tâche en cours ne correspond aux filtres sélectionnés.
-                        {% else %}
-                            Vous n'avez pas de tâches en cours pour le moment.
-                        {% endif %}
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+    <!-- Kanban Board -->
+    {% from 'components/kanban_board.html' import kanban_board %}
+    {{ kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives')) }}
 
-{% if tasks_completed %}
-<div class="row">
-    <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-check me-2"></i>Terminées récemment</h5>
-                <span class="badge bg-light text-success">{{ tasks_completed|length }}</span>
-            </div>
-            <div class="card-body">
-                {% if tasks_completed %}
-                    <div class="list-group">
-                        {% for task in tasks_completed %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small>
-                                                {% if task.completed_at %}
-                                                    <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m/%Y') }}
-                                                {% else %}
-                                                    <i class="fas fa-calendar-check me-1"></i>Terminée
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        {% if task.actual_time %}
-                                            <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if task.status == 'terminé' and not task.is_archived %}
-                                        <button type="button" class="btn btn-sm btn-outline-secondary archive-task-btn" 
-                                                data-task-id="{{ task.id }}" 
-                                                data-task-title="{{ task.title }}" 
-                                                data-task-slug="{{ task.slug }}"
-                                                title="Archiver la tâche">
-                                            <i class="fas fa-archive"></i>
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">Aucune tâche terminée récemment.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script type="module" src="{{ url_for('static', filename='js/pages/task_filters.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/components/kanban.js') }}"></script>
+<script>
+    // Stocker le token CSRF global
+    window.csrfToken = "{{ csrf_token() }}";
+</script>
 {% endblock %}

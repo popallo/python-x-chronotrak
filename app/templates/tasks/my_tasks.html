@@ -31,109 +31,99 @@
     padding: 1.5rem;
 }
 
-/* Design Kanban Vertical Intelligent */
-.kanban-board {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
+/* Harmonisation avec le kanban des projets */
+.kanban-container {
     margin-top: 1rem;
 }
 
-.kanban-column {
-    background: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    min-height: 400px;
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem;
+    width: 100%;
+    align-items: flex-start;
 }
 
-.kanban-column-header {
+.kanban-column {
+    flex: 1;
+    min-width: 280px;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    min-height: auto;
+}
+
+.kanban-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    color: var(--kanban-title-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: -1rem -1rem 1rem -1rem;
-    padding: 0.75rem 1rem;
-    border-radius: 0.75rem 0.75rem 0 0;
-    color: white;
-    font-weight: 600;
 }
 
-/* Couleurs des entêtes par statut */
-.kanban-column:nth-child(1) .kanban-column-header {
-    background: linear-gradient(135deg, #17a2b8, #138496);
+.kanban-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.25rem;
+    max-height: 70vh;
+    min-height: 100px;
 }
 
-.kanban-column:nth-child(2) .kanban-column-header {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    color: #212529;
-}
-
-.kanban-column:nth-child(3) .kanban-column-header {
-    background: linear-gradient(135deg, #28a745, #1e7e34);
-}
-
-.kanban-column-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.kanban-column-count {
-    background: rgba(255, 255, 255, 0.2);
-    color: inherit;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    min-width: 1.5rem;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Ajustement pour la colonne "En cours" (fond jaune) */
-.kanban-column:nth-child(2) .kanban-column-count {
-    background: rgba(0, 0, 0, 0.1);
-    color: #212529;
-}
-
-.kanban-tasks {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
+/* Task card styles harmonisés */
 .kanban-task {
-    background: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    transition: all 0.2s ease;
     cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    will-change: transform, box-shadow;
     position: relative;
+    color: inherit;
 }
 
 .kanban-task:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-color: var(--bs-primary);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.1);
+    text-decoration: none;
 }
 
 .kanban-task-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
     line-height: 1.3;
-    color: var(--bs-body-color);
+    font-weight: 600;
+    margin-right: 1rem;
+    color: inherit;
+    margin-bottom: 0.5rem;
+    padding-right: 1.5rem;
 }
 
 .kanban-task-meta {
-    font-size: 0.75rem;
-    color: var(--bs-secondary-color);
-    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .kanban-task-time {
-    font-size: 0.7rem;
-    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    color: var(--color-secondary);
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -172,6 +162,25 @@
 .priority-dot.priority-normale { background: #198754; }
 .priority-dot.priority-basse { background: #0dcaf0; }
 
+/* Scrollbar styles */
+.kanban-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kanban-items::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-items::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.kanban-items::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
 .task-actions {
     position: absolute;
     top: 0.75rem;
@@ -208,14 +217,15 @@
     transform: scale(1.05);
 }
 
-/* Responsive */
+/* Responsive - harmonisé avec le kanban existant */
 @media (max-width: 768px) {
     .kanban-board {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 1rem;
     }
     
     .kanban-column {
+        min-width: auto;
         min-height: 200px;
     }
     
@@ -236,10 +246,9 @@
     }
 }
 
-/* Dark mode support - styles explicites */
+/* Dark mode support - harmonisé avec le kanban existant */
 html.dark-mode .kanban-column {
     background: var(--dm-bg-card) !important;
-    border-color: var(--dm-border) !important;
 }
 
 html.dark-mode .kanban-task {
@@ -250,39 +259,26 @@ html.dark-mode .kanban-task {
 
 html.dark-mode .kanban-task:hover {
     background: var(--dm-bg-main) !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    border-color: var(--dm-border) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
 html.dark-mode .kanban-task-meta {
     color: var(--dm-text-muted) !important;
+    border-color: var(--dm-border) !important;
 }
 
 html.dark-mode .kanban-task-time {
     color: var(--dm-text-muted) !important;
 }
 
-html.dark-mode .kanban-column-header {
-    border-color: var(--dm-border) !important;
+/* Mode sombre pour la scrollbar */
+html.dark-mode .kanban-items::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Dark mode - ajustement des couleurs d'entêtes */
-html.dark-mode .kanban-column:nth-child(1) .kanban-column-header {
-    background: linear-gradient(135deg, #0d6efd, #0b5ed7) !important;
-}
-
-html.dark-mode .kanban-column:nth-child(2) .kanban-column-header {
-    background: linear-gradient(135deg, #fd7e14, #e8590c) !important;
-    color: white !important;
-}
-
-html.dark-mode .kanban-column:nth-child(3) .kanban-column-header {
-    background: linear-gradient(135deg, #198754, #146c43) !important;
-}
-
-html.dark-mode .kanban-column:nth-child(2) .kanban-column-count {
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+html.dark-mode .kanban-items::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Fallback pour les thèmes sombres sans data-bs-theme */
@@ -441,153 +437,121 @@ html.dark-mode .kanban-column:nth-child(2) .kanban-column-count {
 </div>
 
     <!-- Kanban Board -->
-    <div class="kanban-board">
-        <!-- Colonne À faire -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <h6 class="kanban-column-title">
-                    <i class="fas fa-list me-1"></i>À faire
-                </h6>
-                <span class="kanban-column-count">{{ tasks_todo|length }}</span>
-            </div>
-            <div class="kanban-tasks">
-                {% for task in tasks_todo %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
-                        <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-success" 
-                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
-                                    title="Commencer">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                        <h6 class="kanban-task-title">
-                            <span class="priority-dot priority-{{ task.priority }}"></span>
-                            {{ task.title }}
-                        </h6>
-                        <div class="kanban-task-meta">
-                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
-                            <br>
-                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
-                        </div>
-                        {% if task.estimated_time %}
-                            <div class="kanban-task-time">
-                                <i class="fas fa-hourglass-half"></i>
-                                <span>{{ task.estimated_time|format_time }}</span>
+    <div class="kanban-container">
+        <div class="kanban-board">
+            <!-- Colonne "À faire" -->
+            <div class="kanban-column todo-column" data-status="à faire">
+                <div class="kanban-title bg-info text-white">
+                    À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span>
+                </div>
+                <div class="kanban-items">
+                    {% for task in tasks_todo %}
+                        <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                            <div class="kanban-task-actions">
+                                <button class="btn btn-sm btn-success" 
+                                        onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
+                                        title="Commencer">
+                                    <i class="fas fa-play"></i>
+                                </button>
                             </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-                {% if not tasks_todo %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-clipboard-list fa-2x mb-2"></i>
-                        <p class="mb-0">Aucune tâche à faire</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Colonne En cours -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <h6 class="kanban-column-title">
-                    <i class="fas fa-spinner me-1"></i>En cours
-                </h6>
-                <span class="kanban-column-count">{{ tasks_in_progress|length }}</span>
-            </div>
-            <div class="kanban-tasks">
-                {% for task in tasks_in_progress %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
-                        <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-primary" 
-                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
-                                    title="Terminer">
-                                <i class="fas fa-check"></i>
-                            </button>
-                        </div>
-                        <h6 class="kanban-task-title">
-                            <span class="priority-dot priority-{{ task.priority }}"></span>
-                            {{ task.title }}
-                        </h6>
-                        <div class="kanban-task-meta">
-                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
-                            <br>
-                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
-                        </div>
-                        <div class="kanban-task-time">
+                            <h6 class="kanban-task-title">
+                                <span class="priority-dot priority-{{ task.priority }}"></span>
+                                {{ task.title }}
+                            </h6>
+                            <div class="kanban-task-meta">
+                                <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                                <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                            </div>
                             {% if task.estimated_time %}
-                                <i class="fas fa-hourglass-half"></i>
-                                <span>{{ task.estimated_time|format_time }}</span>
-                            {% endif %}
-                            {% if task.actual_time %}
-                                <br>
-                                <i class="fas fa-stopwatch"></i>
-                                <span>{{ task.actual_time|format_time }}</span>
+                                <div class="kanban-task-time">
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <span>{{ task.estimated_time|format_time }}</span>
+                                </div>
                             {% endif %}
                         </div>
-                    </div>
-                {% endfor %}
-                {% if not tasks_in_progress %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-spinner fa-2x mb-2"></i>
-                        <p class="mb-0">Aucune tâche en cours</p>
-                    </div>
-                {% endif %}
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-
-        <!-- Colonne Terminées -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <h6 class="kanban-column-title">
-                    <i class="fas fa-check me-1"></i>Terminées
-                </h6>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="kanban-column-count">{{ tasks_completed|length }}</span>
-                    <a href="{{ url_for('tasks.archives') }}" class="btn btn-sm btn-outline-secondary" title="Voir les archives">
+            
+            <!-- Colonne "En cours" -->
+            <div class="kanban-column progress-column" data-status="en cours">
+                <div class="kanban-title bg-warning text-dark">
+                    En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span>
+                </div>
+                <div class="kanban-items">
+                    {% for task in tasks_in_progress %}
+                        <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                            <div class="kanban-task-actions">
+                                <button class="btn btn-sm btn-primary" 
+                                        onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
+                                        title="Terminer">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                            <h6 class="kanban-task-title">
+                                <span class="priority-dot priority-{{ task.priority }}"></span>
+                                {{ task.title }}
+                            </h6>
+                            <div class="kanban-task-meta">
+                                <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                                <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                            </div>
+                            <div class="kanban-task-time">
+                                {% if task.estimated_time %}
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <span>{{ task.estimated_time|format_time }}</span>
+                                {% endif %}
+                                {% if task.actual_time %}
+                                    <i class="fas fa-stopwatch"></i>
+                                    <span>{{ task.actual_time|format_time }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Colonne "Terminé" -->
+            <div class="kanban-column done-column" data-status="terminé">
+                <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
+                    <span>Terminé <span class="badge bg-light text-dark">{{ tasks_completed|length }}</span></span>
+                    <a href="{{ url_for('tasks.archives') }}" class="text-white text-decoration-none" title="Voir les archives">
                         <i class="fas fa-archive"></i>
                     </a>
                 </div>
-            </div>
-            <div class="kanban-tasks">
-                {% for task in tasks_completed %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
-                        <div class="kanban-task-actions">
-                            {% if not task.is_archived %}
-                                <button class="btn btn-sm btn-secondary" 
-                                        onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
-                                        title="Archiver">
-                                    <i class="fas fa-archive"></i>
-                                </button>
-                            {% endif %}
+                <div class="kanban-items">
+                    {% for task in tasks_completed %}
+                        <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                            <div class="kanban-task-actions">
+                                {% if not task.is_archived %}
+                                    <button class="btn btn-sm btn-secondary" 
+                                            onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
+                                            title="Archiver">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <h6 class="kanban-task-title">
+                                <span class="priority-dot priority-{{ task.priority }}"></span>
+                                {{ task.title }}
+                            </h6>
+                            <div class="kanban-task-meta">
+                                <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                                <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                            </div>
+                            <div class="kanban-task-time">
+                                {% if task.completed_at %}
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>{{ task.completed_at.strftime('%d/%m') }}</span>
+                                {% endif %}
+                                {% if task.actual_time %}
+                                    <i class="fas fa-stopwatch"></i>
+                                    <span>{{ task.actual_time|format_time }}</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <h6 class="kanban-task-title">
-                            <span class="priority-dot priority-{{ task.priority }}"></span>
-                            {{ task.title }}
-                        </h6>
-                        <div class="kanban-task-meta">
-                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
-                            <br>
-                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
-                        </div>
-                        <div class="kanban-task-time">
-                            {% if task.completed_at %}
-                                <i class="fas fa-calendar-check"></i>
-                                <span>{{ task.completed_at.strftime('%d/%m') }}</span>
-                            {% endif %}
-                            {% if task.actual_time %}
-                                <br>
-                                <i class="fas fa-stopwatch"></i>
-                                <span>{{ task.actual_time|format_time }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-                {% if not tasks_completed %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-check fa-2x mb-2"></i>
-                        <p class="mb-0">Aucune tâche terminée</p>
-                    </div>
-                {% endif %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

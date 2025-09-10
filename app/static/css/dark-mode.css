@@ -1,7 +1,18 @@
 /* Initial loading state - pour éviter le flash */
 html:not(.theme-loaded) body {
     visibility: hidden;
-  }
+}
+
+/* Prévenir le flash blanc en appliquant le dark mode immédiatement */
+html.dark-mode {
+    background-color: var(--dm-bg-main);
+    color: var(--dm-text);
+}
+
+html.dark-mode body {
+    background-color: var(--dm-bg-main);
+    color: var(--dm-text);
+}
   
   /* Variables pour les couleurs du mode sombre */
   :root {

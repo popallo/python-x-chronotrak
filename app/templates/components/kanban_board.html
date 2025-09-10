@@ -8,7 +8,7 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_todo %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
                             <button class="btn btn-sm btn-success" 
@@ -44,7 +44,7 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_in_progress %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
                             <button class="btn btn-sm btn-primary" 
@@ -89,7 +89,7 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_completed %}
-                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
                             {% if not task.is_archived %}

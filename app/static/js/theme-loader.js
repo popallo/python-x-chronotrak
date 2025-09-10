@@ -1,6 +1,7 @@
 (function() {
-    // 1. Déterminer le thème immédiatement
-    if (localStorage.getItem('darkMode') === 'enabled') {
+    // 1. Déterminer le thème immédiatement AVANT que le DOM soit rendu
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
         document.documentElement.classList.add('dark-mode');
     }
     
@@ -9,14 +10,9 @@
         document.documentElement.classList.add('theme-loaded');
     }
     
-    // Exécuter immédiatement si le DOM est déjà chargé
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-        markThemeAsLoaded();
-    } else {
-        // Sinon attendre que le DOM soit chargé
-        document.addEventListener('DOMContentLoaded', markThemeAsLoaded);
-    }
+    // 3. Appliquer le thème immédiatement
+    markThemeAsLoaded();
     
-    // 3. En cas de problème, afficher le contenu après un délai
-    setTimeout(markThemeAsLoaded, 300);
+    // 4. En cas de problème, s'assurer que le contenu est visible
+    setTimeout(markThemeAsLoaded, 100);
 })();

@@ -2,17 +2,324 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<style>
+/* Styles spécifiques pour my_tasks */
+.my-tasks-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.task-section {
+    margin-bottom: 2rem;
+}
+
+.task-section .card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.task-section .card-header {
+    border: none;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+}
+
+.task-section .card-body {
+    padding: 1.5rem;
+}
+
+/* Design Kanban Vertical Intelligent */
+.kanban-board {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.kanban-column {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-height: 400px;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+    color: white;
+    font-weight: 600;
+}
+
+/* Couleurs des entêtes par statut */
+.kanban-column:nth-child(1) .kanban-column-header {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.kanban-column:nth-child(2) .kanban-column-header {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.kanban-column:nth-child(3) .kanban-column-header {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.kanban-column-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kanban-column-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    min-width: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Ajustement pour la colonne "En cours" (fond jaune) */
+.kanban-column:nth-child(2) .kanban-column-count {
+    background: rgba(0, 0, 0, 0.1);
+    color: #212529;
+}
+
+.kanban-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.kanban-task {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.kanban-task:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--bs-primary);
+}
+
+.kanban-task-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+    color: var(--bs-body-color);
+}
+
+.kanban-task-meta {
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.kanban-task-time {
+    font-size: 0.7rem;
+    color: var(--bs-secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.kanban-task-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.kanban-task:hover .kanban-task-actions {
+    opacity: 1;
+}
+
+.kanban-task-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 0.25rem;
+}
+
+.priority-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.priority-dot.priority-haute { background: #dc3545; }
+.priority-dot.priority-urgente { background: #fd7e14; }
+.priority-dot.priority-normale { background: #198754; }
+.priority-dot.priority-basse { background: #0dcaf0; }
+
+.task-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.task-card:hover .task-actions {
+    opacity: 1;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--bs-secondary-color);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.archives-link {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.archives-link:hover {
+    color: #fff;
+    text-decoration: none;
+    transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .kanban-column {
+        min-height: 200px;
+    }
+    
+    .kanban-task {
+        padding: 0.5rem;
+    }
+    
+    .kanban-task-title {
+        font-size: 0.85rem;
+    }
+    
+    .kanban-task-meta {
+        font-size: 0.7rem;
+    }
+    
+    .kanban-task-time {
+        font-size: 0.65rem;
+    }
+}
+
+/* Dark mode support - styles explicites */
+html.dark-mode .kanban-column {
+    background: var(--dm-bg-card) !important;
+    border-color: var(--dm-border) !important;
+}
+
+html.dark-mode .kanban-task {
+    background: var(--dm-bg-elevated) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .kanban-task:hover {
+    background: var(--dm-bg-main) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark-mode .kanban-task-meta {
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .kanban-task-time {
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .kanban-column-header {
+    border-color: var(--dm-border) !important;
+}
+
+/* Dark mode - ajustement des couleurs d'entêtes */
+html.dark-mode .kanban-column:nth-child(1) .kanban-column-header {
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7) !important;
+}
+
+html.dark-mode .kanban-column:nth-child(2) .kanban-column-header {
+    background: linear-gradient(135deg, #fd7e14, #e8590c) !important;
+    color: white !important;
+}
+
+html.dark-mode .kanban-column:nth-child(3) .kanban-column-header {
+    background: linear-gradient(135deg, #198754, #146c43) !important;
+}
+
+html.dark-mode .kanban-column:nth-child(2) .kanban-column-count {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+/* Fallback pour les thèmes sombres sans data-bs-theme */
+@media (prefers-color-scheme: dark) {
+    .task-card {
+        background: #1e293b !important;
+        border-color: #475569 !important;
+        color: #f1f5f9 !important;
+    }
+    
+    .task-card:hover {
+        background: #334155 !important;
+        border-color: #3b82f6 !important;
+    }
+    
+    .task-meta,
+    .task-time,
+    .empty-state {
+        color: #94a3b8 !important;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Mes tâches</h1>
-    <div>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Tableau de bord
-        </a>
+<div class="my-tasks-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Mes tâches</h1>
+            <p class="text-muted mb-0">Gérez vos tâches assignées et suivez votre progression</p>
+        </div>
+        <div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Tableau de bord
+            </a>
+        </div>
     </div>
-</div>
 
 <!-- Panneau de filtres -->
 <div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
@@ -133,176 +440,223 @@
     </div>
 </div>
 
-<!-- Sections de tâches -->
-<div class="row">
-    <div class="col-lg-6">
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-list me-2"></i>À faire</h5>
-                <span class="badge bg-light text-info">{{ tasks_todo|length }}</span>
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- Colonne À faire -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <h6 class="kanban-column-title">
+                    <i class="fas fa-list me-1"></i>À faire
+                </h6>
+                <span class="kanban-column-count">{{ tasks_todo|length }}</span>
             </div>
-            <div class="card-body">
-                {% if tasks_todo %}
-                    <div class="list-group">
-                        {% for task in tasks_todo %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small class="priority-{{ task.priority }}">
-                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        {% if task.estimated_time %}
-                                            <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_todo %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        <div class="kanban-task-actions">
+                            <button class="btn btn-sm btn-success" 
+                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
+                                    title="Commencer">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <br>
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        {% if task.estimated_time %}
+                            <div class="kanban-task-time">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ task.estimated_time|format_time }}</span>
                             </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">
-                        {% if filters_active %}
-                            Aucune tâche à faire ne correspond aux filtres sélectionnés.
-                        {% else %}
-                            Vous n'avez pas de tâches à faire pour le moment.
                         {% endif %}
-                    </p>
+                    </div>
+                {% endfor %}
+                {% if not tasks_todo %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                        <p class="mb-0">Aucune tâche à faire</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
-    </div>
-    
-    <div class="col-lg-6">
-        <div class="card mb-4">
-            <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-spinner me-2"></i>En cours</h5>
-                <span class="badge bg-light text-warning">{{ tasks_in_progress|length }}</span>
-            </div>
-            <div class="card-body">
-                {% if tasks_in_progress %}
-                    <div class="list-group">
-                        {% for task in tasks_in_progress %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small class="priority-{{ task.priority }}">
-                                                <i class="fas fa-flag me-1"></i>{{ task.priority }}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            {% if task.estimated_time %}
-                                                <small><i class="fas fa-hourglass-half me-1"></i>Estimé à {{ task.estimated_time|format_time }}</small>
-                                            {% endif %}
-                                            {% if task.actual_time %}
-                                                <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted">
-                        {% if filters_active %}
-                            Aucune tâche en cours ne correspond aux filtres sélectionnés.
-                        {% else %}
-                            Vous n'avez pas de tâches en cours pour le moment.
-                        {% endif %}
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
 
-{% if tasks_completed %}
-<div class="row">
-    <div class="col-12">
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-check me-2"></i>Terminées récemment</h5>
-                <span class="badge bg-light text-success">{{ tasks_completed|length }}</span>
+        <!-- Colonne En cours -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <h6 class="kanban-column-title">
+                    <i class="fas fa-spinner me-1"></i>En cours
+                </h6>
+                <span class="kanban-column-count">{{ tasks_in_progress|length }}</span>
             </div>
-            <div class="card-body">
-                {% if tasks_completed %}
-                    <div class="list-group">
-                        {% for task in tasks_completed %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">
-                                                <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="text-decoration-none">
-                                                    {{ task.title }}
-                                                </a>
-                                            </h5>
-                                            <small>
-                                                {% if task.completed_at %}
-                                                    <i class="fas fa-calendar-check me-1"></i>{{ task.completed_at.strftime('%d/%m/%Y') }}
-                                                {% else %}
-                                                    <i class="fas fa-calendar-check me-1"></i>Terminée
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                        <p class="mb-1">{{ task.project.name }} ({{ task.project.client.name }})</p>
-                                        {% if task.actual_time %}
-                                            <small><i class="fas fa-stopwatch me-1"></i>{{ task.actual_time|format_time }} passées</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="d-flex gap-1 ms-2">
-                                        <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary" title="Voir la tâche">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if task.status == 'terminé' and not task.is_archived %}
-                                        <button type="button" class="btn btn-sm btn-outline-secondary archive-task-btn" 
-                                                data-task-id="{{ task.id }}" 
-                                                data-task-title="{{ task.title }}" 
-                                                data-task-slug="{{ task.slug }}"
-                                                title="Archiver la tâche">
-                                            <i class="fas fa-archive"></i>
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+            <div class="kanban-tasks">
+                {% for task in tasks_in_progress %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        <div class="kanban-task-actions">
+                            <button class="btn btn-sm btn-primary" 
+                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
+                                    title="Terminer">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <br>
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        <div class="kanban-task-time">
+                            {% if task.estimated_time %}
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ task.estimated_time|format_time }}</span>
+                            {% endif %}
+                            {% if task.actual_time %}
+                                <br>
+                                <i class="fas fa-stopwatch"></i>
+                                <span>{{ task.actual_time|format_time }}</span>
+                            {% endif %}
+                        </div>
                     </div>
-                {% else %}
-                    <p class="text-muted">Aucune tâche terminée récemment.</p>
+                {% endfor %}
+                {% if not tasks_in_progress %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-2x mb-2"></i>
+                        <p class="mb-0">Aucune tâche en cours</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Colonne Terminées -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <h6 class="kanban-column-title">
+                    <i class="fas fa-check me-1"></i>Terminées
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="kanban-column-count">{{ tasks_completed|length }}</span>
+                    <a href="{{ url_for('tasks.archives') }}" class="btn btn-sm btn-outline-secondary" title="Voir les archives">
+                        <i class="fas fa-archive"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="kanban-tasks">
+                {% for task in tasks_completed %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        <div class="kanban-task-actions">
+                            {% if not task.is_archived %}
+                                <button class="btn btn-sm btn-secondary" 
+                                        onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
+                                        title="Archiver">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <br>
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        <div class="kanban-task-time">
+                            {% if task.completed_at %}
+                                <i class="fas fa-calendar-check"></i>
+                                <span>{{ task.completed_at.strftime('%d/%m') }}</span>
+                            {% endif %}
+                            {% if task.actual_time %}
+                                <br>
+                                <i class="fas fa-stopwatch"></i>
+                                <span>{{ task.actual_time|format_time }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                {% if not tasks_completed %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check fa-2x mb-2"></i>
+                        <p class="mb-0">Aucune tâche terminée</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
+
 </div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script type="module" src="{{ url_for('static', filename='js/pages/task_filters.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
+<script>
+    // Stocker le token CSRF global
+    window.csrfToken = "{{ csrf_token() }}";
+    
+    // Fonction pour changer le statut d'une tâche
+    async function changeTaskStatus(taskSlug, newStatus) {
+        try {
+            const response = await fetch(`/tasks/${taskSlug}/update_status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Recharger la page pour voir les changements
+                window.location.reload();
+            } else {
+                alert('Erreur: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue');
+        }
+    }
+    
+    // Fonction pour archiver une tâche
+    async function archiveTask(taskSlug) {
+        if (!confirm('Êtes-vous sûr de vouloir archiver cette tâche ?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/tasks/${taskSlug}/archive`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Recharger la page pour voir les changements
+                window.location.reload();
+            } else {
+                alert('Erreur: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue');
+        }
+    }
+</script>
 {% endblock %}

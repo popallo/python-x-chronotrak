@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Page des tâches
-    if (currentPath.includes('/tasks/') || currentPath.includes('/my_tasks')) {
+    if (currentPath.includes('/tasks/') || currentPath.includes('/my-tasks')) {
         initTasksPage();
     }
     
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Page des tâches - liste
-    if (currentPath === '/my_tasks') {
+    if (currentPath === '/my-tasks') {
         initTaskFilters();
     }
 

@@ -178,7 +178,7 @@ def create_app(config_name):
             return 'bg-primary'
         elif '/projects/' in current_path or current_path == '/projects':
             return 'bg-success'
-        elif '/tasks/' in current_path or current_path == '/my_tasks':
+        elif '/tasks/' in current_path or current_path == '/my-tasks':
             return 'bg-info'
         elif '/reports' in current_path:
             return 'bg-reports'

@@ -9,12 +9,18 @@ function toggleDarkMode() {
     // S'assurer que theme-loaded est toujours présent
     html.classList.add('theme-loaded');
     
-    // Mettre à jour l'icône
+    // Mettre à jour l'icône et l'attribut Bootstrap
     if (html.classList.contains('dark-mode')) {
-        darkModeIcon.classList.replace('fa-sun', 'fa-moon');
+        html.setAttribute('data-bs-theme', 'dark');
+        if (darkModeIcon) {
+            darkModeIcon.classList.replace('fa-sun', 'fa-moon');
+        }
         localStorage.setItem('darkMode', 'enabled');
     } else {
-        darkModeIcon.classList.replace('fa-moon', 'fa-sun');
+        html.setAttribute('data-bs-theme', 'light');
+        if (darkModeIcon) {
+            darkModeIcon.classList.replace('fa-moon', 'fa-sun');
+        }
         localStorage.setItem('darkMode', 'disabled');
     }
 }
@@ -26,12 +32,14 @@ function loadDarkModePreference() {
     
     if (darkMode === 'enabled') {
         document.documentElement.classList.add('dark-mode');
+        document.documentElement.setAttribute('data-bs-theme', 'dark');
         document.documentElement.classList.add('theme-loaded');
         
         if (darkModeIcon) {
             darkModeIcon.classList.replace('fa-sun', 'fa-moon');
         }
     } else {
+        document.documentElement.setAttribute('data-bs-theme', 'light');
         // S'assurer que le thème est marqué comme chargé même en mode clair
         document.documentElement.classList.add('theme-loaded');
     }

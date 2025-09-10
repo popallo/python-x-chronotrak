@@ -462,6 +462,40 @@ def update_status():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@tasks.route('/tasks/update_positions', methods=['POST'])
+@login_required
+def update_positions():
+    """Route pour mettre à jour les positions des tâches dans une colonne"""
+    try:
+        data = request.get_json()
+        task_positions = data.get('task_positions', [])
+        
+        if not task_positions:
+            return jsonify({'success': False, 'error': 'Aucune position fournie'}), 400
+        
+        # Mettre à jour les positions
+        for item in task_positions:
+            task_id = item.get('task_id')
+            position = item.get('position')
+            
+            if task_id and position is not None:
+                task = Task.query.get(task_id)
+                if task:
+                    # Vérifier les permissions
+                    if current_user.is_client():
+                        if not current_user.has_access_to_client(task.project.client_id):
+                            continue
+                    
+                    task.position = position
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de la mise à jour des positions: {str(e)}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @tasks.route('/my_tasks')
 @login_required
 def my_tasks():
@@ -487,16 +521,16 @@ def my_tasks():
     if search:
         query = query.filter(Task.title.ilike(f'%{search}%'))
 
-    # Tri par défaut : date de création décroissante
-    query = query.order_by(Task.created_at.desc())
+    # Tri par défaut : position puis date de création décroissante
+    query = query.order_by(Task.position.asc(), Task.created_at.desc())
 
     # Récupération de toutes les tâches (sans pagination pour le tri par statut)
     all_tasks = query.all()
 
-    # Tri des tâches par statut
-    tasks_todo = [task for task in all_tasks if task.status == 'à faire']
-    tasks_in_progress = [task for task in all_tasks if task.status == 'en cours']
-    tasks_completed = [task for task in all_tasks if task.status == 'terminé']
+    # Tri des tâches par statut et par position
+    tasks_todo = sorted([task for task in all_tasks if task.status == 'à faire'], key=lambda t: (t.position, t.created_at))
+    tasks_in_progress = sorted([task for task in all_tasks if task.status == 'en cours'], key=lambda t: (t.position, t.created_at))
+    tasks_completed = sorted([task for task in all_tasks if task.status == 'terminé'], key=lambda t: (t.position, t.created_at))
 
     # Récupération des données pour les filtres
     projects = Project.query.all()

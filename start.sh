@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de démarrage pour ChronoTrak avec configuration automatique du cron
+# Script de démarrage pour ChronoTrak avec cron
 
 echo "Démarrage de ChronoTrak..."
 
@@ -11,9 +11,14 @@ crond -f -d 8 &
 # Attendre un peu que cron démarre
 sleep 2
 
-# Configurer le cron job pour l'archivage automatique
-echo "Configuration du cron job d'archivage automatique..."
-./management/setup_cron.sh
+# Vérifier que le cron job est configuré
+echo "Vérification du cron job d'archivage automatique..."
+if [ -f /etc/cron.d/chronotrak-archive ]; then
+    echo "Cron job configuré :"
+    cat /etc/cron.d/chronotrak-archive
+else
+    echo "Avertissement : Cron job non trouvé"
+fi
 
 # Démarrer l'application Flask
 echo "Démarrage de l'application Flask..."

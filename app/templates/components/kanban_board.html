@@ -1,0 +1,128 @@
+{% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None) %}
+<div class="kanban-container">
+    <div class="kanban-board">
+        <!-- Colonne "À faire" -->
+        <div class="kanban-column todo-column" data-status="à faire">
+            <div class="kanban-title bg-info text-white">
+                À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span>
+            </div>
+            <div class="kanban-items">
+                {% for task in tasks_todo %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        {% if show_actions %}
+                        <div class="kanban-task-actions">
+                            <button class="btn btn-sm btn-success" 
+                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
+                                    title="Commencer">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        {% if task.estimated_time %}
+                            <div class="kanban-task-time">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ task.estimated_time|format_time }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Colonne "En cours" -->
+        <div class="kanban-column progress-column" data-status="en cours">
+            <div class="kanban-title bg-warning text-dark">
+                En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span>
+            </div>
+            <div class="kanban-items">
+                {% for task in tasks_in_progress %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        {% if show_actions %}
+                        <div class="kanban-task-actions">
+                            <button class="btn btn-sm btn-primary" 
+                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
+                                    title="Terminer">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        <div class="kanban-task-time">
+                            {% if task.estimated_time %}
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ task.estimated_time|format_time }}</span>
+                            {% endif %}
+                            {% if task.actual_time %}
+                                <i class="fas fa-stopwatch"></i>
+                                <span>{{ task.actual_time|format_time }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Colonne "Terminé" -->
+        <div class="kanban-column done-column" data-status="terminé">
+            <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
+                <span>Terminé <span class="badge bg-light text-dark">{{ tasks_completed|length }}</span></span>
+                {% if show_archives_link and archives_url %}
+                    <a href="{{ archives_url }}" class="text-white text-decoration-none" title="Voir les archives">
+                        <i class="fas fa-archive"></i>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="kanban-items">
+                {% for task in tasks_completed %}
+                    <div class="kanban-task" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        {% if show_actions %}
+                        <div class="kanban-task-actions">
+                            {% if not task.is_archived %}
+                                <button class="btn btn-sm btn-secondary" 
+                                        onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
+                                        title="Archiver">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <h6 class="kanban-task-title">
+                            <span class="priority-dot priority-{{ task.priority }}"></span>
+                            {{ task.title }}
+                        </h6>
+                        <div class="kanban-task-meta">
+                            <i class="fas fa-folder me-1"></i>{{ task.project.name }}
+                            <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
+                        </div>
+                        <div class="kanban-task-time">
+                            {% if task.completed_at %}
+                                <i class="fas fa-calendar-check"></i>
+                                <span>{{ task.completed_at.strftime('%d/%m') }}</span>
+                            {% endif %}
+                            {% if task.actual_time %}
+                                <i class="fas fa-stopwatch"></i>
+                                <span>{{ task.actual_time|format_time }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

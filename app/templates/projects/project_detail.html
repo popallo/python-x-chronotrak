@@ -9,6 +9,7 @@
         initProjectsPage();
     });
 </script>
+<script type="module" src="{{ url_for('static', filename='js/components/kanban.js') }}"></script>
 <script>
     // Stocker le token CSRF global
     window.csrfToken = "{{ csrf_token() }}";
@@ -17,6 +18,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/project_detail.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/kanban.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
 {% endblock %}
 
@@ -97,51 +99,8 @@
         </a>
     </div>
     <div class="card-body">
-        <div class="kanban-container">
-            <div class="kanban-board">
-                <!-- Colonne "À faire" -->
-                <div class="kanban-column todo-column" data-status="à faire">
-                    <div class="kanban-title bg-info text-white">
-                        À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span>
-                    </div>
-                    <div class="kanban-items">
-                        {% for task in tasks_todo %}
-                            {% from 'tasks/task_card.html' import task_card %}
-                            {{ task_card(task) }}
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <!-- Colonne "En cours" -->
-                <div class="kanban-column progress-column" data-status="en cours">
-                    <div class="kanban-title bg-warning text-dark">
-                        En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span>
-                    </div>
-                    <div class="kanban-items">
-                        {% for task in tasks_in_progress %}
-                            {% from 'tasks/task_card.html' import task_card %}
-                            {{ task_card(task) }}
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <!-- Colonne "Terminé" -->
-                <div class="kanban-column done-column" data-status="terminé">
-                    <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
-                        <span>Terminé <span class="badge bg-light text-dark">{{ tasks_done|length }}</span></span>
-                        <a href="{{ url_for('tasks.archives', project_id=project.id) }}" class="text-white text-decoration-none" title="Voir les archives de ce projet">
-                            <i class="fas fa-archive"></i>
-                        </a>
-                    </div>
-                    <div class="kanban-items">
-                        {% for task in tasks_done %}
-                            {% from 'tasks/task_card.html' import task_card %}
-                            {{ task_card(task) }}
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% from 'components/kanban_board.html' import kanban_board %}
+        {{ kanban_board(tasks_todo, tasks_in_progress, tasks_done, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives', project_id=project.id)) }}
     </div>
 </div>
 

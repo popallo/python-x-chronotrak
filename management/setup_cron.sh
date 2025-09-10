@@ -11,7 +11,7 @@ CRON_FILE="/tmp/chronotrak_cron"
 # Ajouter la tâche cron (archivage automatique tous les jours à 2h du matin)
 echo "0 2 * * * cd /app && flask auto-archive >> /var/log/chronotrak_archive.log 2>&1" > $CRON_FILE
 
-# Ajouter la tâche cron au crontab de l'utilisateur root
+# Ajouter la tâche cron au crontab de l'utilisateur courant
 crontab $CRON_FILE
 
 # Vérifier que la tâche a été ajoutée

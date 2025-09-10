@@ -153,8 +153,10 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task_filters.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/components/kanban.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/kanban-dragdrop.js') }}"></script>
 <script>
     // Stocker le token CSRF global
     window.csrfToken = "{{ csrf_token() }}";

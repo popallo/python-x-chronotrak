@@ -34,6 +34,7 @@ class Task(db.Model):
     is_pinned = db.Column(db.Boolean, nullable=False, default=False)  # Pour épingler les tâches importantes
     is_archived = db.Column(db.Boolean, nullable=False, default=False)  # Pour archiver les tâches terminées
     archived_at = db.Column(db.DateTime, nullable=True)  # Date d'archivage
+    position = db.Column(db.Integer, default=0)  # Pour maintenir l'ordre des tâches dans les colonnes
     
     # Clés étrangères
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)

@@ -104,14 +104,19 @@ def project_details(slug_or_id):
     tasks = project.tasks
     form = DeleteProjectForm()
     
-    # Trier les tâches par statut (exclure les tâches archivées)
-    tasks_todo = [task for task in tasks if task.status == 'à faire' and not task.is_archived]
-    tasks_in_progress = [task for task in tasks if task.status == 'en cours' and not task.is_archived]
-    # Trier les tâches terminées par date de clôture décroissante (exclure les tâches archivées)
+    # Trier les tâches par statut et par position (exclure les tâches archivées)
+    tasks_todo = sorted(
+        [task for task in tasks if task.status == 'à faire' and not task.is_archived],
+        key=lambda t: (t.position, t.created_at)
+    )
+    tasks_in_progress = sorted(
+        [task for task in tasks if task.status == 'en cours' and not task.is_archived],
+        key=lambda t: (t.position, t.created_at)
+    )
+    # Trier les tâches terminées par position puis date de clôture décroissante (exclure les tâches archivées)
     tasks_done = sorted(
         [task for task in tasks if task.status == 'terminé' and not task.is_archived],
-        key=lambda x: x.completed_at if x.completed_at else datetime.min,
-        reverse=True
+        key=lambda t: (t.position, t.completed_at if t.completed_at else datetime.min)
     )
     
     # Créer un historique unifié avec crédits et temps consommés

@@ -1,3 +1,13 @@
+/* Variables pour les couleurs du mode sombre */
+:root {
+  --dm-bg-main: #0f172a;      /* Fond principal plus profond */
+  --dm-bg-card: #1e293b;      /* Cartes légèrement plus claires */
+  --dm-bg-elevated: #334155;  /* Éléments surélevés */
+  --dm-border: #475569;       /* Bordures plus douces */
+  --dm-text: #f1f5f9;         /* Texte principal plus doux */
+  --dm-text-muted: #94a3b8;   /* Texte secondaire plus lisible */
+}
+
 /* Initial loading state - pour éviter le flash */
 html:not(.theme-loaded) body {
     visibility: hidden;
@@ -13,22 +23,6 @@ html.dark-mode body {
     background-color: var(--dm-bg-main);
     color: var(--dm-text);
 }
-  
-  /* Variables pour les couleurs du mode sombre */
-  :root {
-    --dm-bg-main: #0f172a;      /* Fond principal plus profond */
-    --dm-bg-card: #1e293b;      /* Cartes légèrement plus claires */
-    --dm-bg-elevated: #334155;  /* Éléments surélevés */
-    --dm-border: #475569;       /* Bordures plus douces */
-    --dm-text: #f1f5f9;         /* Texte principal plus doux */
-    --dm-text-muted: #94a3b8;   /* Texte secondaire plus lisible */
-  }
-  
-  /* Sélecteur principal pour le mode sombre */
-  html.dark-mode body {
-    background-color: var(--dm-bg-main);
-    color: var(--dm-text);
-  }
   
   /* ===== Éléments de base ===== */
   html.dark-mode body .navbar-dark {

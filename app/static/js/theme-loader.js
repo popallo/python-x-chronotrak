@@ -1,18 +1,21 @@
 (function() {
     // 1. Déterminer le thème immédiatement AVANT que le DOM soit rendu
     const darkMode = localStorage.getItem('darkMode');
+    const html = document.documentElement;
+    
+    // 2. Appliquer le thème immédiatement pour éviter le flash
     if (darkMode === 'enabled') {
-        document.documentElement.classList.add('dark-mode');
+        html.classList.add('dark-mode');
+        html.setAttribute('data-bs-theme', 'dark');
+    } else {
+        html.setAttribute('data-bs-theme', 'light');
     }
     
-    // 2. Marquer le thème comme chargé pour rendre le contenu visible
-    function markThemeAsLoaded() {
-        document.documentElement.classList.add('theme-loaded');
-    }
+    // 3. Marquer le thème comme chargé pour rendre le contenu visible
+    html.classList.add('theme-loaded');
     
-    // 3. Appliquer le thème immédiatement
-    markThemeAsLoaded();
-    
-    // 4. En cas de problème, s'assurer que le contenu est visible
-    setTimeout(markThemeAsLoaded, 100);
+    // 4. Fallback de sécurité - s'assurer que le contenu est visible
+    setTimeout(function() {
+        html.classList.add('theme-loaded');
+    }, 50);
 })();

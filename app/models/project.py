@@ -10,6 +10,7 @@ class Project(db.Model):
     initial_credit = db.Column(db.Integer, nullable=False, default=0)  # en minutes
     remaining_credit = db.Column(db.Integer, nullable=False, default=0)  # en minutes
     time_tracking_enabled = db.Column(db.Boolean, nullable=True, default=True)  # Indique si le projet utilise la gestion de temps
+    is_favorite = db.Column(db.Boolean, nullable=False, default=False)  # Indique si le projet est en favori
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Clé étrangère

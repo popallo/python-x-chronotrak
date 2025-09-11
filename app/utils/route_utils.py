@@ -127,6 +127,12 @@ def apply_filters(query, model, filters):
             elif field == 'priority' and hasattr(model, 'priority'):
                 query = query.filter(model.priority == value)
                 filters_active = True
+            elif field == 'favorites_only' and hasattr(model, 'is_favorite'):
+                if value == 'true':
+                    query = query.filter(model.is_favorite == True)
+                elif value == 'false':
+                    query = query.filter(model.is_favorite == False)
+                filters_active = True
             elif field == 'credit_status' and hasattr(model, 'remaining_credit'):
                 if value == 'critical':
                     query = query.filter(model.remaining_credit < 120)

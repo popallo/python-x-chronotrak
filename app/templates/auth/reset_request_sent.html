@@ -39,10 +39,10 @@
 
 {% block scripts %}
 <script type="module">
-    import { initDarkMode } from "{{ url_for('static', filename='js/lib/dark-mode.js') }}";
+    import { initAuthPage } from "{{ url_for('static', filename='js/pages/auth.js') }}";
     
     document.addEventListener('DOMContentLoaded', function() {
-        initDarkMode();
+        initAuthPage();
     });
 </script>
 {% endblock %} 

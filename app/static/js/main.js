@@ -6,11 +6,11 @@
 import { initDarkMode } from './lib/dark-mode.js';
 import { autoCloseAlerts, initTooltips, highlightActiveNavItem } from './utils/dom.js';
 import { initTasksPage } from './pages/tasks.js';
-import { initProjectsPage } from './pages/projects.js';
 import { initRegistrationForm } from './pages/user_registration.js';
 import { initUserEditForm } from './pages/user_edit.js';
 import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
+import { initProjectFavorites } from './pages/project_favorites.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
 import { initCardCollapse } from './pages/card_collapse.js';
 import { initWelcomePage } from './pages/welcome-page.js';
@@ -40,10 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initTasksPage();
     }
     
-    // Page des projets
-    if (currentPath.includes('/projects/')) {
-        initProjectsPage();
-    }
+    // Page des projets individuelles - pas d'initialisation spécifique nécessaire
 
     // Page d'inscription utilisateur
     if (currentPath.includes('/register')) {
@@ -63,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Page des projets - liste
     if (currentPath === '/projects') {
         initProjectFilters();
+        initProjectFavorites();
     }
 
     // Page des tâches - liste

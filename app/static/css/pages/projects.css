@@ -1,0 +1,72 @@
+/**
+ * Styles spécifiques à la page des projets
+ * Gère les favoris, catégories et drag & drop
+ */
+
+/* ===== CATÉGORIES DE PROJETS ===== */
+.category-section {
+    margin-bottom: 2rem;
+}
+
+.category-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+/* ===== GRADIENTS SPÉCIFIQUES ===== */
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+/* ===== DRAG & DROP ===== */
+.project-card[draggable="true"] {
+    cursor: grab;
+}
+
+.project-card[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.project-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.favorites-drop-zone {
+    transition: all 0.3s ease;
+}
+
+.favorites-drop-zone.drag-over {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border-color: #ffc107 !important;
+}
+
+/* ===== BOUTONS DE FAVORIS ===== */
+.toggle-favorite {
+    transition: all 0.2s ease;
+}
+
+.toggle-favorite:hover {
+    transform: scale(1.1);
+}
+
+.toggle-favorite i.fa-star {
+    color: #ffc107;
+}
+
+.toggle-favorite i.far {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== MODE SOMBRE ===== */
+html.dark-mode .category-title {
+    color: var(--dm-text-primary) !important;
+    border-bottom-color: var(--dm-border) !important;
+}

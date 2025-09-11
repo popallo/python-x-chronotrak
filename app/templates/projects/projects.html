@@ -2,7 +2,9 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/projects.css') }}">
 <style>
+    /* Styles spécifiques aux cartes de projets (non dupliqués) */
     .project-card {
         transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         border: 1px solid rgba(0, 0, 0, 0.05);
@@ -20,24 +22,6 @@
     }
     
     .project-card .card-header {
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .project-card .card-body {
-        padding: 0.75rem;
-    }
-    
-    .project-card .card-footer {
-        padding: 0.5rem 0.75rem;
-    }
-    
-    /* Les tooltips utilisent maintenant le système Bootstrap existant */
-    
-    .bg-gradient-success {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    }
-    
-    .project-card .card-header {
         border-bottom: none;
         padding: 1rem 1.25rem;
     }
@@ -46,23 +30,13 @@
         padding: 1.25rem;
     }
     
-    .stat-item {
-        padding: 0.5rem;
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
-        font-weight: bold;
-        line-height: 1;
-    }
-    
-    .stat-label {
-        margin-top: 0.25rem;
-    }
-    
     .project-card .card-footer {
         padding: 1rem 1.25rem;
         background: transparent;
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     }
     
     .btn-group .btn {
@@ -90,66 +64,6 @@
         }
     }
     
-    /* Styles pour les catégories */
-    .category-section {
-        margin-bottom: 2rem;
-    }
-    
-    .category-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.5rem;
-    }
-    
-    .bg-gradient-warning {
-        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    }
-    
-    .bg-gradient-secondary {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-    }
-    
-    /* Styles pour le drag & drop */
-    .project-card[draggable="true"] {
-        cursor: grab;
-    }
-    
-    .project-card[draggable="true"]:active {
-        cursor: grabbing;
-    }
-    
-    .project-card.dragging {
-        opacity: 0.5;
-        transform: rotate(5deg);
-    }
-    
-    .favorites-drop-zone {
-        transition: all 0.3s ease;
-    }
-    
-    .favorites-drop-zone.drag-over {
-        background-color: rgba(255, 193, 7, 0.2) !important;
-        border-color: #ffc107 !important;
-    }
-    
-    .toggle-favorite {
-        transition: all 0.2s ease;
-    }
-    
-    .toggle-favorite:hover {
-        transform: scale(1.1);
-    }
-    
-    .toggle-favorite i.fa-star {
-        color: #ffc107;
-    }
-    
-    .toggle-favorite i.far {
-        color: rgba(255, 255, 255, 0.7);
-    }
-    
     /* Dark mode support */
     html.dark-mode .project-card {
         background: var(--dm-bg-card) !important;
@@ -166,11 +80,6 @@
     html.dark-mode .task-stats {
         background: var(--dm-bg-elevated) !important;
         border-color: var(--dm-border) !important;
-    }
-    
-    html.dark-mode .category-title {
-        color: var(--dm-text-primary) !important;
-        border-bottom-color: var(--dm-border) !important;
     }
 </style>
 {% endblock %}
@@ -738,161 +647,5 @@
 
 {% block scripts %}
 <script type="module" src="{{ url_for('static', filename='js/pages/project_filters.js') }}"></script>
-<script>
-    // Initialiser les tooltips Bootstrap
-    document.addEventListener('DOMContentLoaded', function() {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Initialiser le drag & drop et les favoris
-        initializeDragAndDrop();
-        initializeFavoriteButtons();
-    });
-    
-    function initializeDragAndDrop() {
-        const projectCards = document.querySelectorAll('.project-card[draggable="true"]');
-        const favoritesDropZone = document.getElementById('favorites-drop-zone');
-        
-        projectCards.forEach(card => {
-            card.addEventListener('dragstart', handleDragStart);
-            card.addEventListener('dragend', handleDragEnd);
-        });
-        
-        if (favoritesDropZone) {
-            favoritesDropZone.addEventListener('dragover', handleDragOver);
-            favoritesDropZone.addEventListener('dragleave', handleDragLeave);
-            favoritesDropZone.addEventListener('drop', handleDrop);
-        }
-        
-        // Afficher la zone de drop quand on commence à glisser
-        document.addEventListener('dragstart', function(e) {
-            if (e.target.classList.contains('project-card')) {
-                favoritesDropZone.style.display = 'block';
-            }
-        });
-        
-        // Masquer la zone de drop quand on arrête de glisser
-        document.addEventListener('dragend', function(e) {
-            if (e.target.classList.contains('project-card')) {
-                favoritesDropZone.style.display = 'none';
-                favoritesDropZone.classList.remove('drag-over');
-            }
-        });
-    }
-    
-    function handleDragStart(e) {
-        e.target.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', e.target.outerHTML);
-        e.dataTransfer.setData('project-slug', e.target.dataset.projectSlug);
-    }
-    
-    function handleDragEnd(e) {
-        e.target.classList.remove('dragging');
-    }
-    
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        e.target.closest('.favorites-drop-zone').classList.add('drag-over');
-    }
-    
-    function handleDragLeave(e) {
-        e.target.closest('.favorites-drop-zone').classList.remove('drag-over');
-    }
-    
-    function handleDrop(e) {
-        e.preventDefault();
-        const dropZone = e.target.closest('.favorites-drop-zone');
-        dropZone.classList.remove('drag-over');
-        
-        const projectSlug = e.dataTransfer.getData('project-slug');
-        if (projectSlug) {
-            toggleFavorite(projectSlug);
-        }
-    }
-    
-    function initializeFavoriteButtons() {
-        const favoriteButtons = document.querySelectorAll('.toggle-favorite');
-        favoriteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const projectSlug = this.dataset.projectSlug;
-                toggleFavorite(projectSlug);
-            });
-        });
-    }
-    
-    function toggleFavorite(projectSlug) {
-        fetch(`/projects/${projectSlug}/toggle_favorite`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Afficher un toast de succès
-                showToast('success', data.message);
-                
-                // Recharger la page pour mettre à jour l'affichage
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showToast('error', data.error || 'Erreur lors de la mise à jour des favoris');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showToast('error', 'Erreur lors de la mise à jour des favoris');
-        });
-    }
-    
-    function getCSRFToken() {
-        const token = document.querySelector('meta[name="csrf-token"]');
-        return token ? token.getAttribute('content') : '';
-    }
-    
-    function showToast(type, message) {
-        // Créer un toast Bootstrap
-        const toastContainer = document.querySelector('.toast-container') || createToastContainer();
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-        
-        // Supprimer le toast du DOM après qu'il soit caché
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
-    }
-    
-    function createToastContainer() {
-        const container = document.createElement('div');
-        container.className = 'toast-container position-fixed top-0 end-0 p-3';
-        container.style.zIndex = '1055';
-        document.body.appendChild(container);
-        return container;
-    }
-</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/project_favorites.js') }}"></script>
 {% endblock %}

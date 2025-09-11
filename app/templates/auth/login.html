@@ -74,16 +74,12 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {% endif %}
 <script type="module">
-    import { initDarkMode } from "{{ url_for('static', filename='js/lib/dark-mode.js') }}";
-    {% if config.TURNSTILE_ENABLED %}
-    import { initTurnstile } from "{{ url_for('static', filename='js/lib/turnstile.js') }}";
-    {% endif %}
+    import { initAuthPage } from "{{ url_for('static', filename='js/pages/auth.js') }}";
     
     document.addEventListener('DOMContentLoaded', function() {
-        initDarkMode();
-        {% if config.TURNSTILE_ENABLED %}
-        initTurnstile();
-        {% endif %}
+        initAuthPage({
+            turnstileEnabled: {% if config.TURNSTILE_ENABLED %}true{% else %}false{% endif %}
+        });
     });
 </script>
 {% endblock %}

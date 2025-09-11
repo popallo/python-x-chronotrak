@@ -3,13 +3,7 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/components/kanban.css') }}">
-<style>
-/* Styles spécifiques pour my_tasks */
-.my-tasks-container {
-    max-width: 1400px;
-    margin: 0 auto;
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -157,8 +151,4 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task_filters.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/components/kanban.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/kanban-dragdrop.js') }}"></script>
-<script>
-    // Stocker le token CSRF global
-    window.csrfToken = "{{ csrf_token() }}";
-</script>
 {% endblock %}

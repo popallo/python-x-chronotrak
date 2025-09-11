@@ -1,0 +1,9 @@
+/**
+ * Styles spécifiques aux pages de tâches
+ */
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.my-tasks-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}

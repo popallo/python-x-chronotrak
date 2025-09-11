@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models.project import Project, CreditLog
@@ -30,25 +30,78 @@ def list_projects():
     # Récupérer les filtres
     filters = {
         'search': request.args.get('search'),
-        'client_id': request.args.get('client_id', type=int)
+        'client_id': request.args.get('client_id', type=int),
+        'favorites_only': request.args.get('favorites_only')
     }
     
     # Appliquer les filtres
     query = get_accessible_projects()
     query, filters_active = apply_filters(query, Project, filters)
     
-    # Appliquer le tri
-    sort_by = request.args.get('sort_by', 'name')
+    # Appliquer le tri par catégories (favoris, activité récente, ancienne)
+    sort_by = request.args.get('sort_by', 'categories')
     sort_order = request.args.get('sort_order', 'asc')
-    query = apply_sorting(query, Project, sort_by, sort_order)
+    
+    if sort_by == 'categories':
+        # Tri par catégories : favoris d'abord, puis par activité récente
+        from datetime import datetime, timedelta
+        one_month_ago = datetime.utcnow() - timedelta(days=30)
+        
+        # Sous-requête pour obtenir la dernière activité de chaque projet
+        last_activity_subquery = db.session.query(
+            Task.project_id,
+            func.max(Task.updated_at).label('last_activity')
+        ).group_by(Task.project_id).subquery()
+        
+        # Joindre avec la sous-requête pour obtenir la dernière activité
+        query = query.outerjoin(
+            last_activity_subquery, 
+            Project.id == last_activity_subquery.c.project_id
+        )
+        
+        # Tri : favoris d'abord, puis par dernière activité (récente d'abord), puis par nom
+        query = query.order_by(
+            Project.is_favorite.desc(),  # Favoris en premier
+            func.coalesce(last_activity_subquery.c.last_activity, Project.created_at).desc(),  # Activité récente
+            Project.name.asc()  # Puis par nom
+        )
+    else:
+        # Tri classique
+        query = apply_sorting(query, Project, sort_by, sort_order)
     
     projects = query.paginate(page=page, per_page=per_page, error_out=False)
     
     # Récupérer la liste des clients pour le filtre
     clients = Client.query.all() if current_user.is_admin() or current_user.is_technician() else current_user.clients
     
+    # Organiser les projets par catégories pour l'affichage
+    from datetime import datetime, timedelta
+    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    
+    projects_by_category = {
+        'favorites': [],
+        'recent_activity': [],
+        'old_activity': []
+    }
+    
+    for project in projects.items:
+        # Déterminer la dernière activité du projet
+        last_activity = None
+        if project.tasks:
+            last_activity = max([task.updated_at for task in project.tasks if not task.is_archived], default=project.created_at)
+        else:
+            last_activity = project.created_at
+        
+        if project.is_favorite:
+            projects_by_category['favorites'].append(project)
+        elif last_activity >= one_month_ago:
+            projects_by_category['recent_activity'].append(project)
+        else:
+            projects_by_category['old_activity'].append(project)
+    
     return render_template('projects/projects.html', 
                          projects=projects,
+                         projects_by_category=projects_by_category,
                          clients=clients,
                          filters_active=filters_active,
                          sort_by=sort_by,
@@ -332,3 +385,24 @@ def delete_project(slug_or_id):
     delete_from_db(project)
     flash(f'Projet "{project.name}" supprimé!', 'success')
     return redirect(url_for('projects.list_projects'))
+
+@projects.route('/projects/<slug_or_id>/toggle_favorite', methods=['POST'])
+@login_required
+def toggle_favorite(slug_or_id):
+    """Route API pour basculer le statut favori d'un projet"""
+    project = get_project_by_slug_or_id(slug_or_id)
+    
+    # Vérifier les permissions
+    if current_user.is_client():
+        if not current_user.has_access_to_client(project.client_id):
+            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
+    
+    # Basculer le statut favori
+    project.is_favorite = not project.is_favorite
+    save_to_db(project)
+    
+    return jsonify({
+        'success': True, 
+        'is_favorite': project.is_favorite,
+        'message': f'Projet {"ajouté aux" if project.is_favorite else "retiré des"} favoris'
+    })

@@ -90,6 +90,66 @@
         }
     }
     
+    /* Styles pour les catégories */
+    .category-section {
+        margin-bottom: 2rem;
+    }
+    
+    .category-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+    
+    .bg-gradient-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    
+    /* Styles pour le drag & drop */
+    .project-card[draggable="true"] {
+        cursor: grab;
+    }
+    
+    .project-card[draggable="true"]:active {
+        cursor: grabbing;
+    }
+    
+    .project-card.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+    
+    .favorites-drop-zone {
+        transition: all 0.3s ease;
+    }
+    
+    .favorites-drop-zone.drag-over {
+        background-color: rgba(255, 193, 7, 0.2) !important;
+        border-color: #ffc107 !important;
+    }
+    
+    .toggle-favorite {
+        transition: all 0.2s ease;
+    }
+    
+    .toggle-favorite:hover {
+        transform: scale(1.1);
+    }
+    
+    .toggle-favorite i.fa-star {
+        color: #ffc107;
+    }
+    
+    .toggle-favorite i.far {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
     /* Dark mode support */
     html.dark-mode .project-card {
         background: var(--dm-bg-card) !important;
@@ -106,6 +166,11 @@
     html.dark-mode .task-stats {
         background: var(--dm-bg-elevated) !important;
         border-color: var(--dm-border) !important;
+    }
+    
+    html.dark-mode .category-title {
+        color: var(--dm-text-primary) !important;
+        border-bottom-color: var(--dm-border) !important;
     }
 </style>
 {% endblock %}
@@ -147,6 +212,16 @@
                     </select>
                 </div>
                 
+                <!-- Filtre par favoris -->
+                <div class="col-md-6 mb-3">
+                    <label for="favorites_only" class="form-label">Favoris</label>
+                    <select name="favorites_only" id="favorites_only" class="form-select">
+                        <option value="">Tous les projets</option>
+                        <option value="true" {% if request.args.get('favorites_only') == 'true' %}selected{% endif %}>Favoris uniquement</option>
+                        <option value="false" {% if request.args.get('favorites_only') == 'false' %}selected{% endif %}>Non-favoris uniquement</option>
+                    </select>
+                </div>
+                
                 <!-- Filtre par état de crédit -->
                 <div class="col-md-6 mb-3">
                     <label for="credit_status" class="form-label">État du crédit</label>
@@ -168,9 +243,10 @@
                 <div class="col-md-6 mb-3">
                     <label for="sort_by" class="form-label">Trier par</label>
                     <select name="sort_by" id="sort_by" class="form-select">
+                        <option value="categories" {% if request.args.get('sort_by', 'categories') == 'categories' %}selected{% endif %}>Catégories (favoris, activité récente, ancienne)</option>
                         <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Nom</option>
                         <option value="date_asc" {% if request.args.get('sort_by') == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
-                        <option value="date_desc" {% if request.args.get('sort_by', 'date_desc') == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
+                        <option value="date_desc" {% if request.args.get('sort_by') == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
                         <option value="credit_asc" {% if request.args.get('sort_by') == 'credit_asc' %}selected{% endif %}>Crédit (plus bas)</option>
                         <option value="credit_desc" {% if request.args.get('sort_by') == 'credit_desc' %}selected{% endif %}>Crédit (plus haut)</option>
                     </select>
@@ -213,6 +289,16 @@
                 {% endif %}
             {% endif %}
             
+            {% if request.args.get('favorites_only') %}
+                <div class="filter-badge" data-type="favorites_only" data-value="{{ request.args.get('favorites_only') }}">
+                    Favoris: 
+                    {% if request.args.get('favorites_only') == 'true' %}Oui
+                    {% else %}Non
+                    {% endif %}
+                    <span class="remove-filter">×</span>
+                </div>
+            {% endif %}
+            
             {% if request.args.get('credit_status') %}
                 <div class="filter-badge" data-type="credit_status" data-value="{{ request.args.get('credit_status') }}">
                     Crédit: 
@@ -245,111 +331,358 @@
     </div>
 </div>
 
-<!-- Affichage des projets filtrés -->
+<!-- Affichage des projets par catégories -->
 {% if projects %}
-    <div class="row">
-        {% for project in projects %}
-            <div class="col-lg-6 col-xl-4 mb-3">
-                <div class="card project-card shadow-sm">
-                    <!-- En-tête compact -->
-                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center py-2">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-project-diagram me-2"></i>
-                            <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
-                        </div>
-                        <span class="badge bg-light text-dark">{{ project.client.name }}</span>
-                    </div>
-                    
-                    <!-- Corps compact -->
-                    <div class="card-body py-2">
-                        <!-- Description courte -->
-                        {% if project.description %}
-                            <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
-                        {% endif %}
-                        
-                        <!-- Informations essentielles en ligne -->
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
-                                <i class="fas fa-calendar me-1 text-muted"></i>
-                                <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
+    <!-- Zone de drop pour les favoris -->
+    <div id="favorites-drop-zone" class="favorites-drop-zone mb-4" style="display: none;">
+        <div class="text-center p-4 border-2 border-dashed border-warning rounded bg-warning bg-opacity-10">
+            <i class="fas fa-star fa-2x text-warning mb-2"></i>
+            <p class="mb-0 text-warning">Déposez ici pour ajouter aux favoris</p>
+        </div>
+    </div>
+
+    <!-- Projets favoris -->
+    {% if projects_by_category.favorites %}
+    <div class="category-section mb-4">
+        <h4 class="category-title d-flex align-items-center mb-3">
+            <i class="fas fa-star text-warning me-2"></i>
+            Projets favoris
+            <span class="badge bg-warning text-dark ms-2">{{ projects_by_category.favorites|length }}</span>
+        </h4>
+        <div class="row">
+            {% for project in projects_by_category.favorites %}
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
+                        <!-- En-tête compact -->
+                        <div class="card-header bg-gradient-warning text-dark d-flex justify-content-between align-items-center py-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-star me-2"></i>
+                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-dark text-white">{{ project.client.name }}</span>
+                                <button class="btn btn-sm btn-outline-dark toggle-favorite" data-project-slug="{{ project.slug }}" title="Retirer des favoris">
+                                    <i class="fas fa-star"></i>
+                                </button>
                             </div>
                         </div>
-                        
-                        <!-- Crédit et statuts des tâches -->
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <!-- Crédit -->
-                            <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
-                                {% if project.time_tracking_enabled %}
-                                    <i class="fas fa-clock me-1 text-muted"></i>
-                                    <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
-                                        {{ project.remaining_credit|format_time }}
-                                    </span>
-                                {% else %}
-                                    <i class="fas fa-clock me-1 text-muted"></i>
-                                    <span class="badge bg-secondary small">Désactivé</span>
-                                {% endif %}
+                    
+                        <!-- Corps compact -->
+                        <div class="card-body py-2">
+                            <!-- Description courte -->
+                            {% if project.description %}
+                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
+                            {% endif %}
+                            
+                            <!-- Informations essentielles en ligne -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
+                                    <i class="fas fa-calendar me-1 text-muted"></i>
+                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
+                                </div>
                             </div>
                             
-                            <!-- Statuts des tâches -->
-                            {% if project.tasks %}
-                                {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
-                                {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
-                                {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
-                                {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
-                                {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
-                                
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
-                                        <i class="fas fa-tasks me-1 text-muted"></i>
-                                        <span class="small text-muted">{{ total_remaining }}</span>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                            <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
-                                        </span>
-                                        <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                            <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
-                                        </span>
-                                        <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                            <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
-                                        </span>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Actions compactes -->
-                    <div class="card-footer bg-transparent border-top-0 py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
-                                <i class="fas fa-eye me-1"></i>Détails
-                            </a>
-                            {% if not current_user.is_client() %}
-                                <div class="d-flex gap-1">
+                            <!-- Crédit et statuts des tâches -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <!-- Crédit -->
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
                                     {% if project.time_tracking_enabled %}
-                                    <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
+                                            {{ project.remaining_credit|format_time }}
+                                        </span>
+                                    {% else %}
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge bg-secondary small">Désactivé</span>
                                     {% endif %}
-                                    <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
                                 </div>
-                            {% endif %}
+                                
+                                <!-- Statuts des tâches -->
+                                {% if project.tasks %}
+                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
+                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
+                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
+                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
+                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
+                                    
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
+                                            <i class="fas fa-tasks me-1 text-muted"></i>
+                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
+                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                            </span>
+                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
+                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                            </span>
+                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
+                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Actions compactes -->
+                        <div class="card-footer bg-transparent border-top-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-warning btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
+                                    <i class="fas fa-eye me-1"></i>Détails
+                                </a>
+                                {% if not current_user.is_client() %}
+                                    <div class="d-flex gap-1">
+                                        {% if project.time_tracking_enabled %}
+                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
+    {% endif %}
+
+    <!-- Projets avec activité récente -->
+    {% if projects_by_category.recent_activity %}
+    <div class="category-section mb-4">
+        <h4 class="category-title d-flex align-items-center mb-3">
+            <i class="fas fa-clock text-success me-2"></i>
+            Activité récente (moins d'un mois)
+            <span class="badge bg-success ms-2">{{ projects_by_category.recent_activity|length }}</span>
+        </h4>
+        <div class="row">
+            {% for project in projects_by_category.recent_activity %}
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
+                        <!-- En-tête compact -->
+                        <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center py-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-project-diagram me-2"></i>
+                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark">{{ project.client.name }}</span>
+                                <button class="btn btn-sm btn-outline-light toggle-favorite" data-project-slug="{{ project.slug }}" title="Ajouter aux favoris">
+                                    <i class="far fa-star"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Corps compact -->
+                        <div class="card-body py-2">
+                            <!-- Description courte -->
+                            {% if project.description %}
+                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
+                            {% endif %}
+                            
+                            <!-- Informations essentielles en ligne -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
+                                    <i class="fas fa-calendar me-1 text-muted"></i>
+                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Crédit et statuts des tâches -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <!-- Crédit -->
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
+                                    {% if project.time_tracking_enabled %}
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
+                                            {{ project.remaining_credit|format_time }}
+                                        </span>
+                                    {% else %}
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge bg-secondary small">Désactivé</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Statuts des tâches -->
+                                {% if project.tasks %}
+                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
+                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
+                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
+                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
+                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
+                                    
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
+                                            <i class="fas fa-tasks me-1 text-muted"></i>
+                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
+                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                            </span>
+                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
+                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                            </span>
+                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
+                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Actions compactes -->
+                        <div class="card-footer bg-transparent border-top-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
+                                    <i class="fas fa-eye me-1"></i>Détails
+                                </a>
+                                {% if not current_user.is_client() %}
+                                    <div class="d-flex gap-1">
+                                        {% if project.time_tracking_enabled %}
+                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Projets avec activité ancienne -->
+    {% if projects_by_category.old_activity %}
+    <div class="category-section mb-4">
+        <h4 class="category-title d-flex align-items-center mb-3">
+            <i class="fas fa-history text-muted me-2"></i>
+            Activité ancienne (plus d'un mois)
+            <span class="badge bg-secondary ms-2">{{ projects_by_category.old_activity|length }}</span>
+        </h4>
+        <div class="row">
+            {% for project in projects_by_category.old_activity %}
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
+                        <!-- En-tête compact -->
+                        <div class="card-header bg-gradient-secondary text-white d-flex justify-content-between align-items-center py-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-project-diagram me-2"></i>
+                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark">{{ project.client.name }}</span>
+                                <button class="btn btn-sm btn-outline-light toggle-favorite" data-project-slug="{{ project.slug }}" title="Ajouter aux favoris">
+                                    <i class="far fa-star"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Corps compact -->
+                        <div class="card-body py-2">
+                            <!-- Description courte -->
+                            {% if project.description %}
+                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
+                            {% endif %}
+                            
+                            <!-- Informations essentielles en ligne -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
+                                    <i class="fas fa-calendar me-1 text-muted"></i>
+                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Crédit et statuts des tâches -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <!-- Crédit -->
+                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
+                                    {% if project.time_tracking_enabled %}
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
+                                            {{ project.remaining_credit|format_time }}
+                                        </span>
+                                    {% else %}
+                                        <i class="fas fa-clock me-1 text-muted"></i>
+                                        <span class="badge bg-secondary small">Désactivé</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Statuts des tâches -->
+                                {% if project.tasks %}
+                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
+                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
+                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
+                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
+                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
+                                    
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
+                                            <i class="fas fa-tasks me-1 text-muted"></i>
+                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
+                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                            </span>
+                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
+                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                            </span>
+                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
+                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Actions compactes -->
+                        <div class="card-footer bg-transparent border-top-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
+                                    <i class="fas fa-eye me-1"></i>Détails
+                                </a>
+                                {% if not current_user.is_client() %}
+                                    <div class="d-flex gap-1">
+                                        {% if project.time_tracking_enabled %}
+                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
     <!-- Pagination si nécessaire -->
     {% if pagination %}
     <nav aria-label="Pagination des projets">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
                         <i class="fas fa-chevron-left"></i> Précédent
                     </a>
                 </li>
@@ -367,7 +700,7 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">{{ page }}</a>
+                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">{{ page }}</a>
                         </li>
                     {% endif %}
                 {% else %}
@@ -379,7 +712,7 @@
             
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
                         Suivant <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>
@@ -412,6 +745,154 @@
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+        
+        // Initialiser le drag & drop et les favoris
+        initializeDragAndDrop();
+        initializeFavoriteButtons();
     });
+    
+    function initializeDragAndDrop() {
+        const projectCards = document.querySelectorAll('.project-card[draggable="true"]');
+        const favoritesDropZone = document.getElementById('favorites-drop-zone');
+        
+        projectCards.forEach(card => {
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+        });
+        
+        if (favoritesDropZone) {
+            favoritesDropZone.addEventListener('dragover', handleDragOver);
+            favoritesDropZone.addEventListener('dragleave', handleDragLeave);
+            favoritesDropZone.addEventListener('drop', handleDrop);
+        }
+        
+        // Afficher la zone de drop quand on commence à glisser
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('project-card')) {
+                favoritesDropZone.style.display = 'block';
+            }
+        });
+        
+        // Masquer la zone de drop quand on arrête de glisser
+        document.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('project-card')) {
+                favoritesDropZone.style.display = 'none';
+                favoritesDropZone.classList.remove('drag-over');
+            }
+        });
+    }
+    
+    function handleDragStart(e) {
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+        e.dataTransfer.setData('project-slug', e.target.dataset.projectSlug);
+    }
+    
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        e.target.closest('.favorites-drop-zone').classList.add('drag-over');
+    }
+    
+    function handleDragLeave(e) {
+        e.target.closest('.favorites-drop-zone').classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.favorites-drop-zone');
+        dropZone.classList.remove('drag-over');
+        
+        const projectSlug = e.dataTransfer.getData('project-slug');
+        if (projectSlug) {
+            toggleFavorite(projectSlug);
+        }
+    }
+    
+    function initializeFavoriteButtons() {
+        const favoriteButtons = document.querySelectorAll('.toggle-favorite');
+        favoriteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const projectSlug = this.dataset.projectSlug;
+                toggleFavorite(projectSlug);
+            });
+        });
+    }
+    
+    function toggleFavorite(projectSlug) {
+        fetch(`/projects/${projectSlug}/toggle_favorite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Afficher un toast de succès
+                showToast('success', data.message);
+                
+                // Recharger la page pour mettre à jour l'affichage
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast('error', data.error || 'Erreur lors de la mise à jour des favoris');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('error', 'Erreur lors de la mise à jour des favoris');
+        });
+    }
+    
+    function getCSRFToken() {
+        const token = document.querySelector('meta[name="csrf-token"]');
+        return token ? token.getAttribute('content') : '';
+    }
+    
+    function showToast(type, message) {
+        // Créer un toast Bootstrap
+        const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        // Supprimer le toast du DOM après qu'il soit caché
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+    
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '1055';
+        document.body.appendChild(container);
+        return container;
+    }
 </script>
 {% endblock %}

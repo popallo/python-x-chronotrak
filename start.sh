@@ -22,4 +22,17 @@ fi
 
 # Démarrer l'application Flask
 echo "Démarrage de l'application Flask..."
-exec gunicorn --bind 0.0.0.0:5000 wsgi:app
+exec gunicorn \
+  --bind 0.0.0.0:5000 \
+  --workers 4 \
+  --worker-class sync \
+  --worker-connections 1000 \
+  --timeout 30 \
+  --keep-alive 2 \
+  --max-requests 1000 \
+  --max-requests-jitter 50 \
+  --preload \
+  --access-logfile - \
+  --error-logfile - \
+  --log-level info \
+  wsgi:app

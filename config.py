@@ -9,6 +9,16 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///chronotrak.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Configuration du pool de connexions et timeouts pour SQLite
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'connect_args': {
+            'timeout': 30,
+            'check_same_thread': False
+        }
+    }
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
     CREDIT_THRESHOLD = int(os.environ.get('CREDIT_THRESHOLD', '10'))

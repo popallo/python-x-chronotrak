@@ -24,7 +24,7 @@ services:
         else
           echo 'Base de données existante détectée'
         fi &&
-        gunicorn --bind 0.0.0.0:5000 wsgi:app"
+        gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 30 --preload wsgi:app"
 
 volumes:
   chronotrak_data:

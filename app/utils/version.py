@@ -20,21 +20,17 @@ def get_version():
             with open(VERSION_FILE, 'r') as f:
                 version = f.read().strip()
                 
-                # Debug: Afficher la version lue pour diagnostiquer les problèmes
-                print(f"Version lue depuis le fichier: '{version}'")
-                
                 # Accepter à la fois v1.2.3 et 1.2.3 comme formats valides
                 if version:
                     if re.match(r'^v?\d+\.\d+\.\d+$', version):
                         return version
                     else:
-                        print(f"Format de version non reconnu: '{version}'")
+                        if current_app:
+                            current_app.logger.warning(f"Format de version non reconnu: '{version}'")
                 else:
-                    print("Fichier VERSION vide ou illisible")
+                    if current_app:
+                        current_app.logger.warning("Fichier VERSION vide ou illisible")
     except Exception as e:
-        import traceback
-        print(f"Erreur lors de la lecture du fichier de version: {e}")
-        print(traceback.format_exc())
         if current_app:
             current_app.logger.error(f"Erreur lors de la lecture du fichier de version: {e}")
     

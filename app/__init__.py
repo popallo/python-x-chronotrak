@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from flask_mail import Mail
 from werkzeug.exceptions import HTTPException
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -29,6 +31,23 @@ def create_app(config_name):
     
     # Ajouter FLASK_ENV à la configuration de l'application
     app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', config_name)
+    
+    # Configuration des logs
+    if not app.debug and not app.testing:
+        # Créer le répertoire logs s'il n'existe pas
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        
+        # Configuration du handler de fichier avec rotation
+        file_handler = RotatingFileHandler('logs/chronotrak.log', maxBytes=10240000, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('ChronoTrak startup')
 
     # Configuration de sécurité
     app.config['SESSION_COOKIE_SECURE'] = True
@@ -89,7 +108,16 @@ def create_app(config_name):
     @app.after_request
     def after_request(response):
         g.response_status_code = response.status_code
-        log_request_time()
+        elapsed_time = log_request_time()
+        
+        # Log des requêtes lentes (> 2 secondes)
+        if elapsed_time > 2.0:
+            app.logger.warning(f'Slow request: {request.method} {request.url} took {elapsed_time:.2f}s')
+        
+        # Log des erreurs 5xx
+        if response.status_code >= 500:
+            app.logger.error(f'Server error {response.status_code}: {request.method} {request.url}')
+        
         return response
 
     # Gestionnaires d'erreur
@@ -146,7 +174,6 @@ def create_app(config_name):
         
         # Obtenir la version - s'assurer qu'elle est correcte
         version = get_version()
-        print(f"Version injectée dans le template: '{version}'")
         
         return {
             'now': datetime.now(timezone.utc),
@@ -208,6 +235,34 @@ def create_app(config_name):
             'urgente': 'danger'
         }
         return priority_colors.get(priority, 'secondary')
+    
+    # Filtre pour gérer les comparaisons avec None
+    @app.template_filter('safe_compare')
+    def safe_compare_filter(value, operator, threshold):
+        """Compare une valeur avec un seuil en gérant les cas None"""
+        if value is None:
+            return False
+        try:
+            if operator == '<':
+                return value < threshold
+            elif operator == '>':
+                return value > threshold
+            elif operator == '<=':
+                return value <= threshold
+            elif operator == '>=':
+                return value >= threshold
+            elif operator == '==':
+                return value == threshold
+            else:
+                return False
+        except (TypeError, ValueError):
+            return False
+    
+    # Filtre pour gérer les valeurs None
+    @app.template_filter('default_if_none')
+    def default_if_none_filter(value, default=0):
+        """Retourne une valeur par défaut si la valeur est None"""
+        return value if value is not None else default
     
     # Configuration de CSRF pour les requêtes AJAX
     @csrf.exempt

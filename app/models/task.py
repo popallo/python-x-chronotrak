@@ -157,6 +157,11 @@ class Task(db.Model):
         """Archive la tâche"""
         self.is_archived = True
         self.archived_at = datetime.utcnow()
+        
+        # S'assurer que completed_at est défini pour les tâches terminées
+        if self.status == 'terminé' and not self.completed_at:
+            self.completed_at = self.updated_at
+        
         db.session.commit()
     
     def unarchive(self):
@@ -170,10 +175,16 @@ class Task(db.Model):
         """Retourne les tâches qui devraient être archivées (terminées depuis plus de 2 semaines)"""
         from datetime import timedelta
         two_weeks_ago = datetime.utcnow() - timedelta(weeks=2)
+        
+        # Utiliser completed_at si disponible, sinon updated_at comme fallback
+        # Cela gère les cas où des tâches ont été marquées comme terminées avant l'implémentation de completed_at
         return Task.query.filter(
             Task.status == 'terminé',
             Task.is_archived == False,
-            Task.completed_at < two_weeks_ago
+            db.or_(
+                db.and_(Task.completed_at.isnot(None), Task.completed_at < two_weeks_ago),
+                db.and_(Task.completed_at.is_(None), Task.updated_at < two_weeks_ago)
+            )
         ).all()
     
     @staticmethod

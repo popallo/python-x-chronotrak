@@ -25,29 +25,41 @@ def get_dashboard_stats():
         clients_query = get_accessible_clients()
         client_ids = [client.id for client in clients_query.all()]
         
-        # Une seule requête pour toutes les statistiques
+        # Requête principale pour les statistiques de base (avec DISTINCT pour éviter les doublons)
         stats = db.session.query(
-            func.count(Client.id).label('total_clients'),
-            func.count(Project.id).label('total_projects'),
-            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit'),
-            func.count(Task.id).label('total_tasks'),
-            func.sum(case((Task.status == 'à faire', 1), else_=0)).label('tasks_todo'),
-            func.sum(case((Task.status == 'en cours', 1), else_=0)).label('tasks_in_progress'),
+            func.count(func.distinct(Client.id)).label('total_clients'),
+            func.count(func.distinct(Project.id)).label('total_projects'),
+            func.count(func.distinct(Task.id)).label('total_tasks'),
             func.sum(TimeEntry.minutes).label('total_time')
         ).outerjoin(Project, Project.client_id == Client.id)\
          .outerjoin(Task, Task.project_id == Project.id)\
          .outerjoin(TimeEntry, TimeEntry.task_id == Task.id)\
          .filter(Client.id.in_(client_ids)).first()
         
+        # Requête séparée pour les projets en crédit faible
+        projects_low_credit = db.session.query(func.count(Project.id)).filter(
+            Project.client_id.in_(client_ids),
+            Project.remaining_credit < credit_threshold_minutes,
+            Project.remaining_credit > 0
+        ).scalar() or 0
+        
+        # Requête séparée pour les tâches par statut
+        tasks_todo = db.session.query(func.count(Task.id)).join(Project).filter(
+            Project.client_id.in_(client_ids),
+            Task.status == 'à faire'
+        ).scalar() or 0
+        
+        tasks_in_progress = db.session.query(func.count(Task.id)).join(Project).filter(
+            Project.client_id.in_(client_ids),
+            Task.status == 'en cours'
+        ).scalar() or 0
+        
         # S'assurer que les valeurs ne sont pas None
         if stats is None:
             stats = type('Stats', (), {
                 'total_clients': 0,
                 'total_projects': 0,
-                'projects_low_credit': 0,
                 'total_tasks': 0,
-                'tasks_todo': 0,
-                'tasks_in_progress': 0,
                 'total_time': 0
             })()
         
@@ -61,36 +73,47 @@ def get_dashboard_stats():
         return {
             'total_clients': stats.total_clients or 0,
             'total_projects': stats.total_projects or 0,
-            'projects_low_credit': stats.projects_low_credit or 0,
+            'projects_low_credit': projects_low_credit,
             'low_credit_projects': low_credit_projects,
             'total_tasks': stats.total_tasks or 0,
-            'tasks_todo': stats.tasks_todo or 0,
-            'tasks_in_progress': stats.tasks_in_progress or 0,
+            'tasks_todo': tasks_todo,
+            'tasks_in_progress': tasks_in_progress,
             'total_time': (stats.total_time or 0) / 60  # Convertir en heures
         }
     else:
-        # Pour les admins et techniciens - optimiser avec une seule requête principale
+        # Pour les admins et techniciens - requête principale (avec DISTINCT)
         stats = db.session.query(
-            func.count(Client.id).label('total_clients'),
-            func.count(Project.id).label('total_projects'),
-            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit'),
-            func.count(Task.id).label('total_tasks'),
-            func.sum(case((Task.status == 'à faire', 1), else_=0)).label('tasks_todo'),
-            func.sum(case((Task.status == 'en cours', 1), else_=0)).label('tasks_in_progress'),
-            func.sum(case((Task.status == 'terminé', 1), else_=0)).label('tasks_done')
+            func.count(func.distinct(Client.id)).label('total_clients'),
+            func.count(func.distinct(Project.id)).label('total_projects'),
+            func.count(func.distinct(Task.id)).label('total_tasks')
         ).outerjoin(Project, Project.client_id == Client.id)\
          .outerjoin(Task, Task.project_id == Project.id).first()
+        
+        # Requête séparée pour les projets en crédit faible
+        projects_low_credit = db.session.query(func.count(Project.id)).filter(
+            Project.remaining_credit < credit_threshold_minutes,
+            Project.remaining_credit > 0
+        ).scalar() or 0
+        
+        # Requêtes séparées pour les tâches par statut
+        tasks_todo = db.session.query(func.count(Task.id)).filter(
+            Task.status == 'à faire'
+        ).scalar() or 0
+        
+        tasks_in_progress = db.session.query(func.count(Task.id)).filter(
+            Task.status == 'en cours'
+        ).scalar() or 0
+        
+        tasks_done = db.session.query(func.count(Task.id)).filter(
+            Task.status == 'terminé'
+        ).scalar() or 0
         
         # S'assurer que les valeurs ne sont pas None
         if stats is None:
             stats = type('Stats', (), {
                 'total_clients': 0,
                 'total_projects': 0,
-                'projects_low_credit': 0,
-                'total_tasks': 0,
-                'tasks_todo': 0,
-                'tasks_in_progress': 0,
-                'tasks_done': 0
+                'total_tasks': 0
             })()
         
         # Requêtes séparées pour les données détaillées (limitées)
@@ -106,12 +129,12 @@ def get_dashboard_stats():
         return {
             'total_clients': stats.total_clients or 0,
             'total_projects': stats.total_projects or 0,
-            'projects_low_credit': stats.projects_low_credit or 0,
+            'projects_low_credit': projects_low_credit,
             'low_credit_projects': low_credit_projects,
             'total_tasks': stats.total_tasks or 0,
-            'tasks_todo': stats.tasks_todo or 0,
-            'tasks_in_progress': stats.tasks_in_progress or 0,
-            'tasks_done': stats.tasks_done or 0,
+            'tasks_todo': tasks_todo,
+            'tasks_in_progress': tasks_in_progress,
+            'tasks_done': tasks_done,
             'urgent_tasks': urgent_tasks,
             'my_tasks': my_tasks,
             'recent_time_entries': recent_time_entries

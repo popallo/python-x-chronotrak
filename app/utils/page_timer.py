@@ -47,6 +47,7 @@ def log_request_time():
     """
     Enregistre le temps de traitement de la requête dans les logs.
     Cette fonction est appelée après le traitement de chaque requête.
+    Retourne le temps écoulé en secondes.
     """
     if hasattr(g, 'start_time'):
         elapsed = get_elapsed_time()
@@ -57,3 +58,8 @@ def log_request_time():
         # Log au format: MÉTHODE PATH STATUS TEMPSms
         from flask import current_app
         current_app.logger.info(f"Request timing: {method} {path} {status} {elapsed['formatted']}")
+        
+        # Retourner le temps en secondes pour les comparaisons
+        return elapsed['ms'] / 1000.0
+    
+    return 0.0

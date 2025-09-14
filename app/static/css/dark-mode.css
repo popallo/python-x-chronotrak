@@ -310,4 +310,36 @@ html.dark-mode body {
     background: transparent !important;
   }
 
+  /* ===== Tooltips ===== */
+  html.dark-mode body .tooltip {
+    font-size: 0.75rem;
+    opacity: 0.95;
+  }
+  
+  html.dark-mode body .tooltip-inner {
+    max-width: 200px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--dm-bg-elevated);
+    color: var(--dm-text);
+    border: 1px solid var(--dm-border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  html.dark-mode body .tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--dm-bg-elevated);
+  }
+  
+  html.dark-mode body .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: var(--dm-bg-elevated);
+  }
+  
+  html.dark-mode body .tooltip.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: var(--dm-bg-elevated);
+  }
+  
+  html.dark-mode body .tooltip.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: var(--dm-bg-elevated);
+  }
+
   /* Styles spécifiques pour le mode sombre - doublons supprimés */

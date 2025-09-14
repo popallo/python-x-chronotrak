@@ -5,7 +5,7 @@ from app.models.project import Project
 from app.models.task import Task, TimeEntry
 from app.models.user import User
 from sqlalchemy import func, case
-from app import db
+from app import db, cache
 from app.utils.route_utils import (
     get_accessible_clients,
     get_accessible_projects,
@@ -25,93 +25,97 @@ def get_dashboard_stats():
         clients_query = get_accessible_clients()
         client_ids = [client.id for client in clients_query.all()]
         
-        # Statistiques clients et projets en une seule requête
+        # Une seule requête pour toutes les statistiques
         stats = db.session.query(
             func.count(Client.id).label('total_clients'),
             func.count(Project.id).label('total_projects'),
-            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit')
-        ).join(Project, Project.client_id == Client.id, isouter=True).filter(Client.id.in_(client_ids)).first()
+            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit'),
+            func.count(Task.id).label('total_tasks'),
+            func.sum(case((Task.status == 'à faire', 1), else_=0)).label('tasks_todo'),
+            func.sum(case((Task.status == 'en cours', 1), else_=0)).label('tasks_in_progress'),
+            func.sum(TimeEntry.minutes).label('total_time')
+        ).outerjoin(Project, Project.client_id == Client.id)\
+         .outerjoin(Task, Task.project_id == Project.id)\
+         .outerjoin(TimeEntry, TimeEntry.task_id == Task.id)\
+         .filter(Client.id.in_(client_ids)).first()
         
-        total_clients = stats.total_clients or 0
-        total_projects = stats.total_projects or 0
-        projects_low_credit = stats.projects_low_credit or 0
+        # S'assurer que les valeurs ne sont pas None
+        if stats is None:
+            stats = type('Stats', (), {
+                'total_clients': 0,
+                'total_projects': 0,
+                'projects_low_credit': 0,
+                'total_tasks': 0,
+                'tasks_todo': 0,
+                'tasks_in_progress': 0,
+                'total_time': 0
+            })()
         
-        # Récupérer les projets avec crédit faible en une seule requête
+        # Récupérer les projets avec crédit faible
         low_credit_projects = Project.query.filter(
             Project.client_id.in_(client_ids),
             Project.remaining_credit < credit_threshold_minutes,
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         
-        # Statistiques des tâches en une seule requête
-        task_stats = db.session.query(
-            func.count(Task.id).label('total_tasks'),
-            func.sum(case((Task.status == 'à faire', 1), else_=0)).label('tasks_todo'),
-            func.sum(case((Task.status == 'en cours', 1), else_=0)).label('tasks_in_progress')
-        ).join(Project, Task.project_id == Project.id).filter(Project.client_id.in_(client_ids)).first()
-        
-        total_tasks = task_stats.total_tasks or 0
-        tasks_todo = task_stats.tasks_todo or 0
-        tasks_in_progress = task_stats.tasks_in_progress or 0
-        
-        # Temps total en une seule requête
-        total_time = db.session.query(
-            func.sum(TimeEntry.minutes).label('total_time')
-        ).select_from(TimeEntry).join(
-            Task, TimeEntry.task_id == Task.id
-        ).join(
-            Project, Task.project_id == Project.id
-        ).filter(
-            Project.client_id.in_(client_ids)
-        ).scalar() or 0
-        
-        # Convertir les minutes en heures
-        total_time = total_time / 60 if total_time else 0
-        
         return {
-            'total_clients': total_clients,
-            'total_projects': total_projects,
-            'projects_low_credit': projects_low_credit,
+            'total_clients': stats.total_clients or 0,
+            'total_projects': stats.total_projects or 0,
+            'projects_low_credit': stats.projects_low_credit or 0,
             'low_credit_projects': low_credit_projects,
-            'total_tasks': total_tasks,
-            'tasks_todo': tasks_todo,
-            'tasks_in_progress': tasks_in_progress,
-            'total_time': total_time
+            'total_tasks': stats.total_tasks or 0,
+            'tasks_todo': stats.tasks_todo or 0,
+            'tasks_in_progress': stats.tasks_in_progress or 0,
+            'total_time': (stats.total_time or 0) / 60  # Convertir en heures
         }
     else:
-        # Pour les admins et techniciens, montrer toutes les données
-        total_clients = Client.query.count()
-        total_projects = Project.query.count()
+        # Pour les admins et techniciens - optimiser avec une seule requête principale
+        stats = db.session.query(
+            func.count(Client.id).label('total_clients'),
+            func.count(Project.id).label('total_projects'),
+            func.sum(case((Project.remaining_credit < credit_threshold_minutes, 1), else_=0)).label('projects_low_credit'),
+            func.count(Task.id).label('total_tasks'),
+            func.sum(case((Task.status == 'à faire', 1), else_=0)).label('tasks_todo'),
+            func.sum(case((Task.status == 'en cours', 1), else_=0)).label('tasks_in_progress'),
+            func.sum(case((Task.status == 'terminé', 1), else_=0)).label('tasks_done')
+        ).outerjoin(Project, Project.client_id == Client.id)\
+         .outerjoin(Task, Task.project_id == Project.id).first()
         
-        projects_low_credit = Project.query.filter(Project.remaining_credit < credit_threshold_minutes).count()
+        # S'assurer que les valeurs ne sont pas None
+        if stats is None:
+            stats = type('Stats', (), {
+                'total_clients': 0,
+                'total_projects': 0,
+                'projects_low_credit': 0,
+                'total_tasks': 0,
+                'tasks_todo': 0,
+                'tasks_in_progress': 0,
+                'tasks_done': 0
+            })()
         
+        # Requêtes séparées pour les données détaillées (limitées)
         low_credit_projects = Project.query.filter(
             Project.remaining_credit < credit_threshold_minutes, 
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         
-        total_tasks = Task.query.count()
-        tasks_todo = Task.query.filter_by(status='à faire').count()
-        tasks_in_progress = Task.query.filter_by(status='en cours').count()
-        tasks_done = Task.query.filter_by(status='terminé').count()
-        
-        urgent_tasks = Task.query.filter_by(priority='urgente', status='à faire').all()
-        my_tasks = Task.query.filter_by(user_id=current_user.id, status='en cours').all()
+        urgent_tasks = Task.query.filter_by(priority='urgente', status='à faire').limit(10).all()
+        my_tasks = Task.query.filter_by(user_id=current_user.id, status='en cours').limit(10).all()
         recent_time_entries = TimeEntry.query.order_by(TimeEntry.created_at.desc()).limit(10).all()
-    
-    return {
-        'total_clients': total_clients,
-        'total_projects': total_projects,
-        'projects_low_credit': projects_low_credit,
-        'low_credit_projects': low_credit_projects,
-        'total_tasks': total_tasks,
-        'tasks_todo': tasks_todo,
-        'tasks_in_progress': tasks_in_progress,
-        'tasks_done': tasks_done,
-        'urgent_tasks': urgent_tasks,
-        'my_tasks': my_tasks,
-        'recent_time_entries': recent_time_entries
-    }
+        
+        return {
+            'total_clients': stats.total_clients or 0,
+            'total_projects': stats.total_projects or 0,
+            'projects_low_credit': stats.projects_low_credit or 0,
+            'low_credit_projects': low_credit_projects,
+            'total_tasks': stats.total_tasks or 0,
+            'tasks_todo': stats.tasks_todo or 0,
+            'tasks_in_progress': stats.tasks_in_progress or 0,
+            'tasks_done': stats.tasks_done or 0,
+            'urgent_tasks': urgent_tasks,
+            'my_tasks': my_tasks,
+            'recent_time_entries': recent_time_entries
+        }
 
 @main.route('/')
 def index():

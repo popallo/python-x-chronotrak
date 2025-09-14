@@ -45,10 +45,11 @@ LABEL org.opencontainers.image.title="ChronoTrak" \
       org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
 # Créer le répertoire instance et définir les permissions
-RUN mkdir -p /app/instance /var/log && \
+RUN mkdir -p /app/instance /var/log /app/logs && \
     chown -R chronouser:chronouser /app && \
     chmod -R 755 /app && \
     chmod 777 /app/instance && \
+    chmod 777 /app/logs && \
     chmod +x /app/management/setup_cron.sh && \
     chmod +x /app/start.sh && \
     chown chronouser:chronouser /var/log

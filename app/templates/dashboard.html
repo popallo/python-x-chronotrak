@@ -115,8 +115,8 @@
                                             <div class="task-title">{{ project.name }}</div>
                                             <div class="task-info text-muted">{{ project.client.name }}</div>
                                         </div>
-                                        <span class="badge {% if project.remaining_credit < 60 %}bg-danger{% else %}bg-warning{% endif %} text-white">
-                                            {{ project.remaining_credit|format_time }}
+                                        <span class="badge {% if project.remaining_credit|default_if_none(0)|safe_compare('<', 60) %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                                            {{ project.remaining_credit|default_if_none(0)|format_time }}
                                         </span>
                                     </div>
                                 </a>

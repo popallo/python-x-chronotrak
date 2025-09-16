@@ -244,7 +244,7 @@ Un nouveau commentaire a été ajouté sur la tâche "{task.title}":
 - Client: {task.project.client.name}
 - Commentaire par: {user.name if user else 'Système'}
 
-{comment.safe_content}
+{comment.content}
 
 Voir la tâche: {task_url}
 

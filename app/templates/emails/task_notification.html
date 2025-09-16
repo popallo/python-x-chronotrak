@@ -98,7 +98,7 @@
             {% if notification_type == 'comment_added' and comment %}
             <div class="comment">
                 <h3>Nouveau commentaire</h3>
-                <div>{{ comment.safe_content|safe }}</div>
+                <div>{{ comment.content|safe }}</div>
             </div>
             {% endif %}
 

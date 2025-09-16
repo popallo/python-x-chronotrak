@@ -7,11 +7,73 @@ from app.models.notification import NotificationPreference
 from app.models.user import User
 from app.models.communication import Communication
 from app.utils.time_format import format_time
+import queue
+import time
 
-def send_async_email(app, msg):
+# Queue pour les emails à envoyer de façon asynchrone
+email_queue = queue.Queue()
+
+def email_worker():
+    """Worker thread pour traiter la queue d'emails"""
+    while True:
+        try:
+            # Attendre un email à traiter (timeout de 1 seconde)
+            email_data = email_queue.get(timeout=1)
+            if email_data is None:  # Signal d'arrêt
+                break
+            
+            # Traiter l'email
+            send_async_email(email_data['app'], email_data['msg'], email_data['email_data'])
+            email_queue.task_done()
+            
+        except queue.Empty:
+            continue
+        except Exception as e:
+            current_app.logger.error(f"Erreur dans le worker email: {e}")
+            if 'email_data' in locals():
+                email_queue.task_done()
+
+# Démarrer le worker email au démarrage de l'application
+email_worker_thread = None
+
+def start_email_worker():
+    """Démarre le worker email"""
+    global email_worker_thread
+    if email_worker_thread is None or not email_worker_thread.is_alive():
+        email_worker_thread = Thread(target=email_worker, daemon=True)
+        email_worker_thread.start()
+
+def send_async_email(app, msg, email_data=None):
     """Envoie un email de façon asynchrone"""
     with app.app_context():
-        mail.send(msg)
+        try:
+            # Timeout de 10 secondes pour l'envoi d'email
+            import socket
+            socket.setdefaulttimeout(10)
+            mail.send(msg)
+            current_app.logger.info(f"Email envoyé avec succès: {msg.subject}")
+        except Exception as e:
+            current_app.logger.error(f"Erreur lors de l'envoi de l'email: {e}")
+            # Enregistrer l'échec en base si on a les données
+            if email_data:
+                try:
+                    from app.models.communication import Communication
+                    comm = Communication(
+                        recipient=email_data.get('recipient', 'unknown'),
+                        subject=email_data.get('subject', 'Unknown'),
+                        content_html=email_data.get('html_body', ''),
+                        content_text=email_data.get('text_body', ''),
+                        type=email_data.get('email_type', 'general'),
+                        status='failed',
+                        user_id=email_data.get('user_id'),
+                        task_id=email_data.get('task_id'),
+                        project_id=email_data.get('project_id'),
+                        triggered_by_id=email_data.get('triggered_by_id')
+                    )
+                    db.session.add(comm)
+                    db.session.commit()
+                except Exception as db_error:
+                    current_app.logger.error(f"Erreur lors de l'enregistrement de l'échec: {db_error}")
 
 # Dans app/utils/email.py, modifions la fonction send_email
 
@@ -88,37 +150,68 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
     msg.body = text_body
     msg.html = html_body
     
+    # Préparer les données pour l'envoi asynchrone
+    email_data = {
+        'subject': subject,
+        'text_body': text_body,
+        'html_body': html_body,
+        'email_type': email_type or 'general',
+        'user_id': user_id,
+        'task_id': task_id,
+        'project_id': project_id,
+        'triggered_by_id': triggered_by_id
+    }
+    
     success = True
     
     try:
-        # Envoyer de façon asynchrone pour ne pas bloquer l'application
-        Thread(target=send_async_email, 
-               args=(current_app._get_current_object(), msg)).start()
+        # Démarrer le worker email si nécessaire
+        start_email_worker()
+        
+        # Ajouter l'email à la queue pour traitement asynchrone
+        for recipient in recipients:
+            email_data['recipient'] = recipient
+            queue_data = {
+                'app': current_app._get_current_object(),
+                'msg': msg,
+                'email_data': email_data
+            }
+            email_queue.put(queue_data)
+            
     except Exception as e:
-        current_app.logger.error(f"Erreur lors de l'envoi de l'email: {e}")
+        current_app.logger.error(f"Erreur lors de l'ajout de l'email à la queue: {e}")
         success = False
     
-    # Enregistrer la communication dans la base de données
+    # Enregistrer la communication dans la base de données de façon asynchrone aussi
     try:
-        for recipient in recipients:
-            comm = Communication(
-                recipient=recipient,
-                subject=subject,
-                content_html=html_body,
-                content_text=text_body,
-                type=email_type or 'general',
-                status='sent' if success else 'failed',
-                user_id=user_id,
-                task_id=task_id,
-                project_id=project_id,
-                triggered_by_id=triggered_by_id
-            )
-            db.session.add(comm)
+        def save_communication():
+            with current_app.app_context():
+                try:
+                    for recipient in recipients:
+                        comm = Communication(
+                            recipient=recipient,
+                            subject=subject,
+                            content_html=html_body,
+                            content_text=text_body,
+                            type=email_type or 'general',
+                            status='sent' if success else 'failed',
+                            user_id=user_id,
+                            task_id=task_id,
+                            project_id=project_id,
+                            triggered_by_id=triggered_by_id
+                        )
+                        db.session.add(comm)
+                    
+                    db.session.commit()
+                except Exception as e:
+                    current_app.logger.error(f"Erreur lors de l'enregistrement de la communication: {e}")
+                    db.session.rollback()
         
-        db.session.commit()
+        # Lancer l'enregistrement en base de façon asynchrone
+        Thread(target=save_communication).start()
+        
     except Exception as e:
-        current_app.logger.error(f"Erreur lors de l'enregistrement de la communication: {e}")
-        db.session.rollback()
+        current_app.logger.error(f"Erreur lors du lancement de l'enregistrement: {e}")
     
     return success
 
@@ -136,13 +229,16 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
     # Vérifier l'environnement
     is_production = current_app.config.get('FLASK_ENV') == 'production'
     
-    # Déterminer les destinataires
+    # Déterminer les destinataires de façon optimisée
     recipients = set()  # Utiliser un set pour éviter les doublons
     
     if notify_all:
+        # Optimiser les requêtes avec des jointures
+        from sqlalchemy.orm import joinedload
+        
         # Notifier l'utilisateur assigné à la tâche (s'il existe)
         if task.user_id:
-            assigned_user = User.query.get(task.user_id)
+            assigned_user = User.query.options(joinedload(User.notification_preferences)).get(task.user_id)
             if assigned_user and assigned_user.notification_preferences:
                 prefs = assigned_user.notification_preferences
                 if prefs.email_notifications_enabled:
@@ -154,7 +250,8 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
         
         # En production seulement, notifier les clients du projet
         if is_production:
-            client_users = User.query.filter_by(role='client').all()
+            # Une seule requête avec jointure pour tous les clients
+            client_users = User.query.options(joinedload(User.notification_preferences)).filter_by(role='client').all()
             for client_user in client_users:
                 if client_user.has_access_to_client(task.project.client_id):
                     if client_user.notification_preferences and client_user.notification_preferences.email_notifications_enabled:
@@ -165,11 +262,12 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                            (event_type == 'task_created' and prefs.task_created):
                             recipients.add(client_user.email)
     
-    # Ajouter les utilisateurs mentionnés
+    # Ajouter les utilisateurs mentionnés (optimisé)
     if mentioned_users:
-        for mentioned_user in mentioned_users:
-            user_obj = User.query.get(mentioned_user['id'])
-            if user_obj and user_obj.email:
+        mentioned_ids = [u['id'] for u in mentioned_users]
+        mentioned_users_objs = User.query.filter(User.id.in_(mentioned_ids)).all()
+        for user_obj in mentioned_users_objs:
+            if user_obj.email:
                 recipients.add(user_obj.email)
     
     # Éviter d'envoyer à l'utilisateur qui a effectué l'action

@@ -48,6 +48,9 @@ def create_app(config_name):
         
         app.logger.setLevel(logging.INFO)
         app.logger.info('ChronoTrak startup')
+        
+        # Démarrer le worker email pour le traitement asynchrone
+        start_email_worker()
 
     # Configuration de sécurité
     app.config['SESSION_COOKIE_SECURE'] = True
@@ -73,6 +76,7 @@ def create_app(config_name):
     from app.utils.page_timer import start_timer, get_elapsed_time, log_request_time
     from app.utils.version import get_version, get_build_info
     from app.utils.error_handler import send_error_email
+    from app.utils.email import start_email_worker
     
     # Middleware pour les en-têtes de sécurité
     @app.after_request

@@ -14,7 +14,7 @@
     background: #fff;
     border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 0.75rem;
-    padding: 1rem;
+    padding: 0.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
     height: 100%;
@@ -28,26 +28,26 @@
 .info-section {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .info-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
+    gap: 0.5rem;
+    padding: 0.125rem 0;
 }
 
 .info-icon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.375rem;
     background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #6c757d;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     flex-shrink: 0;
     transition: all 0.2s ease;
 }
@@ -61,19 +61,19 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
 }
 
 .info-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
     color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .info-value {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #212529;
     text-decoration: none;
@@ -120,23 +120,23 @@
 .task-stats {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .stat-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.375rem;
 }
 
 .stat-badge {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.125rem;
+    height: 1.125rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     color: white;
     flex-shrink: 0;
@@ -155,7 +155,7 @@
 }
 
 .stat-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #6c757d;
     font-weight: 500;
 }
@@ -163,13 +163,13 @@
 /* Description */
 .info-description {
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 0.85rem;
+    line-height: 1.3;
     color: #495057;
     background: #f8f9fa;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    border-left: 3px solid #0d6efd;
+    padding: 0.375rem;
+    border-radius: 0.375rem;
+    border-left: 2px solid #0d6efd;
 }
 
 /* Dark mode support */
@@ -232,21 +232,21 @@ html.dark-mode .info-description {
     }
     
     .info-icon {
-        width: 1.5rem;
-        height: 1.5rem;
-        font-size: 0.8rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.7rem;
     }
     
     .task-stats {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
     
     .stat-item {
         flex-direction: column;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.125rem;
         text-align: center;
     }
 }

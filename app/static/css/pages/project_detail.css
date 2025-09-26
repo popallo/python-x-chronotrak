@@ -252,6 +252,15 @@ html.dark-mode .info-description {
 }
 
 /* ==========================================================================
+   Kanban card specific styles
+   ========================================================================== */
+
+/* Réduire l'espace entre le titre "Tâches" et le contenu du Kanban */
+.kanban-card .card-body {
+    padding-top: 0.5rem;
+}
+
+/* ==========================================================================
    Responsive adjustments spécifiques au projet
    ========================================================================== */
 

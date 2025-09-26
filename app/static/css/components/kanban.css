@@ -3,7 +3,8 @@
    ========================================================================== */
 
 .kanban-container {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
+    padding: 0;
 }
 
 .kanban-board {
@@ -30,7 +31,7 @@
     font-size: 0.9rem;
     font-weight: 600;
     padding: 0.5rem 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     border-radius: 0.5rem;
     color: var(--kanban-title-color);
     display: flex;

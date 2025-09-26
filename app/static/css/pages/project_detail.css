@@ -2,91 +2,259 @@
  * STYLES SPÉCIFIQUES À LA PAGE DE DÉTAIL DU PROJET
  */
 
-/* Styles pour les sections du projet */
-.project-section {
+/* ==========================================================================
+   Project Info Container - Style moderne harmonieux avec le kanban
+   ========================================================================== */
+
+.project-info-container {
     margin-bottom: 2rem;
 }
 
-.project-section-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--color-primary);
-}
-
-/* Styles pour les listes de tâches */
-.task-list {
-    list-style: none;
-    padding: 0;
-}
-
-.task-list-item {
+.info-card {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 0.75rem;
     padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
-    will-change: transform, box-shadow;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    height: 100%;
 }
 
-.task-list-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.info-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Styles pour le mode sombre */
-html.dark-mode body .task-list-item {
-    background-color: #2c2c2c;
-}
-
-/* Styles pour les indicateurs de progression */
-.progress-indicator {
-    height: 8px;
-    border-radius: 4px;
-    background-color: #e9ecef;
-    overflow: hidden;
-}
-
-.progress-indicator .progress-bar {
-    transition: width var(--transition-smooth);
-    will-change: width;
-}
-
-/* Styles pour les badges de statut */
-.status-badge {
-    padding: 0.35em 0.65em;
-    font-size: 0.85em;
-    font-weight: 500;
-    border-radius: 4px;
-}
-
-/* Styles pour les boutons d'action */
-.action-buttons {
+.info-section {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.action-buttons .btn {
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.info-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.info-item:hover .info-icon {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.info-content {
     flex: 1;
-    max-width: 200px;
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
-    will-change: transform, box-shadow;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
-.action-buttons .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.info-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Styles pour le Kanban */
-/* Styles Kanban spécifiques au projet - les styles généraux sont dans components.css */
+.info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #212529;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
 
-/* Les styles de drag & drop sont maintenant dans css/components/kanban.css */
+.info-value:hover {
+    color: #0d6efd;
+    text-decoration: none;
+}
 
-/* Responsive adjustments spécifiques au projet */
+.credit-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.task-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0d6efd;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-enabled {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-disabled {
+    background: #f8d7da;
+    color: #842029;
+}
+
+/* Task statistics */
+.task-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-badge {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-todo {
+    background: #6c757d;
+}
+
+.stat-progress {
+    background: #fd7e14;
+}
+
+.stat-done {
+    background: #198754;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Description */
+.info-description {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #495057;
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #0d6efd;
+}
+
+/* Dark mode support */
+html.dark-mode .info-card {
+    background: var(--dm-bg-elevated) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .info-card:hover {
+    background: var(--dm-bg-main) !important;
+    border-color: var(--dm-border) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark-mode .info-icon {
+    background: var(--dm-bg-card) !important;
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .info-item:hover .info-icon {
+    background: var(--dm-bg-main) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .info-label {
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .info-value {
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .info-value:hover {
+    color: #0d6efd !important;
+}
+
+html.dark-mode .status-enabled {
+    background: rgba(25, 135, 84, 0.2) !important;
+    color: #75b798 !important;
+}
+
+html.dark-mode .status-disabled {
+    background: rgba(220, 53, 69, 0.2) !important;
+    color: #f5c2c7 !important;
+}
+
+html.dark-mode .info-description {
+    background: var(--dm-bg-card) !important;
+    color: var(--dm-text) !important;
+    border-left-color: #0d6efd !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .task-stats {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Responsive adjustments spécifiques au projet
+   ========================================================================== */
+
 @media (max-width: 768px) {
     .kanban-board {
         flex-direction: column;

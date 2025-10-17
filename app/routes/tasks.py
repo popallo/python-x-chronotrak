@@ -777,12 +777,16 @@ def get_checklist(slug_or_id):
             return jsonify({'error': 'Accès non autorisé'}), 403
     
     # Retourner la checklist complète
+    all_checklist_items = ChecklistItem.query.filter(
+        ChecklistItem.task_id == task.id
+    ).order_by(ChecklistItem.position).all()
+    
     checklist = [{
         'id': item.id,
         'content': item.content,
         'is_checked': item.is_checked,
         'position': item.position
-    } for item in task.checklist_items.order_by(ChecklistItem.position)]
+    } for item in all_checklist_items]
     
     return jsonify({
         'success': True,
@@ -830,44 +834,70 @@ def add_checklist_item(slug_or_id):
 @tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['PUT'])
 @login_required
 def update_checklist_item(slug_or_id, item_id):
-    task = get_task_by_slug_or_id(slug_or_id)
-    
-    # Vérifier si le client a accès à ce projet
-    if current_user.is_client():
-        if not current_user.has_access_to_client(task.project.client_id):
-            return jsonify({'error': 'Accès non autorisé'}), 403
-    
-    item = ChecklistItem.query.get_or_404(item_id)
-    
-    # Vérifier que l'élément appartient bien à la tâche
-    if item.task_id != task.id:
-        return jsonify({'error': 'Élément non trouvé dans cette tâche'}), 404
-    
-    data = request.get_json()
-    
-    if 'is_checked' in data:
-        item.is_checked = data['is_checked']
-    
-    if 'content' in data:
-        item.content = data['content']
-    
-    if 'position' in data:
-        item.position = data['position']
-    
-    db.session.commit()
-    
-    # Retourner la checklist complète mise à jour
-    checklist = [{
-        'id': item.id,
-        'content': item.content,
-        'is_checked': item.is_checked,
-        'position': item.position
-    } for item in task.checklist_items]
-    
-    return jsonify({
-        'success': True,
-        'checklist': checklist
-    })
+    try:
+        task = get_task_by_slug_or_id(slug_or_id)
+        
+        # Vérifier si le client a accès à ce projet
+        if current_user.is_client():
+            if not current_user.has_access_to_client(task.project.client_id):
+                return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
+        
+        item = ChecklistItem.query.get_or_404(item_id)
+        
+        # Vérifier que l'élément appartient bien à la tâche
+        if item.task_id != task.id:
+            return jsonify({'success': False, 'error': 'Élément non trouvé dans cette tâche'}), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Données JSON manquantes'}), 400
+        
+        # Sauvegarder l'ancien état pour la logique de réorganisation
+        old_is_checked = item.is_checked
+        new_is_checked = data.get('is_checked', item.is_checked)
+        
+        if 'is_checked' in data:
+            item.is_checked = data['is_checked']
+        
+        if 'content' in data:
+            item.content = data['content']
+        
+        if 'position' in data:
+            item.position = data['position']
+        
+        # Temporairement désactivé pour déboguer
+        # Si l'élément vient d'être coché, le déplacer en bas automatiquement
+        # if old_is_checked != new_is_checked and new_is_checked:
+        #     # Logique de réorganisation temporairement désactivée
+        #     pass
+        
+        db.session.commit()
+        
+        # Retourner la checklist complète mise à jour, triée par position
+        # Récupérer tous les éléments de la tâche triés par position
+        all_checklist_items = ChecklistItem.query.filter(
+            ChecklistItem.task_id == task.id
+        ).order_by(ChecklistItem.position).all()
+        
+        checklist = [{
+            'id': item.id,
+            'content': item.content,
+            'is_checked': item.is_checked,
+            'position': item.position
+        } for item in all_checklist_items]
+        
+        return jsonify({
+            'success': True,
+            'checklist': checklist
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors de la mise à jour de l'élément de checklist: {str(e)}")
+        current_app.logger.error(f"Type d'erreur: {type(e).__name__}")
+        import traceback
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Erreur interne du serveur: {str(e)}'}), 500
 
 @tasks.route('/tasks/<slug_or_id>/checklist/<int:item_id>', methods=['DELETE'])
 @login_required
@@ -916,6 +946,16 @@ def reorder_checklist(slug_or_id):
     if not data or 'items' not in data:
         return jsonify({'error': 'Données manquantes'}), 400
     
+    # Valider que tous les éléments appartiennent à cette tâche
+    item_ids = [item_data['id'] for item_data in data['items']]
+    existing_items = ChecklistItem.query.filter(
+        ChecklistItem.id.in_(item_ids),
+        ChecklistItem.task_id == task.id
+    ).all()
+    
+    if len(existing_items) != len(item_ids):
+        return jsonify({'error': 'Certains éléments ne sont pas valides'}), 400
+    
     # Mettre à jour les positions
     for item_data in data['items']:
         item = ChecklistItem.query.get(item_data['id'])
@@ -924,7 +964,22 @@ def reorder_checklist(slug_or_id):
     
     db.session.commit()
     
-    return jsonify({'success': True})
+    # Retourner la checklist complète mise à jour
+    all_checklist_items = ChecklistItem.query.filter(
+        ChecklistItem.task_id == task.id
+    ).order_by(ChecklistItem.position).all()
+    
+    checklist = [{
+        'id': item.id,
+        'content': item.content,
+        'is_checked': item.is_checked,
+        'position': item.position
+    } for item in all_checklist_items]
+    
+    return jsonify({
+        'success': True,
+        'checklist': checklist
+    })
 
 @tasks.route('/comments/<int:comment_id>/reply', methods=['POST'])
 @login_required

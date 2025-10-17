@@ -232,16 +232,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function toggleChecklistItem(taskId, itemId, isChecked = null) {
-        const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                is_checked: isChecked,
-                csrf_token: CONFIG.csrfToken
-            })
-        });
+        try {
+            const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    is_checked: isChecked,
+                    csrf_token: CONFIG.csrfToken
+                })
+            });
 
-        if (data.success) {
-            updateChecklist(data.checklist);
+            if (data.success) {
+                // Mettre à jour l'affichage avec les données du serveur
+                updateChecklist(data.checklist);
+            } else {
+                console.error('Erreur lors de la mise à jour:', data.error);
+                showError(data.error || 'Erreur lors de la mise à jour de l\'élément');
+            }
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+            showError('Erreur de connexion lors de la mise à jour');
         }
     }
     
@@ -394,7 +403,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (!data.success) {
+            if (data.success) {
+                // Mettre à jour l'affichage avec les données du serveur
+                updateChecklist(data.checklist);
+            } else {
                 showError(data.error || 'Erreur lors de la réorganisation des éléments');
             }
         })

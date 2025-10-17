@@ -266,9 +266,6 @@ async function handleTimeSubmit(e) {
             // Utiliser la fonction updateTimeInterface pour mettre à jour l'interface de manière cohérente
             await updateTimeInterface(data);
             
-            // Réorganiser les éléments cochés en bas de la checklist
-            await reorderCheckedItemsToBottom();
-            
             // Fermer le modal et réinitialiser le formulaire
             const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
             if (modal) {
@@ -352,68 +349,8 @@ function updateRemainingCredit(remainingCredit) {
     }
 }
 
-async function reorderCheckedItemsToBottom() {
-    try {
-        // Récupérer l'ID de la tâche depuis l'URL ou le DOM
-        const taskId = getTaskIdFromPage();
-        if (!taskId) {
-            console.error('Impossible de récupérer l\'ID de la tâche');
-            return;
-        }
-        
-        // Récupérer tous les éléments de la checklist
-        const items = Array.from(document.querySelectorAll('.checklist-item'));
-        
-        if (items.length === 0) return;
-        
-        // Séparer les éléments cochés et non cochés
-        const uncheckedItems = [];
-        const checkedItems = [];
-        
-        items.forEach(item => {
-            const checkbox = item.querySelector('.checklist-checkbox');
-            const itemData = {
-                id: item.dataset.id,
-                is_checked: checkbox.checked
-            };
-            
-            if (checkbox.checked) {
-                checkedItems.push(itemData);
-            } else {
-                uncheckedItems.push(itemData);
-            }
-        });
-        
-        // Créer le nouvel ordre : non cochés d'abord, puis cochés
-        const newOrder = [...uncheckedItems, ...checkedItems].map((item, index) => ({
-            id: item.id,
-            position: index
-        }));
-        
-        // Envoyer le nouvel ordre au serveur
-        const response = await fetch(`/tasks/${taskId}/checklist/reorder`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': window.csrfToken,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ items: newOrder })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Réorganiser directement dans le DOM sans recharger depuis le serveur
-            reorderChecklistInDOM(uncheckedItems, checkedItems);
-        } else {
-            console.error('Erreur lors de la réorganisation:', data.error);
-        }
-    } catch (error) {
-        console.error('Erreur lors de la réorganisation des éléments:', error);
-    }
-}
+// Cette fonction a été supprimée car la réorganisation est maintenant gérée côté serveur
+// dans l'endpoint update_checklist_item
 
 function getTaskIdFromPage() {
     // Essayer de récupérer l'ID depuis le conteneur de checklist
@@ -454,44 +391,7 @@ async function refreshChecklistDisplay(taskId) {
     }
 }
 
-function reorderChecklistInDOM(uncheckedItems, checkedItems) {
-    const checklistItems = document.getElementById('checklist-items');
-    if (!checklistItems) return;
-    
-    // Créer un tableau avec tous les éléments dans le bon ordre
-    const allItems = [...uncheckedItems, ...checkedItems];
-    
-    // Réorganiser les éléments dans le DOM
-    allItems.forEach(itemData => {
-        const itemElement = document.querySelector(`.checklist-item[data-id="${itemData.id}"]`);
-        if (itemElement) {
-            // S'assurer que l'état de la checkbox correspond à l'état attendu
-            const checkbox = itemElement.querySelector('.checklist-checkbox');
-            if (checkbox) {
-                checkbox.checked = itemData.is_checked;
-                
-                // Mettre à jour l'état du bouton de copie
-                const copyButton = itemElement.querySelector('.copy-to-time-btn');
-                if (copyButton) {
-                    copyButton.classList.toggle('disabled', !itemData.is_checked);
-                    copyButton.disabled = !itemData.is_checked;
-                }
-            }
-            
-            checklistItems.appendChild(itemElement);
-        }
-    });
-    
-    // Ajouter une animation subtile pour montrer le changement
-    const movedItems = document.querySelectorAll('.checklist-item');
-    movedItems.forEach(item => {
-        item.style.transition = 'background-color 0.3s ease';
-        item.style.backgroundColor = 'rgba(var(--bs-primary-rgb), 0.05)';
-        setTimeout(() => {
-            item.style.backgroundColor = '';
-        }, 300);
-    });
-}
+// Cette fonction a été supprimée car la réorganisation est maintenant gérée côté serveur
 
 function updateChecklistDisplay(checklist) {
     const checklistItems = document.getElementById('checklist-items');

@@ -179,7 +179,7 @@ def project_details(slug_or_id):
     for log in project.credit_logs:
         history_items.append({
             'type': 'credit',
-            'amount': log.amount,
+            'amount': log.amount / 60,  # Convertir les minutes en heures pour l'affichage
             'note': log.note,
             'created_at': log.created_at,
             'task': log.task if log.task_id else None,
@@ -239,7 +239,7 @@ def project_history(slug_or_id):
     for log in project.credit_logs:
         history_items.append({
             'type': 'credit',
-            'amount': log.amount,
+            'amount': log.amount / 60,  # Convertir les minutes en heures pour l'affichage
             'note': log.note,
             'created_at': log.created_at,
             'task': log.task if log.task_id else None,

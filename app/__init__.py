@@ -12,6 +12,7 @@ from werkzeug.exceptions import HTTPException
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import click
 
 # Initialisation des extensions
 db = SQLAlchemy()
@@ -297,8 +298,27 @@ def create_app(config_name):
     
     # Commandes CLI
     @app.cli.command()
-    def auto_archive():
+    @click.option('--force', is_flag=True, help='Forcer l\'archivage même en environnement de développement')
+    def auto_archive(force):
         """Archive automatiquement les tâches terminées depuis plus de 2 semaines"""
+        import os
+        
+        # Vérifier que nous sommes en production ou que le mode force est activé
+        flask_env = os.environ.get('FLASK_ENV', 'development')
+        app_env = app.config.get('FLASK_ENV', 'development')
+        
+        # Utiliser l'environnement de l'application si disponible, sinon celui de l'OS
+        current_env = app_env if app_env != 'development' else flask_env
+        
+        if current_env != 'production' and not force:
+            print(f"Archivage automatique désactivé en environnement '{current_env}'. Seul l'environnement 'production' permet l'archivage automatique.")
+            print(f"Variables détectées - FLASK_ENV: {flask_env}, App config: {app_env}")
+            print(f"Pour forcer l'archivage en développement, utilisez: flask auto-archive --force")
+            return
+        
+        if force and current_env != 'production':
+            print(f"⚠️  Mode FORCE activé - Archivage en environnement '{current_env}' (normalement réservé à la production)")
+        
         from app.models.task import Task
         
         tasks_to_archive = Task.should_be_archived()

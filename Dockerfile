@@ -54,9 +54,8 @@ RUN mkdir -p /app/instance /var/log /app/logs && \
     chmod +x /app/start.sh && \
     chown chronouser:chronouser /var/log
 
-# Configurer le cron job pour l'archivage automatique
-RUN echo "0 2 * * * chronouser cd /app && flask auto-archive >> /var/log/chronotrak_archive.log 2>&1" > /etc/cron.d/chronotrak-archive && \
-    chmod 0644 /etc/cron.d/chronotrak-archive
+# Configurer le cron job pour l'archivage automatique (seulement en production)
+# Le cron job sera créé conditionnellement dans le script de démarrage
 
 # Passer à l'utilisateur non-root
 USER chronouser

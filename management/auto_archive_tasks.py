@@ -16,6 +16,12 @@ from app.models.task import Task
 
 def main():
     """Fonction principale pour l'archivage automatique"""
+    # Vérifier que nous sommes en production
+    flask_env = os.environ.get('FLASK_ENV', 'development')
+    if flask_env != 'production':
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Archivage automatique désactivé en environnement '{flask_env}'. Seul l'environnement 'production' permet l'archivage automatique.")
+        return
+    
     app = create_app()
     
     with app.app_context():

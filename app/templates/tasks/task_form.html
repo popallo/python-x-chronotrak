@@ -1,30 +1,5 @@
 {% extends 'layout.html' %}
 
-{% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== DEBUG FORMULAIRE D\'ÉDITION ===');
-    console.log('Titre:', document.getElementById('title')?.value);
-    console.log('Description:', document.getElementById('description')?.value);
-    console.log('Statut:', document.getElementById('status')?.value);
-    console.log('Priorité:', document.getElementById('priority')?.value);
-    console.log('Temps estimé:', document.getElementById('estimated_time')?.value);
-    console.log('User ID:', document.getElementById('user_id')?.value);
-    
-    // Vérifier après un délai pour voir si les valeurs changent
-    setTimeout(() => {
-        console.log('=== APRÈS 1 SECONDE ===');
-        console.log('Titre:', document.getElementById('title')?.value);
-        console.log('Description:', document.getElementById('description')?.value);
-        console.log('Statut:', document.getElementById('status')?.value);
-        console.log('Priorité:', document.getElementById('priority')?.value);
-        console.log('Temps estimé:', document.getElementById('estimated_time')?.value);
-        console.log('User ID:', document.getElementById('user_id')?.value);
-    }, 1000);
-});
-</script>
-{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">

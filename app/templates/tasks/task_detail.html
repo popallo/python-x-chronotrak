@@ -8,13 +8,13 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-time.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-status.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
@@ -398,7 +398,7 @@
                             {% endif %}
                             {% if comment.user_id == current_user.id or current_user.is_admin() %}
                                 <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline delete-comment-form">
-                                    {{ comment_form.hidden_tag() }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -446,7 +446,7 @@
                                             </button>
                                         {% endif %}
                                         <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline delete-comment-form">
-                                            {{ comment_form.hidden_tag() }}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>

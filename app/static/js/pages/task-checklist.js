@@ -16,12 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
     const toggleSizeButton = document.querySelector('.toggle-checklist-size');
+    const toggleTimeSizeButton = document.querySelector('.toggle-time-size');
 
     // Initialisation des écouteurs d'événements
     initChecklistEventListeners();
     initSortable();
     initTimeHistoryHeight();
     initChecklistSizeToggle();
+    initTimeSizeToggle();
     
     // ==========================================================================
     // Gestion de la taille de la checklist
@@ -101,44 +103,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ==========================================================================
-    // Gestion de la hauteur de l'historique de temps
+    // Gestion de la taille de l'historique de temps
     // ==========================================================================
-    function initTimeHistoryHeight() {
-        const timeHistory = document.querySelector('.time-history');
-        
-        function updateTimeHistoryHeight() {
-            if (checklistContainer && timeHistory) {
-                const checklistHeight = checklistContainer.offsetHeight;
-                timeHistory.style.height = `${checklistHeight}px`;
-                timeHistory.style.maxHeight = 'none';
-            }
-        }
-
-        updateTimeHistoryHeight();
-
-        // Observer les changements de classe pour détecter l'expansion/réduction
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    // Attendre la fin de la transition CSS (300ms)
-                    setTimeout(updateTimeHistoryHeight, 300);
+    function initTimeSizeToggle() {
+        if (toggleTimeSizeButton) {
+            const timeHistory = document.querySelector('.time-history');
+            toggleTimeSizeButton.addEventListener('click', function() {
+                timeHistory.classList.toggle('expanded');
+                const icon = this.querySelector('i');
+                if (timeHistory.classList.contains('expanded')) {
+                    icon.classList.replace('fa-expand-alt', 'fa-compress-alt');
+                } else {
+                    icon.classList.replace('fa-compress-alt', 'fa-expand-alt');
                 }
             });
-        });
-
-        observer.observe(checklistContainer, {
-            attributes: true,
-            attributeFilter: ['class']
-        });
-
-        // Observer les changements de contenu
-        const contentObserver = new MutationObserver(updateTimeHistoryHeight);
-        contentObserver.observe(checklistContainer, {
-            childList: true,
-            subtree: true
-        });
-
-        window.addEventListener('resize', updateTimeHistoryHeight);
+        }
+    }
+    
+    // ==========================================================================
+    // Gestion de la synchronisation des hauteurs (approche simplifiée)
+    // ==========================================================================
+    function initTimeHistoryHeight() {
+        // Cette fonction est maintenant simplifiée - CSS gère l'alignement
+        // On garde juste un observateur pour les changements de contenu
+        const timeHistory = document.querySelector('.time-history');
+        
+        if (timeHistory) {
+            // Observer les changements de contenu pour déclencher un reflow
+            const contentObserver = new MutationObserver(() => {
+                // Forcer un reflow pour que CSS recalcule les hauteurs
+                timeHistory.offsetHeight;
+            });
+            
+            contentObserver.observe(timeHistory, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
     
     // ==========================================================================
@@ -197,6 +198,9 @@ document.addEventListener('DOMContentLoaded', function() {
         handleCopyToTime,
         makeContentEditable
     };
+    
+    // Plus besoin d'exposer une fonction de mise à jour de hauteur
+    // CSS gère maintenant l'alignement naturellement
     
     // ==========================================================================
     // Opérations CRUD

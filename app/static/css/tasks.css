@@ -24,6 +24,17 @@
     margin: 0;
 }
 
+/* Assurer que les colonnes ont la même hauteur */
+.card-body .row {
+    display: flex;
+    align-items: stretch;
+}
+
+.card-body .col-md-6 {
+    display: flex;
+    flex-direction: column;
+}
+
 .card-body p {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -64,9 +75,18 @@
    Checklist
    ========================================================================== */
 .checklist-container {
-    max-width: 600px;
+    max-width: 100%;
     border: 1px solid var(--bs-secondary) !important;
     transition: all 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.checklist-header {
+    flex-shrink: 0;
 }
 
 .checklist-container.expanded {
@@ -74,10 +94,13 @@
 }
 
 .checklist-items {
-    max-height: 150px;
+    flex: 1;
     overflow-y: auto;
-    margin-bottom: 1rem;
-    transition: max-height 0.3s ease;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.25rem 0;
+    min-height: 0;
+    max-height: 350px;
 }
 
 .checklist-container.expanded .checklist-items {
@@ -145,9 +168,11 @@
 }
 
 .checklist-add-form {
-    max-width: 600px;
-    margin-top: 1rem;
+    max-width: 100%;
+    margin-top: auto;
     transition: max-width 0.3s ease;
+    flex-shrink: 0;
+    margin-bottom: 0;
 }
 
 .checklist-container.expanded .checklist-add-form {
@@ -169,6 +194,14 @@
 }
 
 .checklist-container.expanded .toggle-checklist-size {
+    transform: rotate(180deg);
+}
+
+.toggle-time-size {
+    transition: transform 0.3s ease;
+}
+
+.time-history.expanded .toggle-time-size {
     transform: rotate(180deg);
 }
 
@@ -441,6 +474,14 @@ textarea.comment-input::placeholder {
 .time-history {
     overflow-y: auto;
     border: 1px solid var(--bs-secondary) !important;
+    max-height: 300px;
+    transition: max-height 0.3s ease;
+    flex: 1;
+    min-height: 0;
+}
+
+.time-history.expanded {
+    max-height: 500px;
 }
 
 .time-entry-item {

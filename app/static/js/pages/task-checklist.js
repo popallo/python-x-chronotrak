@@ -1,5 +1,12 @@
 /**
  * Gestion des checklists pour les tâches
+ * 
+ * Fonctionnalités :
+ * - Ajout/suppression d'éléments de checklist
+ * - Édition en ligne du contenu
+ * - Tri par drag & drop
+ * - Expansion/réduction de la taille
+ * - Synchronisation avec l'historique de temps
  */
 import { CONFIG, utils } from '../utils.js';
 
@@ -21,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialisation des écouteurs d'événements
     initChecklistEventListeners();
     initSortable();
-    initTimeHistoryHeight();
+    initChecklistSync();
     initChecklistSizeToggle();
     initTimeSizeToggle();
     
@@ -121,15 +128,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ==========================================================================
-    // Gestion de la synchronisation des hauteurs (approche simplifiée)
+    // Gestion de la synchronisation de la checklist avec l'historique de temps
     // ==========================================================================
-    function initTimeHistoryHeight() {
-        // Cette fonction est maintenant simplifiée - CSS gère l'alignement
-        // On garde juste un observateur pour les changements de contenu
+    function initChecklistSync() {
+        // CSS gère maintenant l'alignement naturellement
+        // Cette fonction observe les changements pour déclencher un reflow si nécessaire
         const timeHistory = document.querySelector('.time-history');
         
         if (timeHistory) {
-            // Observer les changements de contenu pour déclencher un reflow
+            // Observer les changements de contenu pour déclencher un reflow si nécessaire
             const contentObserver = new MutationObserver(() => {
                 // Forcer un reflow pour que CSS recalcule les hauteurs
                 timeHistory.offsetHeight;

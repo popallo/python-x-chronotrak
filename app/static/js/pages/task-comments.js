@@ -57,6 +57,16 @@ function createCommentElement(comment) {
         <button type="button" class="reply-button" data-comment-id="${comment.id}">
             <i class="fas fa-reply me-1"></i>Répondre
         </button>
+        <form id="edit-form-${comment.id}" method="POST" action="/tasks/comment/${comment.id}/edit" class="edit-comment-form" style="display: none;">
+            <input type="hidden" name="csrf_token" value="${window.csrfToken}">
+            <div class="mb-2">
+                <textarea class="form-control" name="content" rows="2"></textarea>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light cancel-edit-btn" data-comment-id="${comment.id}">Annuler</button>
+                <button type="submit" class="btn btn-sm btn-light">Modifier</button>
+            </div>
+        </form>
     `;
 
     // Ajouter les gestionnaires d'événements
@@ -68,6 +78,16 @@ function createCommentElement(comment) {
     const replyButton = div.querySelector('.reply-button');
     if (replyButton) {
         replyButton.addEventListener('click', handleReplyButtonClick);
+    }
+
+    const editButton = div.querySelector('.edit-comment-btn');
+    if (editButton) {
+        editButton.addEventListener('click', handleEditButtonClick);
+    }
+
+    const editForm = div.querySelector('.edit-comment-form');
+    if (editForm) {
+        editForm.addEventListener('submit', handleEditSubmit);
     }
 
     return div;
@@ -225,6 +245,52 @@ async function handleDeleteSubmit(e) {
     }
 }
 
+// Gestionnaire de soumission du formulaire d'édition
+async function handleEditSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-Token': window.csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la modification du commentaire');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            // Mettre à jour le contenu du commentaire
+            const commentId = form.id.replace('edit-form-', '');
+            const commentElement = document.getElementById(`comment-${commentId}`);
+            const contentElement = commentElement.querySelector('.comment-content');
+            
+            if (contentElement) {
+                contentElement.textContent = data.comment.content;
+            }
+
+            // Masquer le formulaire d'édition et afficher le contenu
+            form.style.display = 'none';
+            contentElement.style.display = 'block';
+
+            showToast('Commentaire modifié avec succès', 'success');
+        } else {
+            throw new Error(data.error || 'Erreur lors de la modification du commentaire');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast(error.message, 'error');
+    }
+}
+
 // Gestionnaire de clic sur le bouton de réponse
 function handleReplyButtonClick(e) {
     const button = e.target;
@@ -252,5 +318,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialiser les boutons de réponse existants
     document.querySelectorAll('.reply-button').forEach(button => {
         button.addEventListener('click', handleReplyButtonClick);
+    });
+
+    // Initialiser les boutons d'édition existants
+    document.querySelectorAll('.edit-comment-btn').forEach(button => {
+        button.addEventListener('click', handleEditButtonClick);
+    });
+
+    // Initialiser les formulaires d'édition existants
+    document.querySelectorAll('.edit-comment-form').forEach(form => {
+        form.addEventListener('submit', handleEditSubmit);
     });
 }); 

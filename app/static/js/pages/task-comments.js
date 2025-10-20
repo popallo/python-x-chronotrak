@@ -57,25 +57,28 @@ function createCommentElement(comment) {
         <button type="button" class="reply-button" data-comment-id="${comment.id}">
             <i class="fas fa-reply me-1"></i>Répondre
         </button>
+        <form id="edit-form-${comment.id}" method="POST" action="/tasks/comment/${comment.id}/edit" class="edit-comment-form" style="display: none;">
+            <input type="hidden" name="csrf_token" value="${window.csrfToken}">
+            <div class="mb-2">
+                <textarea class="form-control" name="content" rows="2"></textarea>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light cancel-edit-btn" data-comment-id="${comment.id}">Annuler</button>
+                <button type="submit" class="btn btn-sm btn-light">Modifier</button>
+            </div>
+        </form>
     `;
 
-    // Ajouter les gestionnaires d'événements
-    const deleteForm = div.querySelector('.delete-comment-form');
-    if (deleteForm) {
-        deleteForm.addEventListener('submit', handleDeleteSubmit);
-    }
-
-    const replyButton = div.querySelector('.reply-button');
-    if (replyButton) {
-        replyButton.addEventListener('click', handleReplyButtonClick);
-    }
+    // Les gestionnaires d'événements sont maintenant gérés par la délégation d'événements
+    // dans la fonction d'initialisation, donc pas besoin de les attacher ici
 
     return div;
 }
 
 // Gestionnaire de clic sur le bouton d'édition
 function handleEditButtonClick(e) {
-    const commentId = e.currentTarget.dataset.commentId;
+    const button = e.target.closest('.edit-comment-btn');
+    const commentId = button.dataset.commentId;
     const commentElement = document.getElementById(`comment-${commentId}`);
     const contentElement = commentElement.querySelector('.comment-content');
     const editForm = document.getElementById(`edit-form-${commentId}`);
@@ -225,9 +228,55 @@ async function handleDeleteSubmit(e) {
     }
 }
 
+// Gestionnaire de soumission du formulaire d'édition
+async function handleEditSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-Token': window.csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la modification du commentaire');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            // Mettre à jour le contenu du commentaire
+            const commentId = form.id.replace('edit-form-', '');
+            const commentElement = document.getElementById(`comment-${commentId}`);
+            const contentElement = commentElement.querySelector('.comment-content');
+            
+            if (contentElement) {
+                contentElement.textContent = data.comment.content;
+            }
+
+            // Masquer le formulaire d'édition et afficher le contenu
+            form.style.display = 'none';
+            contentElement.style.display = 'block';
+
+            showToast('Commentaire modifié avec succès', 'success');
+        } else {
+            throw new Error(data.error || 'Erreur lors de la modification du commentaire');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast(error.message, 'error');
+    }
+}
+
 // Gestionnaire de clic sur le bouton de réponse
 function handleReplyButtonClick(e) {
-    const button = e.target;
+    const button = e.target.closest('.reply-button');
     const commentId = button.dataset.commentId;
     const replyForm = document.getElementById(`reply-form-${commentId}`);
     
@@ -244,13 +293,32 @@ document.addEventListener('DOMContentLoaded', () => {
         commentForm.addEventListener('submit', handleCommentSubmit);
     }
 
-    // Initialiser les formulaires de suppression existants
-    document.querySelectorAll('.delete-comment-form').forEach(form => {
-        form.addEventListener('submit', handleDeleteSubmit);
+    // Utiliser la délégation d'événements pour les formulaires de suppression
+    // Cela fonctionne même pour les éléments ajoutés dynamiquement
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('delete-comment-form')) {
+            handleDeleteSubmit(e);
+        }
     });
 
-    // Initialiser les boutons de réponse existants
-    document.querySelectorAll('.reply-button').forEach(button => {
-        button.addEventListener('click', handleReplyButtonClick);
+    // Utiliser la délégation d'événements pour les boutons de réponse
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reply-button')) {
+            handleReplyButtonClick(e);
+        }
+    });
+
+    // Utiliser la délégation d'événements pour les boutons d'édition
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-comment-btn')) {
+            handleEditButtonClick(e);
+        }
+    });
+
+    // Utiliser la délégation d'événements pour les formulaires d'édition
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('edit-comment-form')) {
+            handleEditSubmit(e);
+        }
     });
 }); 

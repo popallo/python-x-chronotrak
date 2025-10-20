@@ -8,13 +8,13 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-checklist.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-time.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-status.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
@@ -147,56 +147,45 @@
                     </div>
                 </div>
 
-                <!-- Checklist Section -->
-                <div id="checklist-container" class="checklist-container border border-secondary rounded p-2 mt-3" data-task-id="{{ task.id }}">
-                    <div class="checklist-header d-flex justify-content-between align-items-center">
-                        <h6 class="checklist-title mb-0">
-                            <i class="fas fa-tasks me-1"></i>Checklist
-                        </h6>
-                        <div class="checklist-actions">
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-checklist-size" title="Agrandir/Réduire">
+                <!-- Historique de temps (première colonne - inversé avec checklist) -->
+                <div class="time-history border border-secondary rounded p-2 mt-3 flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-history me-2 text-muted"></i>
+                            <small class="text-muted">Temps consommé</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-time-size" title="Agrandir/Réduire">
                                 <i class="fas fa-expand-alt"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
-                                <i class="fas fa-code me-1"></i>Shortcode
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
-                        {% for item in task.checklist_items|sort(attribute='position') %}
-                        <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
-                            <div class="form-check d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                                    <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
-                                        <i class="fas fa-grip-vertical text-muted"></i>
-                                    </div>
-                                    <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
-                                        <span class="checklist-content">{{ item.content }}</span>
-                                    </label>
-                                </div>
-                                <div class="btn-group btn-group-sm ms-2">
-                                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
-                                        <i class="fas fa-clock"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <form id="add-checklist-item-form" class="checklist-add-form position-relative mt-1">
-                        <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
-                        <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                            <span class="text-muted" style="font-size: 0.7rem;">
-                                <i class="fas fa-keyboard me-1"></i>Entrée
+                            <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
+                                <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
                             </span>
                         </div>
-                    </form>
+                    </div>
+                    {% if time_entries %}
+                        <div class="list-group list-group-flush">
+                            {% for entry in time_entries %}
+                                <div class="list-group-item py-1 px-2 time-entry-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-minus me-1 text-danger"></i>
+                                            <span class="text-danger">
+                                                {{ entry.hours|format_time }}
+                                            </span>
+                                        </div>
+                                        <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
+                                    </div>
+                                    <small class="text-muted d-block">{{ entry.user.name }}</small>
+                                    {% if entry.description %}
+                                    <small class="text-muted d-block mt-1">{{ entry.description }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-muted small">Aucun temps enregistré</div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -230,42 +219,56 @@
                         </div>
                     </div>
 
-                    <!-- Historique de temps -->
-                    <div class="time-history border border-secondary rounded p-2 mt-3 flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-history me-2 text-muted"></i>
-                                <small class="text-muted">Temps consommé</small>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
-                                    <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
-                                </span>
+                    <!-- Checklist Section (deuxième colonne - inversé avec temps) -->
+                    <div id="checklist-container" class="checklist-container border border-secondary rounded p-2 mt-3" data-task-id="{{ task.id }}">
+                        <div class="checklist-header d-flex justify-content-between align-items-center">
+                            <h6 class="checklist-title mb-0">
+                                <i class="fas fa-tasks me-1"></i>Checklist
+                            </h6>
+                            <div class="checklist-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-checklist-size" title="Agrandir/Réduire">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
+                                    <i class="fas fa-code me-1"></i>Shortcode
+                                </button>
                             </div>
                         </div>
-                        {% if time_entries %}
-                            <div class="list-group list-group-flush">
-                                {% for entry in time_entries %}
-                                    <div class="list-group-item py-1 px-2 time-entry-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-minus me-1 text-danger"></i>
-                                                <span class="text-danger">
-                                                    {{ entry.hours|format_time }}
-                                                </span>
-                                            </div>
-                                            <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
+                        
+                        <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
+                            {% for item in task.checklist_items|sort(attribute='position') %}
+                            <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
+                                <div class="form-check d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
+                                        <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
+                                            <i class="fas fa-grip-vertical text-muted"></i>
                                         </div>
-                                        <small class="text-muted d-block">{{ entry.user.name }}</small>
-                                        {% if entry.description %}
-                                        <small class="text-muted d-block mt-1">{{ entry.description }}</small>
-                                        {% endif %}
+                                        <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
+                                            <span class="checklist-content">{{ item.content }}</span>
+                                        </label>
                                     </div>
-                                {% endfor %}
+                                    <div class="btn-group btn-group-sm ms-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        {% else %}
-                            <div class="text-muted small">Aucun temps enregistré</div>
-                        {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <form id="add-checklist-item-form" class="checklist-add-form position-relative mt-1">
+                            <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
+                            <div class="position-absolute" style="right: 10px; bottom: 10px;">
+                                <span class="text-muted" style="font-size: 0.7rem;">
+                                    <i class="fas fa-keyboard me-1"></i>Entrée
+                                </span>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -395,7 +398,7 @@
                             {% endif %}
                             {% if comment.user_id == current_user.id or current_user.is_admin() %}
                                 <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline delete-comment-form">
-                                    {{ comment_form.hidden_tag() }}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -443,7 +446,7 @@
                                             </button>
                                         {% endif %}
                                         <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline delete-comment-form">
-                                            {{ comment_form.hidden_tag() }}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>

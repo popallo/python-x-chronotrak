@@ -24,6 +24,17 @@
     margin: 0;
 }
 
+/* Assurer que les colonnes ont la même hauteur */
+.card-body .row {
+    display: flex;
+    align-items: stretch;
+}
+
+.card-body .col-md-6 {
+    display: flex;
+    flex-direction: column;
+}
+
 .card-body p {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -61,12 +72,32 @@
 }
 
 /* ==========================================================================
+   Variables pour les hauteurs
+   ========================================================================== */
+:root {
+    --checklist-max-height: 350px;
+    --checklist-expanded-max-height: 500px;
+    --time-history-max-height: 300px;
+    --time-history-expanded-max-height: 500px;
+    --transition-duration: 0.3s;
+}
+
+/* ==========================================================================
    Checklist
    ========================================================================== */
 .checklist-container {
-    max-width: 600px;
+    max-width: 100%;
     border: 1px solid var(--bs-secondary) !important;
-    transition: all 0.3s ease;
+    transition: all var(--transition-duration) ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.checklist-header {
+    flex-shrink: 0;
 }
 
 .checklist-container.expanded {
@@ -74,14 +105,17 @@
 }
 
 .checklist-items {
-    max-height: 150px;
+    flex: 1;
     overflow-y: auto;
-    margin-bottom: 1rem;
-    transition: max-height 0.3s ease;
+    margin-bottom: 0.5rem;
+    transition: all var(--transition-duration) ease;
+    padding: 0.25rem 0;
+    min-height: 0;
+    max-height: var(--checklist-max-height);
 }
 
 .checklist-container.expanded .checklist-items {
-    max-height: 500px;
+    max-height: var(--checklist-expanded-max-height);
 }
 
 .checklist-item {
@@ -89,7 +123,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
-    transition: padding 0.3s ease;
+    transition: padding var(--transition-duration) ease;
 }
 
 .checklist-container.expanded .checklist-item {
@@ -111,7 +145,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
-    transition: font-size 0.3s ease;
+    transition: font-size var(--transition-duration) ease;
 }
 
 .checklist-container.expanded .checklist-item .form-check-label {
@@ -122,7 +156,7 @@
     flex: 1;
     word-break: break-word;
     font-size: 0.9rem;
-    transition: font-size 0.3s ease;
+    transition: font-size var(--transition-duration) ease;
 }
 
 .checklist-container.expanded .checklist-item .checklist-content {
@@ -133,7 +167,7 @@
     flex-shrink: 0;
     margin-left: auto;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-duration) ease;
 }
 
 .checklist-item:hover .btn-group {
@@ -145,9 +179,11 @@
 }
 
 .checklist-add-form {
-    max-width: 600px;
-    margin-top: 1rem;
-    transition: max-width 0.3s ease;
+    max-width: 100%;
+    margin-top: auto;
+    transition: max-width var(--transition-duration) ease;
+    flex-shrink: 0;
+    margin-bottom: 0;
 }
 
 .checklist-container.expanded .checklist-add-form {
@@ -156,7 +192,7 @@
 
 .checklist-add-form .form-control {
     font-size: 0.9rem;
-    transition: font-size 0.3s ease;
+    transition: font-size var(--transition-duration) ease;
 }
 
 .checklist-container.expanded .checklist-add-form .form-control {
@@ -164,11 +200,13 @@
 }
 
 /* Style pour le bouton de basculement */
-.toggle-checklist-size {
-    transition: transform 0.3s ease;
+.toggle-checklist-size,
+.toggle-time-size {
+    transition: transform var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .toggle-checklist-size {
+.checklist-container.expanded .toggle-checklist-size,
+.time-history.expanded .toggle-time-size {
     transform: rotate(180deg);
 }
 
@@ -441,6 +479,14 @@ textarea.comment-input::placeholder {
 .time-history {
     overflow-y: auto;
     border: 1px solid var(--bs-secondary) !important;
+    max-height: var(--time-history-max-height);
+    transition: max-height var(--transition-duration) ease;
+    flex: 1;
+    min-height: 0;
+}
+
+.time-history.expanded {
+    max-height: var(--time-history-expanded-max-height);
 }
 
 .time-entry-item {

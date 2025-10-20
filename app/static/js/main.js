@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initWelcomePage();
     }
     
-    // Page des tâches
-    if (currentPath.includes('/tasks/') || currentPath.includes('/my-tasks')) {
+    // Page des tâches (exclure la page d'édition)
+    if ((currentPath.includes('/tasks/') || currentPath.includes('/my-tasks')) && !currentPath.includes('/edit')) {
         initTasksPage();
     }
     

@@ -7,6 +7,10 @@
 
 {% block scripts %}
 {{ super() }}
+<script>
+    // Définir le token CSRF pour les requêtes AJAX
+    window.csrfToken = "{{ csrf_token() }}";
+</script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
 <script type="module">
@@ -458,6 +462,21 @@
                         <div class="comment-content">
                             {{ reply.content }}
                         </div>
+                        {% if reply.user_id == current_user.id or current_user.is_admin() %}
+                            {% set reply_minutes_elapsed = ((now.replace(tzinfo=None) - reply.created_at).total_seconds() / 60)|int %}
+                            {% if reply_minutes_elapsed < 10 %}
+                                <form id="edit-form-{{ reply.id }}" method="POST" action="{{ url_for('tasks.edit_comment', comment_id=reply.id) }}" class="edit-comment-form" style="display: none;">
+                                    {{ edit_comment_form.hidden_tag() }}
+                                    <div class="mb-2">
+                                        {{ edit_comment_form.content(class="form-control", rows=2) }}
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-light cancel-edit-btn" data-comment-id="{{ reply.id }}">Annuler</button>
+                                        {{ edit_comment_form.submit(class="btn btn-sm btn-light") }}
+                                    </div>
+                                </form>
+                            {% endif %}
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>

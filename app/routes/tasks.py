@@ -757,8 +757,32 @@ def edit_comment(comment_id):
         # Pas de mise à jour de created_at pour garder l'horodatage d'origine
         save_to_db(comment)
         
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True,
+                'message': 'Commentaire modifié avec succès!',
+                'comment': {
+                    'id': comment.id,
+                    'content': comment.content,
+                    'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+                    'user_name': comment.user.name,
+                    'user_id': comment.user.id,
+                    'is_own_comment': comment.user_id == current_user.id,
+                    'parent_id': comment.parent_id
+                }
+            })
+        
         flash('Commentaire modifié avec succès !', 'success')
     else:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors[0]
+            return jsonify({
+                'success': False,
+                'errors': errors
+            }), 400
+            
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f'Erreur dans le champ {getattr(form, field).label.text}: {error}', 'danger')
@@ -991,7 +1015,7 @@ def add_reply(comment_id):
     # Vérifier si le client a accès à ce projet
     if current_user.is_client():
         if not current_user.has_access_to_client(task.project.client_id):
-            if request.is_json:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'error': "Vous n'avez pas accès à cette tâche."}), 403
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
@@ -1007,7 +1031,7 @@ def add_reply(comment_id):
         )
         save_to_db(reply)
         
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': True,
                 'message': 'Réponse ajoutée avec succès!',
@@ -1024,7 +1048,7 @@ def add_reply(comment_id):
             
         flash('Réponse ajoutée avec succès!', 'success')
     else:
-        if request.is_json:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             errors = {}
             for field, field_errors in form.errors.items():
                 errors[field] = field_errors[0]

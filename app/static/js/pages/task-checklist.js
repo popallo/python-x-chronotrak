@@ -442,21 +442,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Gestion des réponses aux commentaires
-    document.querySelectorAll('.reply-button').forEach(button => {
-        button.addEventListener('click', function() {
-            const commentId = this.dataset.commentId;
-            const replyForm = document.getElementById(`reply-form-${commentId}`);
-            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-        });
-    });
-
-    // Gestionnaire pour le bouton d'annulation de réponse
-    document.querySelectorAll('.cancel-reply-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const commentId = this.dataset.commentId;
-            const replyForm = document.getElementById(`reply-form-${commentId}`);
-            replyForm.style.display = 'none';
-        });
-    });
 }); 

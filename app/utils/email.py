@@ -184,8 +184,8 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
     
     # Enregistrer la communication dans la base de données de façon asynchrone aussi
     try:
-        def save_communication():
-            with current_app.app_context():
+        def save_communication(app_instance):
+            with app_instance.app_context():
                 try:
                     for recipient in recipients:
                         comm = Communication(
@@ -204,11 +204,11 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
                     
                     db.session.commit()
                 except Exception as e:
-                    current_app.logger.error(f"Erreur lors de l'enregistrement de la communication: {e}")
+                    app_instance.logger.error(f"Erreur lors de l'enregistrement de la communication: {e}")
                     db.session.rollback()
         
         # Lancer l'enregistrement en base de façon asynchrone
-        Thread(target=save_communication).start()
+        Thread(target=save_communication, args=(current_app._get_current_object(),)).start()
         
     except Exception as e:
         current_app.logger.error(f"Erreur lors du lancement de l'enregistrement: {e}")

@@ -34,7 +34,7 @@ class EncryptedType(TypeDecorator):
                 
         except Exception as e:
             logger.error(f"Erreur lors du chiffrement: {str(e)}")
-            logger.error(f"Valeur à chiffrer: {value[:20]}...")
+            # Ne pas logger la valeur pour éviter les fuites d'informations
             return value  # En cas d'erreur, retourner la valeur non chiffrée
 
     def process_result_value(self, value, dialect):
@@ -73,10 +73,8 @@ class EncryptedType(TypeDecorator):
             return decrypted_data.decode('utf-8')
                 
         except InvalidToken:
-            logger.error(f"Impossible de déchiffrer la valeur. Token invalide ou mauvaise clé.")
-            logger.error(f"Valeur chiffrée: {value[:20]}...")
+            logger.error("Impossible de déchiffrer la valeur. Token invalide ou mauvaise clé.")
             return "[Erreur de déchiffrement]"
         except Exception as e:
             logger.error(f"Erreur lors du déchiffrement: {str(e)}")
-            logger.error(f"Valeur chiffrée: {value[:20]}...")
             return "[Erreur de déchiffrement]"

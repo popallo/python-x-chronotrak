@@ -49,7 +49,7 @@ RUN mkdir -p /app/instance /var/log /app/logs && \
     chown -R chronouser:chronouser /app && \
     chmod -R 755 /app && \
     chmod 777 /app/instance && \
-    chmod 777 /app/logs && \
+    chmod 755 /app/logs && \
     chmod +x /app/management/setup_cron.sh && \
     chmod +x /app/start.sh && \
     chown chronouser:chronouser /var/log
@@ -59,6 +59,10 @@ RUN mkdir -p /app/instance /var/log /app/logs && \
 
 # Passer à l'utilisateur non-root
 USER chronouser
+
+# Ajouter un healthcheck pour vérifier la santé du conteneur
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
 
 EXPOSE 5000
 

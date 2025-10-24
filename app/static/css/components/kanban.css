@@ -7,6 +7,109 @@
     padding: 0;
 }
 
+/* Styles pour la barre de recherche du kanban */
+.kanban-search-container {
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.kanban-search-container .input-group {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.kanban-search-container .input-group-text {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-right: none;
+    color: #6c757d;
+}
+
+.kanban-search-container .form-control {
+    border: 1px solid #dee2e6;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+    font-size: 0.9rem;
+}
+
+.kanban-search-container .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.kanban-search-container .btn {
+    border: 1px solid #dee2e6;
+    border-left: none;
+    background: #fff;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.kanban-search-container .btn:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.kanban-search-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Animation pour les tâches filtrées */
+.kanban-task {
+    transition: all 0.3s ease;
+}
+
+.kanban-task-filtered {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+/* Dark mode pour la barre de recherche */
+html.dark-mode .kanban-search-container {
+    background: var(--dm-bg-card) !important;
+    border-color: var(--dm-border) !important;
+}
+
+html.dark-mode .kanban-search-container .input-group-text {
+    background: var(--dm-bg-elevated) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .kanban-search-container .form-control {
+    background: var(--dm-bg-elevated) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .kanban-search-container .form-control:focus {
+    background: var(--dm-bg-elevated) !important;
+    border-color: #0d6efd !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .kanban-search-container .btn {
+    background: var(--dm-bg-elevated) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .kanban-search-container .btn:hover {
+    background: var(--dm-bg-main) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode .kanban-search-info {
+    color: var(--dm-text-muted) !important;
+}
+
 .kanban-board {
     display: flex;
     gap: 1rem;

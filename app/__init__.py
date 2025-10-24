@@ -122,9 +122,26 @@ def create_app(config_name):
         if elapsed_time > 2.0:
             app.logger.warning(f'Slow request: {request.method} {request.url} took {elapsed_time:.2f}s')
         
+        # Log des requêtes très lentes (> 5 secondes) - CRITIQUE
+        if elapsed_time > 5.0:
+            app.logger.error(f'CRITICAL: Very slow request: {request.method} {request.url} took {elapsed_time:.2f}s')
+        
         # Log des erreurs 5xx
         if response.status_code >= 500:
             app.logger.error(f'Server error {response.status_code}: {request.method} {request.url}')
+        
+        # Log des erreurs 502 spécifiquement
+        if response.status_code == 502:
+            app.logger.error(f'502 Bad Gateway: {request.method} {request.url} - Possible timeout or worker issue')
+        
+        # Monitoring de la queue d'emails
+        try:
+            from app.utils.email import email_queue
+            queue_size = email_queue.qsize()
+            if queue_size > 50:
+                app.logger.warning(f'Email queue size: {queue_size} - Possible email processing bottleneck')
+        except:
+            pass  # Ignorer si le module email n'est pas disponible
         
         return response
 
@@ -296,6 +313,37 @@ def create_app(config_name):
     app.register_blueprint(communications)
     app.register_blueprint(api)
     
+    # Route de santé pour monitoring
+    @app.route('/health')
+    def health_check():
+        """Endpoint de santé pour monitoring"""
+        try:
+            # Vérifier la base de données
+            db.session.execute('SELECT 1')
+            
+            # Vérifier la queue d'emails
+            from app.utils.email import email_queue
+            queue_size = email_queue.qsize()
+            
+            # Vérifier l'état du worker email
+            from app.utils.email import email_worker_thread
+            worker_alive = email_worker_thread and email_worker_thread.is_alive()
+            
+            return {
+                'status': 'healthy',
+                'database': 'ok',
+                'email_queue_size': queue_size,
+                'email_worker_alive': worker_alive,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            app.logger.error(f"Health check failed: {e}")
+            return {
+                'status': 'unhealthy',
+                'error': str(e),
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }, 500
+
     # Commandes CLI
     @app.cli.command()
     @click.option('--force', is_flag=True, help='Forcer l\'archivage même en environnement de développement')

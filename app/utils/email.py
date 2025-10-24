@@ -17,16 +17,17 @@ def email_worker():
     """Worker thread pour traiter la queue d'emails"""
     while True:
         try:
-            # Attendre un email à traiter (timeout de 1 seconde)
-            email_data = email_queue.get(timeout=1)
+            # Attendre un email à traiter (timeout de 5 secondes)
+            email_data = email_queue.get(timeout=5)
             if email_data is None:  # Signal d'arrêt
                 break
             
-            # Traiter l'email
+            # Traiter l'email sans timeout complexe
             send_async_email(email_data['app'], email_data['msg'], email_data['email_data'])
             email_queue.task_done()
             
         except queue.Empty:
+            # Pas d'email à traiter, continuer
             continue
         except Exception as e:
             current_app.logger.error(f"Erreur dans le worker email: {e}")
@@ -47,11 +48,20 @@ def send_async_email(app, msg, email_data=None):
     """Envoie un email de façon asynchrone"""
     with app.app_context():
         try:
-            # Timeout de 10 secondes pour l'envoi d'email
+            # Timeout de 15 secondes pour l'envoi d'email (augmenté)
             import socket
-            socket.setdefaulttimeout(10)
+            socket.setdefaulttimeout(15)
+            
+            # Vérifier la taille de la queue avant d'envoyer
+            queue_size = email_queue.qsize()
+            if queue_size > 100:  # Si trop d'emails en attente
+                current_app.logger.warning(f"Queue d'emails surchargée ({queue_size} emails), email ignoré")
+                return
+            
             mail.send(msg)
             current_app.logger.info(f"Email envoyé avec succès: {msg.subject}")
+        except socket.timeout:
+            current_app.logger.error(f"Timeout lors de l'envoi de l'email: {msg.subject}")
         except Exception as e:
             current_app.logger.error(f"Erreur lors de l'envoi de l'email: {e}")
             # Enregistrer l'échec en base si on a les données

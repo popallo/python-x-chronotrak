@@ -42,12 +42,14 @@ exec gunicorn \
   --workers 4 \
   --worker-class sync \
   --worker-connections 1000 \
-  --timeout 30 \
-  --keep-alive 2 \
+  --timeout 60 \
+  --keep-alive 5 \
   --max-requests 1000 \
   --max-requests-jitter 50 \
   --preload \
   --access-logfile - \
   --error-logfile - \
   --log-level info \
+  --capture-output \
+  --enable-stdio-inheritance \
   wsgi:app

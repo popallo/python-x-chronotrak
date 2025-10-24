@@ -25,16 +25,40 @@ def get_dashboard_stats():
         clients_query = get_accessible_clients()
         client_ids = [client.id for client in clients_query.all()]
         
-        # Requête principale pour les statistiques de base (avec DISTINCT pour éviter les doublons)
-        stats = db.session.query(
-            func.count(func.distinct(Client.id)).label('total_clients'),
-            func.count(func.distinct(Project.id)).label('total_projects'),
-            func.count(func.distinct(Task.id)).label('total_tasks'),
-            func.sum(TimeEntry.minutes).label('total_time')
-        ).outerjoin(Project, Project.client_id == Client.id)\
-         .outerjoin(Task, Task.project_id == Project.id)\
-         .outerjoin(TimeEntry, TimeEntry.task_id == Task.id)\
-         .filter(Client.id.in_(client_ids)).first()
+        # Optimisation : requêtes séparées pour éviter les JOINs complexes
+        try:
+            # Requêtes séparées pour de meilleures performances
+            total_clients = db.session.query(func.count(Client.id)).filter(
+                Client.id.in_(client_ids)
+            ).scalar() or 0
+            
+            total_projects = db.session.query(func.count(Project.id)).filter(
+                Project.client_id.in_(client_ids)
+            ).scalar() or 0
+            
+            total_tasks = db.session.query(func.count(Task.id)).join(Project).filter(
+                Project.client_id.in_(client_ids)
+            ).scalar() or 0
+            
+            total_time = db.session.query(func.sum(TimeEntry.minutes)).join(Task).join(Project).filter(
+                Project.client_id.in_(client_ids)
+            ).scalar() or 0
+            
+            stats = type('Stats', (), {
+                'total_clients': total_clients,
+                'total_projects': total_projects,
+                'total_tasks': total_tasks,
+                'total_time': total_time
+            })()
+                
+        except Exception as e:
+            current_app.logger.error(f"Erreur lors de la récupération des statistiques: {e}")
+            stats = type('Stats', (), {
+                'total_clients': 0,
+                'total_projects': 0,
+                'total_tasks': 0,
+                'total_time': 0
+            })()
         
         # Requête séparée pour les projets en crédit faible
         projects_low_credit = db.session.query(func.count(Project.id)).filter(
@@ -81,13 +105,26 @@ def get_dashboard_stats():
             'total_time': (stats.total_time or 0) / 60  # Convertir en heures
         }
     else:
-        # Pour les admins et techniciens - requête principale (avec DISTINCT)
-        stats = db.session.query(
-            func.count(func.distinct(Client.id)).label('total_clients'),
-            func.count(func.distinct(Project.id)).label('total_projects'),
-            func.count(func.distinct(Task.id)).label('total_tasks')
-        ).outerjoin(Project, Project.client_id == Client.id)\
-         .outerjoin(Task, Task.project_id == Project.id).first()
+        # Pour les admins et techniciens - requêtes séparées optimisées
+        try:
+            # Requêtes séparées pour de meilleures performances
+            total_clients = db.session.query(func.count(Client.id)).scalar() or 0
+            total_projects = db.session.query(func.count(Project.id)).scalar() or 0
+            total_tasks = db.session.query(func.count(Task.id)).scalar() or 0
+            
+            stats = type('Stats', (), {
+                'total_clients': total_clients,
+                'total_projects': total_projects,
+                'total_tasks': total_tasks
+            })()
+                
+        except Exception as e:
+            current_app.logger.error(f"Erreur lors de la récupération des statistiques admin: {e}")
+            stats = type('Stats', (), {
+                'total_clients': 0,
+                'total_projects': 0,
+                'total_tasks': 0
+            })()
         
         # Requête séparée pour les projets en crédit faible
         projects_low_credit = db.session.query(func.count(Project.id)).filter(

@@ -26,10 +26,12 @@ class EncryptedType(TypeDecorator):
             if not key:
                 logger.error("Clé de chiffrement manquante dans la configuration")
                 return value  # Retourner la valeur telle quelle si pas de clé
-                
+            
+            # Chiffrement simple sans timeout (plus compatible)
             f = Fernet(key)
             encrypted_data = f.encrypt(value.encode('utf-8'))
             return encrypted_data.decode('utf-8')
+                
         except Exception as e:
             logger.error(f"Erreur lors du chiffrement: {str(e)}")
             logger.error(f"Valeur à chiffrer: {value[:20]}...")
@@ -60,19 +62,19 @@ class EncryptedType(TypeDecorator):
                     _warning_count += 1
                 return value
             
-            # La valeur est chiffrée, procéder au déchiffrement
+            # La valeur est chiffrée, procéder au déchiffrement simple
             key = current_app.config.get('ENCRYPTION_KEY')
             if not key:
                 logger.error("Clé de chiffrement manquante dans la configuration")
                 return "[Erreur: Clé de chiffrement manquante]"
-                
+            
             f = Fernet(key)
             decrypted_data = f.decrypt(value.encode('utf-8'))
             return decrypted_data.decode('utf-8')
+                
         except InvalidToken:
             logger.error(f"Impossible de déchiffrer la valeur. Token invalide ou mauvaise clé.")
             logger.error(f"Valeur chiffrée: {value[:20]}...")
-            logger.error(f"Clé utilisée: {key[:10]}...")
             return "[Erreur de déchiffrement]"
         except Exception as e:
             logger.error(f"Erreur lors du déchiffrement: {str(e)}")

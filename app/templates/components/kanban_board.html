@@ -1,5 +1,30 @@
 {% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None) %}
 <div class="kanban-container">
+    <!-- Barre de recherche pour le kanban -->
+    <div class="kanban-search-container mb-3">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" 
+                   class="form-control" 
+                   id="kanban-search" 
+                   placeholder="Rechercher une tâche, projet ou client..."
+                   autocomplete="off">
+            <button class="btn btn-outline-secondary" 
+                    type="button" 
+                    id="kanban-clear-search" 
+                    title="Effacer la recherche">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="kanban-search-info mt-2" id="kanban-search-info" style="display: none;">
+            <small class="text-muted">
+                <span id="kanban-search-count">0</span> tâche(s) trouvée(s)
+            </small>
+        </div>
+    </div>
+    
     <div class="kanban-board">
         <!-- Colonne "À faire" -->
         <div class="kanban-column todo-column" data-status="à faire">

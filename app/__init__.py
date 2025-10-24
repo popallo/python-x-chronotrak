@@ -135,21 +135,49 @@ def create_app(config_name):
         g.response_status_code = response.status_code
         elapsed_time = log_request_time()
         
+        # Récupérer l'IP réelle du client (avec Cloudflare + reverse proxy)
+        def get_real_ip():
+            # Priorité aux headers Cloudflare
+            headers_to_check = [
+                'CF-Connecting-IP',  # Cloudflare - IP réelle du client
+                'X-Real-IP',         # Nginx standard
+                'X-Forwarded-For',   # Standard reverse proxy
+                'X-Client-IP',       # Autres proxies
+                'X-Forwarded',       # RFC 7239
+                'Forwarded-For',     # RFC 7239
+                'Forwarded'          # RFC 7239
+            ]
+            
+            for header in headers_to_check:
+                ip = request.headers.get(header)
+                if ip:
+                    # X-Forwarded-For peut contenir plusieurs IPs (client, proxy1, proxy2)
+                    # On prend la première (IP du client original)
+                    return ip.split(',')[0].strip()
+            
+            # Fallback sur l'IP directe
+            return request.remote_addr
+        
+        client_ip = get_real_ip()
+        
         # Log des requêtes lentes (> 2 secondes)
         if elapsed_time > 2.0:
-            app.logger.warning(f'Slow request: {request.method} {request.url} took {elapsed_time:.2f}s')
+            app.logger.warning(f'Slow request: {request.method} {request.url} took {elapsed_time:.2f}s from {client_ip}')
         
         # Log des requêtes très lentes (> 5 secondes) - CRITIQUE
         if elapsed_time > 5.0:
-            app.logger.error(f'CRITICAL: Very slow request: {request.method} {request.url} took {elapsed_time:.2f}s')
+            app.logger.error(f'CRITICAL: Very slow request: {request.method} {request.url} took {elapsed_time:.2f}s from {client_ip}')
         
         # Log des erreurs 5xx
         if response.status_code >= 500:
-            app.logger.error(f'Server error {response.status_code}: {request.method} {request.url}')
+            app.logger.error(f'Server error {response.status_code}: {request.method} {request.url} from {client_ip}')
         
         # Log des erreurs 502 spécifiquement
         if response.status_code == 502:
-            app.logger.error(f'502 Bad Gateway: {request.method} {request.url} - Possible timeout or worker issue')
+            app.logger.error(f'502 Bad Gateway: {request.method} {request.url} from {client_ip} - Possible timeout or worker issue')
+        
+        # Log de toutes les requêtes avec IP (pour debug)
+        app.logger.info(f'Request: {request.method} {request.url} {response.status_code} {elapsed_time:.2f}s from {client_ip}')
         
         # Monitoring de la queue d'emails
         try:

@@ -101,11 +101,28 @@ def create_app(config_name):
             "frame-src 'self' https://*.cloudflare.com; "
             "worker-src 'self'"
         )
-        # Ajouter les en-têtes CORS pour Cloudflare
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        # Configuration CORS sécurisée - uniquement pour les domaines autorisés
+        origin = request.headers.get('Origin')
+        allowed_origins = [
+            'https://chronotrak.com',
+            'https://www.chronotrak.com',
+            'https://app.chronotrak.com'
+        ]
+        
+        # En développement, autoriser localhost
+        if app.config.get('FLASK_ENV') == 'development':
+            allowed_origins.extend([
+                'http://localhost:5000',
+                'http://127.0.0.1:5000',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000'
+            ])
+        
+        if origin and origin in allowed_origins:
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
         return response
 
     # Middleware pour mesurer le temps de chargement

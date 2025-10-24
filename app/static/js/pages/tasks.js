@@ -112,7 +112,15 @@ function updateTaskStatusUI(statusButtons, newStatus, currentButton) {
     // Ajouter un message de succès temporaire
     const statusMsg = document.createElement('div');
     statusMsg.className = 'alert alert-success mt-2 status-update-msg';
-    statusMsg.innerHTML = `<i class="fas fa-check me-2"></i>Statut mis à jour avec succès!`;
+    
+    // Créer l'icône et le texte séparément pour éviter XSS
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-check me-2';
+    statusMsg.appendChild(icon);
+    
+    const text = document.createTextNode('Statut mis à jour avec succès!');
+    statusMsg.appendChild(text);
+    
     document.querySelector('.status-toggle').appendChild(statusMsg);
     
     // Supprimer le message après quelques secondes
@@ -153,7 +161,12 @@ function updateCompletionDate(newStatus) {
         // Créer un nouvel élément avec une classe spécifique
         const completedDateElem = document.createElement('p');
         completedDateElem.className = 'completed-date';
-        completedDateElem.innerHTML = `<strong>Terminée le :</strong> ${formattedDate}`;
+        
+        // Utiliser textContent pour éviter XSS
+        const strong = document.createElement('strong');
+        strong.textContent = 'Terminée le : ';
+        completedDateElem.appendChild(strong);
+        completedDateElem.appendChild(document.createTextNode(formattedDate));
         
         // Insérer après la date de création
         createdDateElem.after(completedDateElem);
@@ -334,12 +347,24 @@ function initCommentMentions() {
                     mentionDropdown = createMentionDropdown();
                 }
                 
-                mentionDropdown.innerHTML = filteredUsers.map(user => `
-                    <div class="mention-item" data-user-id="${user.id}">
-                        <strong>${user.name}</strong>
-                        <small class="text-muted d-block">${user.email}</small>
-                    </div>
-                `).join('');
+                // Créer les éléments DOM de manière sécurisée pour éviter XSS
+                mentionDropdown.innerHTML = '';
+                filteredUsers.forEach(user => {
+                    const item = document.createElement('div');
+                    item.className = 'mention-item';
+                    item.setAttribute('data-user-id', user.id);
+                    
+                    const strong = document.createElement('strong');
+                    strong.textContent = user.name;
+                    item.appendChild(strong);
+                    
+                    const small = document.createElement('small');
+                    small.className = 'text-muted d-block';
+                    small.textContent = user.email;
+                    item.appendChild(small);
+                    
+                    mentionDropdown.appendChild(item);
+                });
 
                 mentionDropdown.style.display = 'block';
                 positionDropdown(match);

@@ -39,14 +39,12 @@ class Config:
     TURNSTILE_ENABLED = os.environ.get('TURNSTILE_ENABLED', 'false').lower() in ['true', 'on', '1']
     
     # Clé de chiffrement pour les données sensibles
-    # Si non définie dans les variables d'environnement, une clé temporaire sera générée
-    # ATTENTION: Si la clé change, les données existantes ne pourront plus être déchiffrées
-    ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY') or Fernet.generate_key()
+    # ATTENTION: ENCRYPTION_KEY DOIT être définie dans les variables d'environnement
+    # Si la clé change, les données existantes ne pourront plus être déchiffrées
+    ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
     if not ENCRYPTION_KEY:
-        # Générer une clé temporaire (pour le développement uniquement)
-        # En production, définissez ENCRYPTION_KEY dans les variables d'environnement
-        ENCRYPTION_KEY = base64.urlsafe_b64encode(os.urandom(32))
-        print("ATTENTION: Utilisation d'une clé de chiffrement temporaire. Définissez ENCRYPTION_KEY en production.")
+        raise ValueError("ENCRYPTION_KEY doit être définie dans les variables d'environnement. "
+                        "Générez une clé avec: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'")
 
     # Configuration du cache
     CACHE_TYPE = 'SimpleCache'  # Utilise le cache en mémoire

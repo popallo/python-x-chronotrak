@@ -358,6 +358,17 @@ def create_app(config_name):
     app.register_blueprint(communications)
     app.register_blueprint(api)
     
+    # Route pour le favicon
+    @app.route('/favicon.ico')
+    def favicon():
+        """Serve le favicon"""
+        from flask import send_from_directory
+        return send_from_directory(
+            app.static_folder, 
+            'favicon/favicon.ico', 
+            mimetype='image/vnd.microsoft.icon'
+        )
+
     # Route de santé pour monitoring
     @app.route('/health')
     def health_check():

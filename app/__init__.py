@@ -318,8 +318,9 @@ def create_app(config_name):
     def health_check():
         """Endpoint de santé pour monitoring"""
         try:
-            # Vérifier la base de données
-            db.session.execute('SELECT 1')
+            # Vérifier la base de données avec la syntaxe correcte
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
             
             # Vérifier la queue d'emails
             from app.utils.email import email_queue

@@ -60,6 +60,10 @@ RUN mkdir -p /app/instance /var/log /app/logs && \
 # Passer à l'utilisateur non-root
 USER chronouser
 
+# Ajouter un healthcheck pour vérifier la santé du conteneur
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
 EXPOSE 5000
 
 CMD ["./start.sh"]

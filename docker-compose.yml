@@ -1,5 +1,6 @@
 services:
   web:
+    container_name: chronotrak
     build: .
     image: forge.apacher.eu/aurelien-dazy/chronotrak:latest
     restart: always
@@ -19,20 +20,14 @@ services:
           cpus: '0.5'
     command: >
       sh -c "mkdir -p /app/instance &&
-        echo 'Début de l'application des migrations...' &&
-        if flask db upgrade; then
-          echo 'Migrations appliquées avec succès.'
-        else
-          echo 'Erreur lors de l'application des migrations.' >&2
-          exit 1
-        fi &&
-        if [ ! -f /app/instance/chronotrak.db ] || [ ! -s /app/instance/chronotrak.db ]; then
-          echo 'Base de données vide, création du compte administrateur...' &&
-          python ./scripts/create_admin.py
+        flask db upgrade || echo 'Migration échouée, continuons...' &&
+        if [ ! -f /app/instance/chronotrak.db ]; then
+          echo 'Initialisation de la base de données...'
+          python create_admin.py
         else
           echo 'Base de données existante détectée'
         fi &&
-        gunicorn -c gunicorn.conf.py wsgi:app"
+        gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 30 wsgi:app"
 
 volumes:
   chronotrak_data:

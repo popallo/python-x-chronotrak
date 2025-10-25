@@ -11,12 +11,14 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuration du pool de connexions et timeouts pour SQLite
+    # ATTENTION: SQLite n'est PAS thread-safe avec plusieurs workers Gunicorn
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
         'connect_args': {
             'timeout': 30,
-            'check_same_thread': False
+            'check_same_thread': True,  # CRITIQUE: True pour la sécurité
+            'isolation_level': None     # Mode autocommit pour éviter les deadlocks
         }
     }
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')

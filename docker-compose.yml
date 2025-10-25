@@ -9,6 +9,14 @@ services:
       - chronotrak_data:/app/instance
     env_file:
       - ./.env.${ENVIRONMENT:-development}
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
     command: >
       sh -c "mkdir -p /app/instance &&
         echo 'Début de l'application des migrations...' &&
@@ -24,7 +32,7 @@ services:
         else
           echo 'Base de données existante détectée'
         fi &&
-        gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 30 --preload wsgi:app"
+        gunicorn -c gunicorn.conf.py wsgi:app"
 
 volumes:
   chronotrak_data:

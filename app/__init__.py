@@ -71,6 +71,18 @@ def create_app(config_name):
     # Initialiser les extensions avec l'app
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    # Configuration du pool de connexions pour éviter les timeouts
+    with app.app_context():
+        from sqlalchemy import event
+        from sqlalchemy.pool import QueuePool
+        
+        # Configuration du pool de connexions
+        engine = db.engine
+        engine.pool._recycle = 3600  # Recycle les connexions après 1h
+        engine.pool._pre_ping = True  # Test les connexions avant utilisation
+        engine.pool._pool_size = 10   # Taille du pool
+        engine.pool._max_overflow = 20  # Connexions supplémentaires
     login_manager.init_app(app)
     bcrypt.init_app(app)
     mail.init_app(app)
@@ -129,9 +141,32 @@ def create_app(config_name):
     @app.before_request
     def before_request():
         start_timer()
+        
+        # Timeout global pour éviter les requêtes qui traînent (uniquement en production)
+        if not app.debug:
+            import signal
+            import threading
+            
+            # Vérifier qu'on est dans le thread principal
+            if threading.current_thread() is threading.main_thread():
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("Request timeout")
+                
+                # Timeout de 30 secondes par requête
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(30)
     
     @app.after_request
     def after_request(response):
+        # Annuler le timeout (uniquement en production)
+        if not app.debug:
+            import signal
+            import threading
+            
+            # Vérifier qu'on est dans le thread principal
+            if threading.current_thread() is threading.main_thread():
+                signal.alarm(0)
+        
         g.response_status_code = response.status_code
         elapsed_time = log_request_time()
         
@@ -212,6 +247,21 @@ def create_app(config_name):
             app.logger.error(f"Échec de l'envoi d'email d'erreur: {email_error}")
         
         return render_template('errors/error.html'), 500
+
+    @app.errorhandler(TimeoutError)
+    def handle_timeout(error):
+        app.logger.error(f"Timeout détecté: {error}")
+        try:
+            request_info = {
+                'url': request.url,
+                'method': request.method,
+                'ip': request.remote_addr,
+                'user_agent': request.user_agent.string
+            }
+            send_error_email(error, request_info)
+        except Exception as email_error:
+            app.logger.error(f"Échec de l'envoi d'email d'erreur: {email_error}")
+        return render_template('errors/error.html', error_message="La requête a pris trop de temps"), 500
 
     @app.errorhandler(Exception)
     def handle_exception(error):

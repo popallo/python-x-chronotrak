@@ -11,13 +11,15 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuration du pool de connexions et timeouts pour SQLite
-    # ATTENTION: SQLite n'est PAS thread-safe avec plusieurs workers Gunicorn
+    # SQLite thread-safe avec Waitress (4 threads)
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
+        'pool_size': 10,  # Pool de connexions pour les threads
+        'max_overflow': 20,
         'connect_args': {
             'timeout': 30,
-            'check_same_thread': False,  # False pour le développement, True pour la production
+            'check_same_thread': False,  # False pour permettre les threads
             'isolation_level': None     # Mode autocommit pour éviter les deadlocks
         }
     }
@@ -64,13 +66,15 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     
-    # Configuration SQLite spécifique à la production
+    # Configuration SQLite spécifique à la production avec Waitress
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
+        'pool_size': 10,  # Pool de connexions pour les threads
+        'max_overflow': 20,
         'connect_args': {
             'timeout': 30,
-            'check_same_thread': True,  # True en production pour la sécurité
+            'check_same_thread': False,  # False pour permettre les threads avec Waitress
             'isolation_level': None
         }
     }

@@ -11,8 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_ENV=production \
     TZ=Europe/Paris
 
-# Installer bash, cron et les dépendances système
-RUN apk add --no-cache bash tzdata dcron && \
+# Installer bash, cron, curl et les dépendances système
+RUN apk add --no-cache bash tzdata dcron curl && \
     addgroup -S chronouser && \
     adduser -S -G chronouser chronouser
 

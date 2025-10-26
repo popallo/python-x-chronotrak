@@ -17,7 +17,7 @@ class Config:
         'pool_recycle': 300,
         'connect_args': {
             'timeout': 30,
-            'check_same_thread': True,  # CRITIQUE: True pour la sécurité
+            'check_same_thread': False,  # False pour le développement, True pour la production
             'isolation_level': None     # Mode autocommit pour éviter les deadlocks
         }
     }
@@ -63,6 +63,17 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    
+    # Configuration SQLite spécifique à la production
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'connect_args': {
+            'timeout': 30,
+            'check_same_thread': True,  # True en production pour la sécurité
+            'isolation_level': None
+        }
+    }
     # En production, la clé de chiffrement DOIT être définie dans les variables d'environnement
     @classmethod
     def init_app(cls, app):

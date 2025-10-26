@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}-waitress-3.0.1
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-waitress-3.0.1-$(date +%s)
           restore-keys: |
             ${{ runner.os }}-buildx-
 

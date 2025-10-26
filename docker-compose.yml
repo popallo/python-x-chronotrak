@@ -27,7 +27,7 @@ services:
         else
           echo 'Base de données existante détectée'
         fi &&
-        gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 120 --preload wsgi:app"
+        waitress-serve --host=0.0.0.0 --port=5000 --threads=4 wsgi:app"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s

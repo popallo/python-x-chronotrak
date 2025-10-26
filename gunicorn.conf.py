@@ -13,9 +13,9 @@ timeout = 60  # Augmenté pour les requêtes SQLite
 keepalive = 10
 graceful_timeout = 60
 
-# Gestion des workers - Redémarrage fréquent pour éviter l'accumulation de mémoire
-max_requests = 50  # Redémarre le worker après 50 requêtes
-max_requests_jitter = 10
+# Gestion des workers - Désactivé à cause du bug Gunicorn 21.0.0+
+# max_requests = 50  # BUG: Cause des 502 avec Gunicorn 21.0.0+
+# max_requests_jitter = 10
 preload_app = True
 
 # Logging détaillé

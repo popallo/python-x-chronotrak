@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 COPY app/ ./app/
 COPY migrations/ ./migrations/
 COPY management/ ./management/
-COPY config.py run.py wsgi.py start.sh ./
+COPY config.py run.py wsgi.py start.sh gunicorn.conf.py ./
 
 # Créer le fichier VERSION avec la valeur fournie
 RUN echo -n "$VERSION" > ./app/VERSION

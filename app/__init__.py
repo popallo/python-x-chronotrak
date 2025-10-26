@@ -30,21 +30,21 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
-    # Monkey patch pour corriger le bug Gunicorn 21.0.0+ avec max_requests
-    if not app.debug:
-        try:
-            from gunicorn.workers.gthread import ThreadWorker
-            original_accept = ThreadWorker.accept
-            
-            def patched_accept(self, server, listener):
-                if not self.alive:
-                    self.log.info('gunicorn monkey-patch: ignoring accept() called when alive==False')
-                    return
-                original_accept(self, server, listener)
-            
-            ThreadWorker.accept = patched_accept
-        except ImportError:
-            pass  # Gunicorn pas disponible en développement
+    # Monkey patch désactivé temporairement
+    # if not app.debug:
+    #     try:
+    #         from gunicorn.workers.gthread import ThreadWorker
+    #         original_accept = ThreadWorker.accept
+    #         
+    #         def patched_accept(self, server, listener):
+    #             if not self.alive:
+    #                 self.log.info('gunicorn monkey-patch: ignoring accept() called when alive==False')
+    #                 return
+    #             original_accept(self, server, listener)
+    #         
+    #         ThreadWorker.accept = patched_accept
+    #     except ImportError:
+    #         pass  # Gunicorn pas disponible en développement
     
     # Ajouter FLASK_ENV à la configuration de l'application
     app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', config_name)

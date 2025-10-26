@@ -13,10 +13,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
           cpus: '1.0'
         reservations:
-          memory: 512M
+          memory: 1G
           cpus: '0.5'
     command: >
       sh -c "mkdir -p /app/instance &&
@@ -28,6 +28,12 @@ services:
           echo 'Base de données existante détectée'
         fi &&
         gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 30 wsgi:app"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   chronotrak_data:

@@ -24,14 +24,13 @@ COPY requirements.txt .
 
 # Installer les dépendances Python dans une couche séparée
 RUN pip install --no-cache-dir -r requirements.txt && \
-    python -m pip install gunicorn && \
     pip install --upgrade setuptools>=70.0.0
 
 # Copier les fichiers de l'application
 COPY app/ ./app/
 COPY migrations/ ./migrations/
 COPY management/ ./management/
-COPY config.py run.py wsgi.py start.sh gunicorn.conf.py ./
+COPY config.py run.py wsgi.py start.sh ./
 
 # Créer le fichier VERSION avec la valeur fournie
 RUN echo -n "$VERSION" > ./app/VERSION

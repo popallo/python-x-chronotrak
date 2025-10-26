@@ -27,6 +27,22 @@ cache = Cache()
 csrf = CSRFProtect()
 
 def create_app(config_name):
+    # Monkey patch pour corriger le bug Gunicorn 21.0.0+ avec max_requests
+    if not app.debug:
+        try:
+            from gunicorn.workers.gthread import ThreadWorker
+            original_accept = ThreadWorker.accept
+            
+            def patched_accept(self, server, listener):
+                if not self.alive:
+                    self.log.info('gunicorn monkey-patch: ignoring accept() called when alive==False')
+                    return
+                original_accept(self, server, listener)
+            
+            ThreadWorker.accept = patched_accept
+        except ImportError:
+            pass  # Gunicorn pas disponible en développement
+    
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     

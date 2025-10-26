@@ -27,6 +27,9 @@ cache = Cache()
 csrf = CSRFProtect()
 
 def create_app(config_name):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+    
     # Monkey patch pour corriger le bug Gunicorn 21.0.0+ avec max_requests
     if not app.debug:
         try:
@@ -42,9 +45,6 @@ def create_app(config_name):
             ThreadWorker.accept = patched_accept
         except ImportError:
             pass  # Gunicorn pas disponible en développement
-    
-    app = Flask(__name__)
-    app.config.from_object(config[config_name])
     
     # Ajouter FLASK_ENV à la configuration de l'application
     app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', config_name)

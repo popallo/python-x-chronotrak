@@ -5,7 +5,7 @@ services:
     image: forge.apacher.eu/aurelien-dazy/chronotrak:latest
     restart: always
     ports:
-      - "8000:5000"
+      - "80:5000"
     volumes:
       - chronotrak_data:/app/instance
     env_file:

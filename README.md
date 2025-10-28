@@ -4,6 +4,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.11+-1F425F.svg?style=flat-square&logo=python&logoColor=white)
+![uv](https://img.shields.io/badge/uv-Package%20Manager-FFD43B.svg?style=flat-square&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.1.0+-000000.svg?style=flat-square&logo=flask&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)
@@ -97,6 +98,41 @@ docker-compose up -d
 
 ### Installation manuelle
 
+#### Avec uv (recommandé)
+
+```bash
+# Cloner le dépôt
+git clone https://github.com/popallo/python-x-chronotrak
+cd chronotrak
+
+# Installer uv si ce n'est pas déjà fait
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Créer un environnement virtuel avec Python 3.13
+uv venv --python python3.13
+source .venv/bin/activate  # Sous Linux/macOS
+# ou
+.venv\Scripts\activate     # Sous Windows
+
+# Installer les dépendances
+uv pip install -e .
+
+# Configuration
+cp .env.example .env
+# Éditer le fichier .env selon votre environnement
+
+# Initialiser la base de données
+flask db upgrade
+
+# Créer le compte administrateur
+python scripts/create_admin.py
+
+# Lancer l'application
+flask run
+```
+
+#### Avec pip (alternative)
+
 ```bash
 # Cloner le dépôt
 git clone https://github.com/popallo/python-x-chronotrak
@@ -106,10 +142,10 @@ cd chronotrak
 python -m venv .venv
 source .venv/bin/activate  # Sous Linux/macOS
 # ou
-.venv/bin/activate.ps1     # Sous Windows
+.venv\Scripts\activate     # Sous Windows
 
 # Installer les dépendances
-pip install -r requirements.txt
+pip install -e .
 
 # Configuration
 cp .env.example .env
@@ -167,6 +203,7 @@ Pour plus d'informations, consultez notre [guide de sécurité](docs/security.md
 - **Base de données** : SQLite (développement), PostgreSQL/MySQL (production)
 - **Frontend** : HTML5, CSS3, JavaScript avec Bootstrap 5
 - **Containerisation** : Docker et docker-compose
+- **Gestion des dépendances** : uv avec pyproject.toml (moderne) ou pip (compatible)
 - **Authentification** : Système à base de sessions avec Flask-Login
 - **Chiffrement** : Bibliothèque cryptography avec Fernet
 

@@ -162,7 +162,7 @@
                             <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-time-size" title="Agrandir/Réduire">
                                 <i class="fas fa-expand-alt"></i>
                             </button>
-                            <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
+                            <span id="total-time-badge" class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
                                 <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
                             </span>
                         </div>

@@ -12,6 +12,10 @@ Nous utilisons la bibliothèque `cryptography` avec l'algorithme Fernet qui four
 
 1. Installer les dépendances nécessaires:
    ```bash
+   # Avec uv (recommandé)
+   uv add cryptography
+   
+   # Ou avec pip
    pip install cryptography
    ```
 

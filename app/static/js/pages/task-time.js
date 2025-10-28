@@ -42,8 +42,8 @@ function formatTime(hours) {
 // Fonction pour mettre à jour l'interface après l'ajout de temps
 async function updateTimeInterface(data) {
     // Mettre à jour le temps total
-    const timeBadge = document.querySelector('.badge[title="Temps total passé sur la tâche"]');
-    if (timeBadge) {
+    const timeBadge = document.getElementById('total-time-badge');
+    if (timeBadge && data.task.actual_time !== undefined && data.task.actual_time !== null) {
         timeBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.actual_time)}`;
     }
     

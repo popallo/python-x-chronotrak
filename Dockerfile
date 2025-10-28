@@ -20,10 +20,10 @@ RUN apk add --no-cache bash tzdata dcron curl && \
 WORKDIR /app
 
 # Copier uniquement les fichiers de dépendances d'abord
-COPY requirements.txt .
+COPY pyproject.toml .
 
 # Installer les dépendances Python dans une couche séparée
-RUN pip install --no-cache-dir -r requirements.txt && \
+RUN pip install --no-cache-dir -e . && \
     pip install --upgrade setuptools>=70.0.0
 
 # Copier les fichiers de l'application

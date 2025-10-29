@@ -389,9 +389,16 @@ html.dark-mode .info-description {
     margin: -0.125rem -0.25rem;
 }
 
-.description-text:hover {
+/* Style uniquement pour les descriptions cliquables */
+.description-text[data-bs-toggle="modal"]:hover {
     background-color: rgba(13, 110, 253, 0.1);
     color: #0d6efd !important;
+}
+
+/* Style pour les descriptions complètes (non-cliquables) */
+.description-text:not([data-bs-toggle="modal"]) {
+    cursor: default !important;
+    text-decoration: none !important;
 }
 
 /* Style pour le modal de description */
@@ -407,7 +414,7 @@ html.dark-mode .info-description {
 }
 
 /* Mode sombre pour la description cliquable */
-html.dark-mode .description-text:hover {
+html.dark-mode .description-text[data-bs-toggle="modal"]:hover {
     background-color: rgba(13, 110, 253, 0.2) !important;
     color: #0d6efd !important;
 }

@@ -11,7 +11,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuration du pool de connexions et timeouts pour SQLite
-    # SQLite thread-safe avec Waitress (4 threads)
+    # SQLite thread-safe avec Waitress (4 threads) - Optimisé pour Python 3.13
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
@@ -66,7 +66,7 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     
-    # Configuration SQLite spécifique à la production avec Waitress
+    # Configuration SQLite spécifique à la production avec Waitress - Optimisé Python 3.13
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
         'pool_recycle': 300,

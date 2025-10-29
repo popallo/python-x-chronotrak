@@ -23,10 +23,14 @@ def verify_turnstile_token(token):
     if not token:
         return False
         
-    response = requests.post('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        'secret': current_app.config['TURNSTILE_SECRET_KEY'],
-        'response': token
-    })
+    response = requests.post(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        {
+            'secret': current_app.config['TURNSTILE_SECRET_KEY'],
+            'response': token
+        },
+        timeout=10  # Timeout de 10 secondes pour éviter les blocages
+    )
     
     result = response.json()
     return result.get('success', False)

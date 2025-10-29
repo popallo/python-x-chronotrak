@@ -34,119 +34,68 @@
 
 <!-- Informations du projet -->
 <div class="project-info-container mb-4">
-    <div class="row g-3">
-        <!-- Informations principales -->
-        <div class="col-lg-8">
-            <div class="info-card">
-                <div class="info-section">
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Client</span>
-                            <a href="{{ url_for('clients.client_details', slug_or_id=project.client.slug) }}" class="info-value">{{ project.client.name }}</a>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Créé le</span>
-                            <span class="info-value">{{ project.created_at.strftime('%d/%m/%Y') }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Gestion de temps</span>
-                            {% if project.time_tracking_enabled %}
-                                <span class="status-badge status-enabled">Activée</span>
-                            {% else %}
-                                <span class="status-badge status-disabled">Désactivée</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    {% if project.time_tracking_enabled %}
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Crédit restant</span>
-                            <span class="info-value credit-amount {% if project.remaining_credit < 120 %}text-danger{% elif project.remaining_credit < 300 %}text-warning{% else %}text-success{% endif %}">
-                                {{ project.remaining_credit|format_time }}
-                            </span>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
+    <div class="info-card">
+        <div class="compact-info-grid">
+            <div class="compact-info-item">
+                <i class="fas fa-user text-primary me-2"></i>
+                <span class="compact-label">Client:</span>
+                <a href="{{ url_for('clients.client_details', slug_or_id=project.client.slug) }}" class="compact-value">{{ project.client.name }}</a>
             </div>
-        </div>
-        
-        <!-- Statistiques des tâches -->
-        <div class="col-lg-4">
-            <div class="info-card">
-                <div class="info-section">
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Total des tâches</span>
-                            <span class="info-value task-count">{{ project.tasks|length }}</span>
-                        </div>
-                    </div>
-                    
-                    {% if project.tasks %}
-                    <div class="info-item">
-                        <div class="info-content">
-                            <span class="info-label mb-2 d-block">Répartition</span>
-                            <div class="task-stats">
-                                <div class="stat-item">
-                                    <span class="stat-badge stat-todo">{{ project.tasks|selectattr('status', 'equalto', 'à faire')|list|length }}</span>
-                                    <span class="stat-label">À faire</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-badge stat-progress">{{ project.tasks|selectattr('status', 'equalto', 'en cours')|list|length }}</span>
-                                    <span class="stat-label">En cours</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-badge stat-done">{{ project.tasks|selectattr('status', 'equalto', 'terminé')|list|length }}</span>
-                                    <span class="stat-label">Terminé</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
+            <div class="compact-info-item">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                <span class="compact-label">Créé:</span>
+                <span class="compact-value">{{ project.created_at.strftime('%d/%m/%Y') }}</span>
             </div>
-        </div>
-        
-        <!-- Description -->
-        {% if project.description %}
-        <div class="col-12">
-            <div class="info-card">
-                <div class="info-section">
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-align-left"></i>
-                        </div>
-                        <div class="info-content">
-                            <span class="info-label">Description</span>
-                            <p class="info-description">{{ project.description }}</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="compact-info-item">
+                <i class="fas fa-clock text-primary me-2"></i>
+                <span class="compact-label">Temps:</span>
+                {% if project.time_tracking_enabled %}
+                    <span class="status-badge status-enabled">Activée</span>
+                {% else %}
+                    <span class="status-badge status-disabled">Désactivée</span>
+                {% endif %}
             </div>
+            {% if project.time_tracking_enabled %}
+            <div class="compact-info-item">
+                <i class="fas fa-coins text-primary me-2"></i>
+                <span class="compact-label">Crédits:</span>
+                <span class="compact-value credit-amount {% if project.remaining_credit < 120 %}text-danger{% elif project.remaining_credit < 300 %}text-warning{% else %}text-success{% endif %}">
+                    {{ project.remaining_credit|format_time }}
+                </span>
+            </div>
+            {% endif %}
+            <div class="compact-info-item compact-tasks">
+                <i class="fas fa-tasks text-primary me-2"></i>
+                <span class="compact-label">Tâches:</span>
+                <span class="compact-value task-count">{{ project.tasks|length }}</span>
+                {% if project.tasks %}
+                    <div class="compact-task-stats">
+                        <span class="compact-stat-badge stat-todo" title="À faire">
+                            <i class="fas fa-clock me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'à faire')|list|length }}
+                        </span>
+                        <span class="compact-stat-badge stat-progress" title="En cours">
+                            <i class="fas fa-play me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'en cours')|list|length }}
+                        </span>
+                        <span class="compact-stat-badge stat-done" title="Terminé">
+                            <i class="fas fa-check me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'terminé')|list|length }}
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+            {% if project.description %}
+            <div class="compact-info-item compact-description">
+                <i class="fas fa-align-left text-primary me-2"></i>
+                <span class="compact-label">Description:</span>
+                <span class="compact-value description-text" 
+                      data-full-description="{{ project.description }}"
+                      data-bs-toggle="modal" 
+                      data-bs-target="#descriptionModal"
+                      style="cursor: pointer;">
+                    {{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}
+                </span>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
 
@@ -244,4 +193,30 @@
         </div>
     </div>
 </div>
+
+<!-- Modal pour afficher la description complète -->
+<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="descriptionModalLabel">
+                    <i class="fas fa-align-left me-2"></i>Description du projet
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="description-content">
+                    <p id="fullDescriptionText" class="mb-0"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script pour la description complète -->
+<script src="{{ url_for('static', filename='js/pages/project-description.js') }}"></script>
+
 {% endblock %}

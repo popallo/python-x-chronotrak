@@ -14,6 +14,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 import click
 
+# Import des optimisations SQLite
+from app.utils.db_optimization import set_sqlite_pragma
+
 # Initialisation des extensions
 db = SQLAlchemy()
 migrate = Migrate()
@@ -236,8 +239,9 @@ def create_app(config_name):
             queue_size = email_queue.qsize()
             if queue_size > 50:
                 app.logger.warning(f'Email queue size: {queue_size} - Possible email processing bottleneck')
-        except:
-            pass  # Ignorer si le module email n'est pas disponible
+        except (ImportError, AttributeError):
+            # Ignorer si le module email n'est pas disponible ou si email_queue n'existe pas
+            pass
         
         return response
 

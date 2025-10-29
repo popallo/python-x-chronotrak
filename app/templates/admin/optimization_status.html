@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Optimisations Python 3.13 - ChronoTrak{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-rocket"></i> Optimisations Python 3.13</h1>
+            <p class="text-muted">Statut des optimisations de ChronoTrak</p>
+        </div>
+    </div>
+
+    <!-- Informations Python 3.13 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informations Python 3.13</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Version Python:</strong> {{ python_info.python_version }}</p>
+                            <p><strong>Python 3.13 disponible:</strong> 
+                                {% if python_info.python_313_available %}
+                                    <span class="badge badge-success">Oui</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Non</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>JIT activé:</strong> 
+                                {% if python_info.jit_enabled %}
+                                    <span class="badge badge-success">Oui</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Non</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Optimisations activées:</strong> 
+                                {% if python_info.optimizations_enabled %}
+                                    <span class="badge badge-success">Oui</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Non</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Allocateur mémoire:</strong> {{ python_info.memory_allocator }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note d'information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> À propos des optimisations</h6>
+                <p class="mb-0">
+                    Les optimisations Python 3.13 sont automatiquement activées via les variables d'environnement 
+                    définies dans le Dockerfile (production) et config.py (développement). 
+                    Aucune action manuelle n'est requise.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

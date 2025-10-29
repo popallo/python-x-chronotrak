@@ -28,8 +28,8 @@
     <div class="kanban-board">
         <!-- Colonne "À faire" -->
         <div class="kanban-column todo-column" data-status="à faire">
-            <div class="kanban-title bg-info text-white">
-                À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span>
+            <div class="kanban-title bg-info text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-clock me-2"></i>À faire <span class="badge bg-light text-dark">{{ tasks_todo|length }}</span></span>
             </div>
             <div class="kanban-items">
                 {% for task in tasks_todo %}
@@ -64,8 +64,8 @@
         
         <!-- Colonne "En cours" -->
         <div class="kanban-column progress-column" data-status="en cours">
-            <div class="kanban-title bg-warning text-dark">
-                En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span>
+            <div class="kanban-title bg-warning text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-play me-2"></i>En cours <span class="badge bg-light text-dark">{{ tasks_in_progress|length }}</span></span>
             </div>
             <div class="kanban-items">
                 {% for task in tasks_in_progress %}
@@ -105,7 +105,7 @@
         <!-- Colonne "Terminé" -->
         <div class="kanban-column done-column" data-status="terminé">
             <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
-                <span>Terminé <span class="badge bg-light text-dark">{{ tasks_completed|length }}</span></span>
+                <span><i class="fas fa-check me-2"></i>Terminé <span class="badge bg-light text-dark">{{ tasks_completed|length }}</span></span>
                 {% if show_archives_link and archives_url %}
                     <a href="{{ archives_url }}" class="text-white text-decoration-none" title="Voir les archives">
                         <i class="fas fa-archive"></i>

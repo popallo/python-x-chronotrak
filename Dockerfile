@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.13-alpine
 
 # Accepter la version comme argument de build
 ARG VERSION=dev

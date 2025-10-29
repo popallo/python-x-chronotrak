@@ -71,18 +71,6 @@ html.dark-mode ::placeholder {
 
 /* ===== COMPOSANTS DE BASE ===== */
 
-/* Cards - Base */
-.card {
-    box-shadow: var(--shadow-md);
-    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
-    will-change: transform, box-shadow;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-}
-
 /* Formulaires - Base */
 .form-label {
     font-weight: 500;
@@ -125,21 +113,7 @@ html.dark-mode ::placeholder {
 }
 
 /* ===== STYLES SPÉCIFIQUES ===== */
-.stats-card {
-    text-align: center;
-    padding: 5px;
-    border-radius: 10px;
-}
-
-.stats-card i {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.stats-card .stats-number {
-    font-size: 1.8rem;
-    font-weight: bold;
-}
+/* Note: .stats-card et .card sont définis dans components.css */
 
 /* Barre de rappel des couleurs */
 .color-reminder-bar {

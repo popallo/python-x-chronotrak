@@ -9,7 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_APP=run.py \
     FLASK_ENV=production \
-    TZ=Europe/Paris
+    TZ=Europe/Paris \
+    PYTHON_JIT=1 \
+    PYTHONOPTIMIZE=1 \
+    PYTHONHASHSEED=0 \
+    PYTHONMALLOC=malloc
 
 # Installer bash, cron, curl et les dépendances système
 RUN apk add --no-cache bash tzdata dcron curl && \

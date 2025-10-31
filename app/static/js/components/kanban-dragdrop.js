@@ -25,17 +25,30 @@ function initKanbanDragDrop() {
             return;
         }
         
+        const status = column.getAttribute('data-status');
+        const isDoneColumn = status === 'terminé';
+
         new Sortable(kanbanItems, {
-            group: 'tasks',
+            group: isDoneColumn ? { name: 'tasks', put: false, pull: false } : 'tasks',
+            sort: !isDoneColumn,
             animation: 150,
             ghostClass: 'kanban-ghost',
             dragClass: 'kanban-drag',
             onEnd: function(evt) {
+                // Empêcher toute modification via DnD dans la colonne "terminé"
+                const toStatus = evt.to.closest('.kanban-column').getAttribute('data-status');
+                const fromStatus = evt.from.closest('.kanban-column').getAttribute('data-status');
+                if (toStatus === 'terminé' || fromStatus === 'terminé') {
+                    // Recharger pour remettre l'état visuel si quelque chose a bougé par erreur
+                    // et éviter toute mise à jour de position/statut côté serveur
+                    return;
+                }
+
                 // evt.item est l'élément .kanban-task lui-même
                 const taskCard = evt.item;
                 const taskId = taskCard?.getAttribute('data-task-id');
-                const newStatus = evt.to.closest('.kanban-column').getAttribute('data-status');
-                const oldStatus = evt.from.closest('.kanban-column').getAttribute('data-status');
+                const newStatus = toStatus;
+                const oldStatus = fromStatus;
                 
                 if (!taskId) {
                     return;
@@ -46,7 +59,7 @@ function initKanbanDragDrop() {
                     updateTaskStatus(taskId, newStatus);
                 }
                 
-                // Toujours mettre à jour les positions
+                // Toujours mettre à jour les positions dans la colonne de destination
                 updateTaskPositions(evt.to.closest('.kanban-column'));
                 updateColumnCounters();
             }

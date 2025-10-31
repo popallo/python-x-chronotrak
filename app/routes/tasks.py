@@ -530,7 +530,11 @@ def my_tasks():
     # Tri des tâches par statut et par position
     tasks_todo = sorted([task for task in all_tasks if task.status == 'à faire'], key=lambda t: (t.position, t.created_at))
     tasks_in_progress = sorted([task for task in all_tasks if task.status == 'en cours'], key=lambda t: (t.position, t.created_at))
-    tasks_completed = sorted([task for task in all_tasks if task.status == 'terminé'], key=lambda t: (t.position, t.created_at))
+    tasks_completed = sorted(
+        [task for task in all_tasks if task.status == 'terminé'],
+        key=lambda t: (t.completed_at or t.created_at or datetime.min),
+        reverse=True
+    )
 
     # Récupération des données pour les filtres
     projects = Project.query.all()

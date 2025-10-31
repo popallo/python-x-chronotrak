@@ -166,10 +166,11 @@ def project_details(slug_or_id):
         [task for task in tasks if task.status == 'en cours' and not task.is_archived],
         key=lambda t: (t.position, t.created_at)
     )
-    # Trier les tâches terminées par position puis date de clôture décroissante (exclure les tâches archivées)
+    # Trier les tâches terminées par date de clôture décroissante (exclure les tâches archivées)
     tasks_done = sorted(
         [task for task in tasks if task.status == 'terminé' and not task.is_archived],
-        key=lambda t: (t.position, t.completed_at if t.completed_at else datetime.min)
+        key=lambda t: (t.completed_at or datetime.min),
+        reverse=True
     )
     
     # Créer un historique unifié avec crédits et temps consommés

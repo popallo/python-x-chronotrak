@@ -846,13 +846,17 @@ def add_checklist_item(slug_or_id):
     # Sinon, ajouter un élément normal
     item = task.add_checklist_item(data['content'])
     
-    # Retourner la checklist complète mise à jour
+    # Retourner la checklist complète mise à jour, triée par position
+    all_checklist_items = ChecklistItem.query.filter(
+        ChecklistItem.task_id == task.id
+    ).order_by(ChecklistItem.position).all()
+    
     checklist = [{
         'id': item.id,
         'content': item.content,
         'is_checked': item.is_checked,
         'position': item.position
-    } for item in task.checklist_items]
+    } for item in all_checklist_items]
     
     return jsonify({
         'success': True,
@@ -984,11 +988,16 @@ def reorder_checklist(slug_or_id):
     if len(existing_items) != len(item_ids):
         return jsonify({'error': 'Certains éléments ne sont pas valides'}), 400
     
-    # Mettre à jour les positions
+    # Mettre à jour les positions et l'état des checkboxes
     for item_data in data['items']:
-        item = ChecklistItem.query.get(item_data['id'])
+        # S'assurer que l'ID est un entier
+        item_id = int(item_data['id']) if isinstance(item_data['id'], str) else item_data['id']
+        item = ChecklistItem.query.get(item_id)
         if item and item.task_id == task.id:
             item.position = item_data['position']
+            # Mettre à jour l'état de la checkbox si fourni (pour synchroniser avec le DOM)
+            if 'is_checked' in item_data:
+                item.is_checked = bool(item_data['is_checked'])
     
     db.session.commit()
     

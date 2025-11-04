@@ -29,18 +29,21 @@ function initKanbanDragDrop() {
         const isDoneColumn = status === 'terminé';
 
         new Sortable(kanbanItems, {
-            group: isDoneColumn ? { name: 'tasks', put: false, pull: false } : 'tasks',
+            group: isDoneColumn ? { name: 'tasks', put: true, pull: false } : 'tasks',
             sort: !isDoneColumn,
             animation: 150,
             ghostClass: 'kanban-ghost',
             dragClass: 'kanban-drag',
             onEnd: function(evt) {
-                // Empêcher toute modification via DnD dans la colonne "terminé"
+                // Empêcher seulement de sortir de la colonne "terminé" (mais permettre d'y entrer)
                 const toStatus = evt.to.closest('.kanban-column').getAttribute('data-status');
                 const fromStatus = evt.from.closest('.kanban-column').getAttribute('data-status');
-                if (toStatus === 'terminé' || fromStatus === 'terminé') {
+                
+                // Bloquer uniquement si on essaie de sortir de "terminé"
+                if (fromStatus === 'terminé') {
                     // Recharger pour remettre l'état visuel si quelque chose a bougé par erreur
                     // et éviter toute mise à jour de position/statut côté serveur
+                    location.reload();
                     return;
                 }
 

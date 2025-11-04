@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleSizeButton = document.querySelector('.toggle-checklist-size');
     const toggleTimeSizeButton = document.querySelector('.toggle-time-size');
 
+    // Variable pour stocker l'instance Sortable
+    let sortableInstance = null;
+
     // Initialisation des écouteurs d'événements
     initChecklistEventListeners();
     initSortable();
@@ -155,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initSortable() {
         const checklistItems = document.getElementById('checklist-items');
         if (checklistItems) {
-            new Sortable(checklistItems, {
+            sortableInstance = new Sortable(checklistItems, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onEnd: updateItemsOrder,
@@ -253,8 +256,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (data.success) {
-                // Mettre à jour l'affichage avec les données du serveur
-                updateChecklist(data.checklist);
+                // Ne pas reconstruire la liste complète, juste mettre à jour l'état local
+                // pour éviter de casser l'ordre du DOM si un déplacement est en cours
+                const itemElement = document.querySelector(`.checklist-item[data-id="${itemId}"]`);
+                if (itemElement) {
+                    const copyButton = itemElement.querySelector('.copy-to-time-btn');
+                    if (copyButton) {
+                        copyButton.classList.toggle('disabled', !isChecked);
+                        copyButton.disabled = !isChecked;
+                    }
+                }
+                // On ne reconstruit pas la liste pour préserver l'ordre du DOM
+                // updateChecklist(data.checklist);
             } else {
                 console.error('Erreur lors de la mise à jour:', data.error);
                 showError(data.error || 'Erreur lors de la mise à jour de l\'élément');
@@ -298,17 +311,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateItemsOrder() {
         const items = Array.from(document.querySelectorAll('.checklist-item'));
-        const itemsData = items.map((item, index) => ({
-            id: item.dataset.id,
-            position: index
-        }));
+        const itemsData = items.map((item, index) => {
+            const checkbox = item.querySelector('.checklist-checkbox');
+            // Convertir l'ID en entier pour s'assurer qu'il correspond à la DB
+            const itemId = parseInt(item.dataset.id, 10);
+            return {
+                id: itemId,
+                position: index,
+                is_checked: checkbox ? checkbox.checked : false
+            };
+        });
         
         reorderChecklist(taskId, itemsData);
     }
     
     function updateChecklist(checklist) {
         const checklistItems = document.getElementById('checklist-items');
-        if (!checklistItems) return;
+        if (!checklistItems) {
+            console.error('checklist-items container not found');
+            return;
+        }
         
         // Vérifier que checklist est défini et est un tableau
         if (!checklist || !Array.isArray(checklist)) {
@@ -316,10 +338,32 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Détruire l'instance Sortable existante si elle existe
+        if (sortableInstance) {
+            sortableInstance.destroy();
+            sortableInstance = null;
+        }
+        
         checklistItems.innerHTML = '';
         
         checklist.forEach(item => {
             addItemToList(item);
+        });
+        
+        // Vérifier que Sortable est disponible
+        if (typeof Sortable === 'undefined') {
+            console.error('SortableJS n\'est pas chargé !');
+            return;
+        }
+        
+        // Réinitialiser Sortable après reconstruction
+        sortableInstance = new Sortable(checklistItems, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: updateItemsOrder,
+            handle: '.checklist-drag-handle',
+            preventOnFilter: true,
+            filter: '.checklist-checkbox, .btn-group'
         });
     }
     

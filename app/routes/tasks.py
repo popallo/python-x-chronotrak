@@ -251,10 +251,30 @@ def delete_task(slug_or_id):
     if task.time_entries:
         flash(f'Impossible de supprimer cette tâche car du temps y a été enregistré.', 'danger')
         return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
+    
+    try:
+        # Supprimer les relations qui n'ont pas de cascade delete
+        # 1. Supprimer les UserPinnedTask liés à cette tâche
+        UserPinnedTask.query.filter_by(task_id=task.id).delete()
         
-    delete_from_db(task)
-    flash(f'Tâche "{task.title}" supprimée!', 'success')
-    return redirect(url_for('projects.project_details', slug_or_id=project.slug))
+        # 2. Mettre à NULL les task_id dans CreditLog (pour préserver l'historique)
+        from app.models.project import CreditLog
+        CreditLog.query.filter_by(task_id=task.id).update({'task_id': None})
+        
+        # 3. Mettre à NULL les task_id dans Communication (pour préserver l'historique)
+        from app.models.communication import Communication
+        Communication.query.filter_by(task_id=task.id).update({'task_id': None})
+        
+        # Maintenant on peut supprimer la tâche (toutes les opérations dans la même transaction)
+        db.session.delete(task)
+        db.session.commit()
+        flash(f'Tâche "{task.title}" supprimée!', 'success')
+        return redirect(url_for('projects.project_details', slug_or_id=project.slug))
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur lors de la suppression de la tâche: {str(e)}")
+        flash(f'Erreur lors de la suppression de la tâche: {str(e)}', 'danger')
+        return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
 
 @tasks.route('/tasks/<slug_or_id>/log_time', methods=['POST'])
 @login_required

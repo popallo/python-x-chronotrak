@@ -97,8 +97,12 @@ def save_to_db(obj):
     db.session.commit()
 
 def delete_from_db(obj):
-    db.session.delete(obj)
-    db.session.commit()
+    try:
+        db.session.delete(obj)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
 
 def get_user_by_id(user_id):
     return User.query.get_or_404(user_id)

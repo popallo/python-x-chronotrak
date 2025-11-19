@@ -256,6 +256,14 @@ def create_app(config_name):
 
     @app.errorhandler(500)
     def internal_error(error):
+        # Gérer les erreurs de session SQLAlchemy en faisant un rollback
+        from sqlalchemy.exc import PendingRollbackError, SQLAlchemyError
+        if isinstance(error, (PendingRollbackError, SQLAlchemyError)):
+            try:
+                db.session.rollback()
+            except Exception as rollback_error:
+                app.logger.error(f"Erreur lors du rollback: {rollback_error}")
+        
         # Envoyer l'email d'erreur dans tous les cas
         try:
             request_info = {
@@ -292,6 +300,14 @@ def create_app(config_name):
         if isinstance(error, HTTPException):
             return render_template('errors/error.html',
                                  error_message=error.description), error.code
+
+        # Gérer les erreurs de session SQLAlchemy en faisant un rollback
+        from sqlalchemy.exc import PendingRollbackError, SQLAlchemyError
+        if isinstance(error, (PendingRollbackError, SQLAlchemyError)):
+            try:
+                db.session.rollback()
+            except Exception as rollback_error:
+                app.logger.error(f"Erreur lors du rollback: {rollback_error}")
 
         # Envoyer l'email d'erreur dans tous les cas
         try:

@@ -20,8 +20,6 @@ jobs:
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.sha }}
           fetch-depth: 0
 
       # Configuration du cache Docker
@@ -29,7 +27,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}-waitress-3.0.1-$(date +%s)
+          key: ${{ runner.os }}-buildx-${{ gitea.sha }}-waitress-3.0.1-$(date +%s)
           restore-keys: |
             ${{ runner.os }}-buildx-
 
@@ -47,7 +45,7 @@ jobs:
           if [ -z "$VERSION" ]; then
             VERSION="v1.0.0-dev"
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITEA_ENV
           echo "Version détectée: $VERSION"
 
       # Authentification au registre
@@ -133,7 +131,7 @@ jobs:
 
       # Analyse de sécurité avec Trivy (uniquement sur main/master)
       - name: Installation et exécution de Trivy
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -167,7 +165,7 @@ jobs:
 
       # Sauvegarde de la base de données (uniquement sur main/master)
       - name: Sauvegarde de la base de données
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex

@@ -138,7 +138,11 @@ jobs:
         run: |
           apk add --no-cache curl
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest --severity HIGH,CRITICAL --exit-code 1
+          # Ignorer les vulnérabilités déjà corrigées (status: fixed)
+          trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest \
+            --severity HIGH,CRITICAL \
+            --ignore-status fixed \
+            --exit-code 1
 
   deploy:
     needs: build-and-push

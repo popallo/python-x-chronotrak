@@ -66,7 +66,7 @@ class Project(db.Model):
         )
         db.session.add(log)
             
-    def deduct_credit(self, amount, task_id=None):
+    def deduct_credit(self, amount, task_id=None, note=None):
         """Déduit du crédit du projet et crée une entrée dans l'historique"""
         # Si le projet n'utilise pas la gestion de temps, on ne fait rien
         if not self.time_tracking_enabled:
@@ -83,7 +83,7 @@ class Project(db.Model):
             project_id=self.id,
             amount=-amount_minutes,
             task_id=task_id,
-            note=f"Déduction de {amount}h de crédit"
+            note=note or f"Déduction de {amount}h de crédit"
         )
         db.session.add(log)
         

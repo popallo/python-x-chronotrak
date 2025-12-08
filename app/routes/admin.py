@@ -164,8 +164,15 @@ def time_transfer():
             )
             db.session.add(target_task)
             
+            # Flush pour obtenir les IDs des tâches avant de créer les logs de crédit
+            db.session.flush()
+            
             # Déduire le crédit du projet source
-            source_project.deduct_credit(form.amount.data, f"Transfert vers {target_project.name}")
+            source_project.deduct_credit(
+                form.amount.data, 
+                task_id=source_task.id,
+                note=f"Transfert vers {target_project.name}"
+            )
             
             # Ajouter le crédit au projet destination
             target_project.add_credit(form.amount.data, f"Transfert depuis {source_project.name}")

@@ -296,30 +296,6 @@ def log_time(slug_or_id):
         # Convertir le temps en minutes avec arrondi approprié
         time_in_minutes = round(form.hours.data * 60)
         
-        # Vérifier s'il reste assez de crédit uniquement si la gestion de temps est activée
-        if task.project.time_tracking_enabled:
-            # Si remaining_credit est inférieur à 100, on considère que c'est en heures
-            current_credit = task.project.remaining_credit
-            if current_credit < 100:  # Probablement en heures
-                current_credit = current_credit * 60  # Convertir en minutes
-            
-            if current_credit < time_in_minutes:
-                # Formater le temps restant en heures et minutes
-                remaining_hours = current_credit // 60
-                remaining_minutes = current_credit % 60
-                if remaining_hours > 0:
-                    credit_display = f"{remaining_hours}h{remaining_minutes:02d}min"
-                else:
-                    credit_display = f"{remaining_minutes}min"
-                
-                if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return jsonify({
-                        'success': False, 
-                        'error': f'Pas assez de crédit restant sur le projet! ({credit_display} disponibles)'
-                    }), 400
-                flash(f'Pas assez de crédit restant sur le projet! ({credit_display} disponibles)', 'danger')
-                return redirect(url_for('tasks.task_details', slug_or_id=task.slug))
-        
         # Créer l'entrée de temps
         time_entry = TimeEntry(
             task_id=task.id,

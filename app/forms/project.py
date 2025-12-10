@@ -25,11 +25,6 @@ class ProjectForm(FlaskForm):
         if not super().validate():
             return False
         
-        # Si la gestion de temps est activée, le crédit initial est requis
-        if self.time_tracking_enabled.data and (self.initial_credit.data is None or self.initial_credit.data == 0):
-            self.initial_credit.errors.append('Le crédit initial est requis quand la gestion de temps est activée')
-            return False
-            
         return True
 
 class AddCreditForm(FlaskForm):

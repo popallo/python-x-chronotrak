@@ -120,8 +120,9 @@ def new_project(client_id):
     if form.validate_on_submit():
         # Si la gestion de temps est désactivée, on met le crédit à 0
         if form.time_tracking_enabled.data:
-            # Convertir les heures en minutes
-            initial_credit_minutes = int(round(form.initial_credit.data * 60))
+            # Convertir les heures en minutes (gérer le cas où initial_credit.data est None ou 0)
+            initial_credit_hours = form.initial_credit.data or 0
+            initial_credit_minutes = int(round(initial_credit_hours * 60))
         else:
             initial_credit_minutes = 0
         
@@ -314,8 +315,9 @@ def edit_project(slug_or_id):
         
         # Si on active la gestion de temps, on met à jour le crédit initial
         if form.time_tracking_enabled.data:
-            # Convertir les heures en minutes
-            new_initial_credit = int(round(form.initial_credit.data * 60))
+            # Convertir les heures en minutes (gérer le cas où initial_credit.data est None ou 0)
+            initial_credit_hours = form.initial_credit.data or 0
+            new_initial_credit = int(round(initial_credit_hours * 60))
             print(f"DEBUG: form.initial_credit.data = {form.initial_credit.data}")
             print(f"DEBUG: new_initial_credit = {new_initial_credit} minutes")
             print(f"DEBUG: project.initial_credit avant = {project.initial_credit} minutes")

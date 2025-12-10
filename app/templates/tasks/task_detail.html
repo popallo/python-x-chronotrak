@@ -359,14 +359,14 @@
             <div class="mb-3 position-relative">
                 {{ comment_form.content.label(class="form-label") }}
                 {% if comment_form.content.errors %}
-                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=2, **{'data-project-id': task.project.slug}) }}
+                    {{ comment_form.content(class="form-control is-invalid comment-input", rows=4, **{'data-project-id': task.project.slug}) }}
                     <div class="invalid-feedback">
                         {% for error in comment_form.content.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ comment_form.content(class="form-control comment-input", rows=2, **{'data-project-id': task.project.slug}) }}
+                    {{ comment_form.content(class="form-control comment-input", rows=4, **{'data-project-id': task.project.slug}) }}
                 {% endif %}
                 <div class="comment-submit-container d-flex align-items-center gap-3">
                     <div class="form-check">

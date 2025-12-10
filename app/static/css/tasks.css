@@ -223,6 +223,7 @@ textarea.comment-input {
     margin-bottom: 2rem;
     border-radius: 20px;
     transition: all 0.2s ease;
+    min-height: 120px;
 }
 
 textarea.comment-input:focus {

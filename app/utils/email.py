@@ -155,6 +155,7 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         
         recipients = list(final_recipients)
     
+    # Créer UN SEUL message avec tous les destinataires
     msg = Message(subject, recipients=recipients, 
                   sender=sender or current_app.config['MAIL_DEFAULT_SENDER'])
     msg.body = text_body
@@ -178,15 +179,14 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
         # Démarrer le worker email si nécessaire
         start_email_worker()
         
-        # Ajouter l'email à la queue pour traitement asynchrone
-        for recipient in recipients:
-            email_data['recipient'] = recipient
-            queue_data = {
-                'app': current_app._get_current_object(),
-                'msg': msg,
-                'email_data': email_data
-            }
-            email_queue.put(queue_data)
+        # Ajouter UN SEUL message à la queue (avec tous les destinataires)
+        # Cela évite les doublons tout en permettant de voir tous les destinataires
+        queue_data = {
+            'app': current_app._get_current_object(),
+            'msg': msg,
+            'email_data': email_data
+        }
+        email_queue.put(queue_data)
             
     except Exception as e:
         current_app.logger.error(f"Erreur lors de l'ajout de l'email à la queue: {e}")

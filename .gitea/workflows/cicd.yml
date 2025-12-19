@@ -18,7 +18,9 @@ jobs:
           docker-cli-buildx \
           git \
           curl \
-          bash
+          bash \
+          nodejs \
+          npm
 
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3

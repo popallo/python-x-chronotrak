@@ -122,7 +122,9 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
             current_app.logger.info(f"Administrateurs ajoutés en copie: {', '.join(admin_emails)}")
         
         # Règle 2: Pour les emails liés à un projet, s'assurer que le client reçoit l'email
-        if project_id:
+        # Ne pas ajouter les clients pour les emails de type task_* car send_task_notification
+        # gère déjà cela avec le paramètre notify_all
+        if project_id and not (email_type and email_type.startswith('task_')):
             from app.models.project import Project
             project = Project.query.get(project_id)
             if project and project.client_id:
@@ -136,17 +138,7 @@ def send_email(subject, recipients, text_body, html_body, sender=None, email_typ
                             should_notify = True
                             
                             if email_type:
-                                if email_type.startswith('task_'):
-                                    event_type = email_type.replace('task_', '')
-                                    if event_type == 'status_change' and not prefs.task_status_change:
-                                        should_notify = False
-                                    elif event_type == 'comment_added' and not prefs.task_comment_added:
-                                        should_notify = False
-                                    elif event_type == 'time_logged' and not prefs.task_time_logged:
-                                        should_notify = False
-                                    elif event_type == 'task_created' and not prefs.task_created:
-                                        should_notify = False
-                                elif email_type == 'project_low_credit' and not prefs.project_credit_low:
+                                if email_type == 'project_low_credit' and not prefs.project_credit_low:
                                     should_notify = False
                             
                             if should_notify and client_user.email not in final_recipients:

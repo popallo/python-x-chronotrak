@@ -102,6 +102,18 @@
             </div>
             {% endif %}
 
+            {% if notification_type == 'comment_reply' and reply and parent_comment %}
+            <div class="comment">
+                <h3>Réponse à votre commentaire</h3>
+                <p><strong>Votre commentaire:</strong></p>
+                <div style="background: #e8e8e8; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    {{ parent_comment.content|safe }}
+                </div>
+                <p><strong>Réponse:</strong></p>
+                <div>{{ reply.content|safe }}</div>
+            </div>
+            {% endif %}
+
             {% if notification_type == 'time_logged' and time_entry %}
             <div class="time-entry">
                 <h3>Temps enregistré</h3>

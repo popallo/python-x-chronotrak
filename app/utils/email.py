@@ -222,7 +222,7 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
     Envoie une notification concernant une tâche
     
     :param task: La tâche concernée
-    :param event_type: Type d'événement ('status_change', 'comment_added', 'time_logged')
+    :param event_type: Type d'événement ('status_change', 'comment_added', 'comment_reply', 'time_logged')
     :param user: L'utilisateur qui a effectué l'action
     :param additional_data: Données supplémentaires (commentaire, temps, etc.)
     :param notify_all: Si True, notifie tous les participants
@@ -233,6 +233,19 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
     
     # Déterminer les destinataires de façon optimisée
     recipients = set()  # Utiliser un set pour éviter les doublons
+    
+    # Pour les réponses aux commentaires, notifier spécifiquement l'auteur du commentaire parent
+    if event_type == 'comment_reply':
+        parent_comment = additional_data.get('parent_comment')
+        reply = additional_data.get('reply')
+        if parent_comment and parent_comment.user:
+            # Charger les préférences de notification de l'auteur du commentaire parent
+            from sqlalchemy.orm import joinedload
+            parent_author = User.query.options(joinedload(User.notification_preferences)).get(parent_comment.user_id)
+            if parent_author and parent_author.notification_preferences:
+                prefs = parent_author.notification_preferences
+                if prefs.email_notifications_enabled and prefs.task_comment_added:
+                    recipients.add(parent_author.email)
     
     if notify_all:
         # Optimiser les requêtes avec des jointures
@@ -246,6 +259,7 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                 if prefs.email_notifications_enabled:
                     if (event_type == 'status_change' and prefs.task_status_change) or \
                        (event_type == 'comment_added' and prefs.task_comment_added) or \
+                       (event_type == 'comment_reply' and prefs.task_comment_added) or \
                        (event_type == 'time_logged' and prefs.task_time_logged) or \
                        (event_type == 'task_created' and prefs.task_created):
                         recipients.add(assigned_user.email)
@@ -260,6 +274,7 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
                         prefs = client_user.notification_preferences
                         if (event_type == 'status_change' and prefs.task_status_change) or \
                            (event_type == 'comment_added' and prefs.task_comment_added) or \
+                           (event_type == 'comment_reply' and prefs.task_comment_added) or \
                            (event_type == 'time_logged' and prefs.task_time_logged) or \
                            (event_type == 'task_created' and prefs.task_created):
                             recipients.add(client_user.email)
@@ -345,6 +360,45 @@ Un nouveau commentaire a été ajouté sur la tâche "{task.title}":
 - Commentaire par: {user.name if user else 'Système'}
 
 {comment.content}
+
+Voir la tâche: {task_url}
+
+Ceci est un message automatique envoyé par ChronoTrak.
+Pour ne plus recevoir ces notifications, modifiez vos préférences dans votre profil.
+        """
+    
+    elif event_type == 'comment_reply':
+        reply = additional_data.get('reply')
+        parent_comment = additional_data.get('parent_comment')
+        if not reply or not parent_comment:
+            return
+            
+        subject = f"[ChronoTrak] Réponse à votre commentaire sur: {task.title}"
+        
+        # Construire l'URL de la tâche
+        task_url = url_for('tasks.task_details', slug_or_id=task.slug, _external=True)
+        
+        # Préparer le contenu HTML
+        html_content = render_template('emails/task_notification.html',
+                                     task=task,
+                                     user=user,
+                                     notification_type=event_type,
+                                     reply=reply,
+                                     parent_comment=parent_comment,
+                                     url=task_url,
+                                     mentioned_users=mentioned_users)
+        
+        text = f"""
+Bonjour,
+
+{user.name if user else 'Quelqu\'un'} a répondu à votre commentaire sur la tâche "{task.title}":
+
+- Projet: {task.project.name}
+- Client: {task.project.client.name}
+- Votre commentaire: {parent_comment.content[:100]}{'...' if len(parent_comment.content) > 100 else ''}
+- Réponse par: {user.name if user else 'Système'}
+
+{reply.content}
 
 Voir la tâche: {task_url}
 

@@ -1018,6 +1018,8 @@ def reorder_checklist(slug_or_id):
 @login_required
 def add_reply(comment_id):
     """Ajoute une réponse à un commentaire"""
+    from app.utils.email import send_task_notification
+    
     parent_comment = Comment.query.get_or_404(comment_id)
     task = parent_comment.task
     
@@ -1032,6 +1034,14 @@ def add_reply(comment_id):
     form = CommentForm()
     
     if form.validate_on_submit():
+        # Récupérer les mentions depuis le champ caché
+        mentioned_users = []
+        try:
+            mentions_data = request.form.get('mentions', '[]')
+            mentioned_users = json.loads(mentions_data)
+        except json.JSONDecodeError:
+            current_app.logger.warning("Erreur lors du décodage des mentions")
+        
         reply = Comment(
             content=form.content.data,
             task_id=task.id,
@@ -1039,6 +1049,19 @@ def add_reply(comment_id):
             parent_id=parent_comment.id
         )
         save_to_db(reply)
+        
+        # Envoyer une notification à l'auteur du commentaire parent
+        send_task_notification(
+            task=task,
+            event_type='comment_reply',
+            user=current_user,
+            additional_data={
+                'reply': reply,
+                'parent_comment': parent_comment
+            },
+            notify_all=False,  # Pour les réponses, on notifie seulement l'auteur du commentaire parent
+            mentioned_users=mentioned_users
+        )
         
         if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({

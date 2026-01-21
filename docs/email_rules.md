@@ -27,9 +27,14 @@ Ce document décrit les règles d'envoi d'emails implémentées dans ChronoTrak 
 - **Préférences :** Les préférences de notification du client sont respectées
 - **Types concernés :** 
   - `task_status_change` : Changements de statut des tâches
-  - `task_comment_added` : Nouveaux commentaires
+  - `task_comment_added` : Nouveaux commentaires et réponses aux commentaires
   - `task_time_logged` : Enregistrement de temps
   - `project_low_credit` : Alerte de crédit faible
+
+**Note sur les réponses aux commentaires :**
+- Lorsqu'un utilisateur répond à un commentaire, l'auteur du commentaire original reçoit automatiquement une notification
+- Cette notification est envoyée uniquement si l'auteur a activé les notifications de commentaires dans ses préférences
+- Le type d'email enregistré est `task_comment_reply` pour permettre le suivi spécifique des réponses
 
 ## Types d'emails
 
@@ -40,13 +45,19 @@ Ce document décrit les règles d'envoi d'emails implémentées dans ChronoTrak 
 **Types d'événements :**
 - `status_change` : Changement de statut d'une tâche
 - `comment_added` : Ajout d'un commentaire
+- `comment_reply` : Réponse à un commentaire
 - `time_logged` : Enregistrement de temps
 
 **Destinataires en production :**
-- Utilisateur assigné à la tâche (selon ses préférences)
-- Clients du projet (selon leurs préférences)
-- Administrateurs (en copie)
-- Utilisateurs mentionnés dans les commentaires
+- Pour `comment_added` et `time_logged` :
+  - Utilisateur assigné à la tâche (selon ses préférences)
+  - Clients du projet (selon leurs préférences)
+  - Administrateurs (en copie)
+  - Utilisateurs mentionnés dans les commentaires
+- Pour `comment_reply` :
+  - Auteur du commentaire parent (selon ses préférences de notification de commentaires)
+  - Utilisateurs mentionnés dans la réponse
+  - Administrateurs (en copie)
 
 ### 2. Alertes de crédit faible
 

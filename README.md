@@ -114,8 +114,12 @@ source .venv/bin/activate  # Sous Linux/macOS
 # ou
 .venv\Scripts\activate     # Sous Windows
 
+# (Recommandé) Fixer le cache uv dans le repo
+# Utile pour éviter des soucis de permissions/sandbox sur certains environnements.
+export UV_CACHE_DIR="$PWD/uv_cache"
+
 # Installer les dépendances
-uv pip install -e .
+uv sync --extra dev
 
 # Configuration
 cp .env.example .env
@@ -129,6 +133,16 @@ python scripts/create_admin.py
 
 # Lancer l'application
 flask run
+```
+
+#### Mettre à jour les dépendances (upgrade)
+
+```bash
+source .venv/bin/activate
+export UV_CACHE_DIR="$PWD/uv_cache"
+
+# Upgrade (met à jour uv.lock + l'environnement)
+uv sync --active -U --extra dev
 ```
 
 #### Avec pip (alternative)

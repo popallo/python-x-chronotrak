@@ -141,7 +141,7 @@
 
     <!-- Kanban Board -->
     {% from 'components/kanban_board.html' import kanban_board %}
-    {{ kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives')) }}
+    {{ kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives'), today=now.date()) }}
 
 </div>
 {% endblock %}

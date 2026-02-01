@@ -1,9 +1,169 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import calendar
 from app.utils.encryption import EncryptedType
 from flask import current_app
 from cryptography.fernet import Fernet
 from app.utils.slug_utils import update_slug
+
+class TaskRecurrenceSeries(db.Model):
+    """
+    Décrit une règle de récurrence pour une tâche.
+    Les occurrences futures sont matérialisées par des lignes Task avec scheduled_for.
+    """
+    __tablename__ = 'task_recurrence_series'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # daily | weekly | monthly
+    frequency = db.Column(db.String(20), nullable=False)
+    interval = db.Column(db.Integer, nullable=False, default=1)
+
+    # Date de départ de la série (date "théorique" de la 1ère occurrence)
+    start_date = db.Column(db.Date, nullable=False)
+
+    # Fin (au choix): soit une date de fin, soit un nombre d'occurrences.
+    end_date = db.Column(db.Date, nullable=True)
+    count = db.Column(db.Integer, nullable=True)
+
+    # weekly: CSV d'entiers 0..6 (0=lundi)
+    byweekday = db.Column(db.String(30), nullable=True)
+
+    # daily: option "jours ouvrés uniquement"
+    business_days_only = db.Column(db.Boolean, nullable=False, default=False)
+
+    # monthly: si la date de départ est un dernier jour du mois, on peut garder "dernier jour"
+    monthly_use_last_day = db.Column(db.Boolean, nullable=False, default=False)
+    monthly_day = db.Column(db.Integer, nullable=True)  # 1..31
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relation 1-1 vers la tâche "template" (la tâche sur laquelle l'utilisateur a configuré la récurrence)
+    template_task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False, unique=True)
+
+    def _parsed_byweekday(self):
+        if not self.byweekday:
+            return []
+        out = []
+        for part in self.byweekday.split(','):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                out.append(int(part))
+            except ValueError:
+                continue
+        return [d for d in out if 0 <= d <= 6]
+
+    def _is_last_day_of_month(self, d: date) -> bool:
+        return d.day == calendar.monthrange(d.year, d.month)[1]
+
+    def _add_months(self, d: date, months: int) -> date:
+        year = d.year + (d.month - 1 + months) // 12
+        month = (d.month - 1 + months) % 12 + 1
+        last = calendar.monthrange(year, month)[1]
+        if self.monthly_use_last_day:
+            return date(year, month, last)
+        day = self.monthly_day or d.day
+        return date(year, month, min(day, last))
+
+    def iter_dates(self, horizon_end: date):
+        """
+        Génère les dates d'occurrence de start_date à horizon_end (inclus),
+        en tenant compte de end_date / count.
+        """
+        if self.interval < 1:
+            return
+
+        hard_end = horizon_end
+        if self.end_date and self.end_date < hard_end:
+            hard_end = self.end_date
+
+        emitted = 0
+
+        if self.frequency == 'daily':
+            cur = self.start_date
+            while cur <= hard_end:
+                if not self.business_days_only or cur.weekday() < 5:
+                    yield cur
+                    emitted += 1
+                    if self.count and emitted >= self.count:
+                        return
+                cur = cur + timedelta(days=self.interval)
+
+        elif self.frequency == 'weekly':
+            weekdays = self._parsed_byweekday()
+            if not weekdays:
+                weekdays = [self.start_date.weekday()]
+
+            # On parcourt par blocs de semaines (interval)
+            # "semaine de référence" = semaine contenant start_date
+            start_week_monday = self.start_date - timedelta(days=self.start_date.weekday())
+            week_index = 0
+            while True:
+                week_start = start_week_monday + timedelta(weeks=week_index * self.interval)
+                # générer les jours de la semaine sélectionnés
+                for wd in sorted(set(weekdays)):
+                    d = week_start + timedelta(days=wd)
+                    if d < self.start_date:
+                        continue
+                    if d > hard_end:
+                        return
+                    yield d
+                    emitted += 1
+                    if self.count and emitted >= self.count:
+                        return
+                # Stop si la semaine suivante démarre après hard_end
+                next_week_start = start_week_monday + timedelta(weeks=(week_index + 1) * self.interval)
+                if next_week_start > hard_end:
+                    return
+                week_index += 1
+
+        elif self.frequency == 'monthly':
+            cur = self.start_date
+            # Mettre à jour les paramètres mensuels si nécessaire
+            if self.monthly_day is None:
+                self.monthly_day = cur.day
+            if self.monthly_use_last_day is False and self._is_last_day_of_month(cur):
+                # Si la date de départ est le dernier jour du mois, on suit ce pattern par défaut
+                self.monthly_use_last_day = True
+
+            while cur <= hard_end:
+                yield cur
+                emitted += 1
+                if self.count and emitted >= self.count:
+                    return
+                cur = self._add_months(cur, self.interval)
+
+    def human_summary(self) -> str:
+        """Résumé lisible (FR) de la règle."""
+        if self.frequency == 'daily':
+            if self.interval == 1:
+                base = "Tous les jours"
+            else:
+                base = f"Tous les {self.interval} jours"
+            if self.business_days_only:
+                base += " (jours ouvrés)"
+            return base
+        if self.frequency == 'weekly':
+            wd_map = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+            weekdays = self._parsed_byweekday()
+            if not weekdays:
+                weekdays = [self.start_date.weekday()]
+            days = ", ".join(wd_map[d] for d in sorted(set(weekdays)))
+            if self.interval == 1:
+                return f"Chaque semaine ({days})"
+            return f"Toutes les {self.interval} semaines ({days})"
+        if self.frequency == 'monthly':
+            if self.interval == 1:
+                if self.monthly_use_last_day:
+                    return "Chaque mois (dernier jour)"
+                return f"Chaque mois (le {self.monthly_day or self.start_date.day})"
+            if self.monthly_use_last_day:
+                return f"Tous les {self.interval} mois (dernier jour)"
+            return f"Tous les {self.interval} mois (le {self.monthly_day or self.start_date.day})"
+        return "Récurrence"
 
 class ChecklistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,6 +188,8 @@ class Task(db.Model):
     priority = db.Column(db.String(20), nullable=False, default='normale')  # basse, normale, haute, urgente
     estimated_minutes = db.Column(db.Integer, nullable=True)  # en minutes
     actual_minutes = db.Column(db.Integer, nullable=True)  # en minutes
+    # Date "d'apparition" (utilisée pour masquer les occurrences futures des tâches récurrentes)
+    scheduled_for = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -39,11 +201,14 @@ class Task(db.Model):
     # Clés étrangères
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    recurrence_series_id = db.Column(db.Integer, db.ForeignKey('task_recurrence_series.id'), nullable=True)
     
     # Relations
     time_entries = db.relationship('TimeEntry', backref='task', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='task', lazy=True, cascade='all, delete-orphan')
     checklist_items = db.relationship('ChecklistItem', backref='task', lazy=True, cascade='all, delete-orphan', order_by='ChecklistItem.position')
+    recurrence_series = db.relationship('TaskRecurrenceSeries', foreign_keys=[recurrence_series_id], lazy=True)
+    recurrence_template = db.relationship('TaskRecurrenceSeries', foreign_keys=[TaskRecurrenceSeries.template_task_id], uselist=False, lazy=True)
     
     def __repr__(self):
         return f"Task('{self.title}', Status: '{self.status}', Project: '{self.project.name}')"
@@ -91,6 +256,37 @@ class Task(db.Model):
                 ))
         
         return cloned_task
+
+    def clone_for_recurrence(self, scheduled_for: date, clone_checklist_items: bool = True):
+        """
+        Copie "propre" pour la récurrence (même titre, même contenu),
+        sans commentaires ni temps passé, statut remis à "à faire".
+        """
+        cloned_task = Task(
+            title=self.title,
+            description=self.description,
+            status='à faire',
+            priority=self.priority,
+            estimated_minutes=self.estimated_minutes,
+            project_id=self.project_id,
+            user_id=self.user_id,
+            scheduled_for=scheduled_for,
+            recurrence_series_id=self.recurrence_series_id
+        )
+        if clone_checklist_items:
+            for item in self.checklist_items:
+                cloned_task.checklist_items.append(ChecklistItem(
+                    content=item.content,
+                    is_checked=False,
+                    position=item.position
+                ))
+        return cloned_task
+
+    @property
+    def recurrence_summary(self) -> str:
+        if self.recurrence_series:
+            return self.recurrence_series.human_summary()
+        return "Aucune"
         
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""

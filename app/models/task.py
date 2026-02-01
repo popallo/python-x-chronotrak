@@ -61,8 +61,14 @@ class Task(db.Model):
         db.session.add(self)
         db.session.commit()
         
-    def clone(self):
-        """Crée une copie de la tâche sans les commentaires et le temps passé"""
+    def clone(self, clone_checklist_items: bool = True):
+        """
+        Crée une copie de la tâche sans les commentaires et le temps passé.
+        
+        Par défaut, la checklist (sous-tâches) est aussi clonée, mais:
+        - l'état d'avancement des éléments est réinitialisé (is_checked = False)
+        - aucun historique de temps n'est cloné (TimeEntry n'est pas dupliqué)
+        """
         cloned_task = Task(
             title=f"Copie de {self.title}",
             description=self.description,
@@ -73,6 +79,17 @@ class Task(db.Model):
             user_id=self.user_id
         )
         # Le slug sera automatiquement généré dans __init__
+        
+        if clone_checklist_items:
+            # Cloner le contenu et l'ordre de la checklist, sans cloner l'état "fait"
+            # (on repart sur une nouvelle checklist à cocher).
+            for item in self.checklist_items:
+                cloned_task.checklist_items.append(ChecklistItem(
+                    content=item.content,
+                    is_checked=False,
+                    position=item.position
+                ))
+        
         return cloned_task
         
     def log_time(self, hours, user_id, description=None):

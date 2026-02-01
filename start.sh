@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de démarrage pour ChronoTrak avec cron
+# Script de démarrage pour ChronoTrak (web uniquement)
 
 echo "Démarrage de ChronoTrak..."
 
@@ -8,32 +8,7 @@ echo "Démarrage de ChronoTrak..."
 FLASK_ENV=${FLASK_ENV:-development}
 echo "Environnement détecté : $FLASK_ENV"
 
-# Configurer le cron job seulement en production
-if [ "$FLASK_ENV" = "production" ]; then
-    echo "Configuration du cron job d'archivage automatique pour la production..."
-    
-    # Créer le cron job pour l'archivage automatique
-    echo "0 2 * * * chronouser cd /app && FLASK_ENV=production flask auto-archive >> /var/log/chronotrak_archive.log 2>&1" > /etc/cron.d/chronotrak-archive
-    chmod 0644 /etc/cron.d/chronotrak-archive
-    
-    # Démarrer le service cron en arrière-plan
-    echo "Démarrage du service cron..."
-    crond -f -d 8 &
-    
-    # Attendre un peu que cron démarre
-    sleep 2
-    
-    # Vérifier que le cron job est configuré
-    echo "Vérification du cron job d'archivage automatique..."
-    if [ -f /etc/cron.d/chronotrak-archive ]; then
-        echo "Cron job configuré :"
-        cat /etc/cron.d/chronotrak-archive
-    else
-        echo "Avertissement : Cron job non trouvé"
-    fi
-else
-    echo "Archivage automatique désactivé en environnement '$FLASK_ENV' (seulement en production)"
-fi
+echo "Note: les tâches cron (ex: auto-archive) doivent être gérées par un conteneur/service dédié (ex: docker-compose service 'cron') ou par le cron de l'hôte."
 
 # Démarrer l'application Flask
 echo "Démarrage de l'application Flask..."

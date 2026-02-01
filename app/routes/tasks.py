@@ -228,8 +228,13 @@ def clone_task(slug_or_id):
             flash("Vous n'avez pas accès à cette tâche.", "danger")
             return redirect(url_for('main.dashboard'))
     
+    # Option : cloner (ou non) la checklist / sous-tâches.
+    # Par défaut on clone, pour répondre au besoin #84.
+    clone_checklist_raw = request.form.get('clone_checklist', '').strip().lower()
+    clone_checklist = clone_checklist_raw not in {'0', 'false', 'off', 'no'}
+
     # Créer une copie de la tâche
-    cloned_task = task.clone()
+    cloned_task = task.clone(clone_checklist_items=clone_checklist)
     # Utiliser la méthode save() du modèle pour générer le slug
     cloned_task.save()
     

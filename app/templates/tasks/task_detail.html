@@ -52,11 +52,9 @@
                 <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
                     <i class="fas fa-clock"></i>
                 </button>
-                <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Cloner la tâche">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </form>
+                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#cloneTaskModal" title="Cloner la tâche">
+                    <i class="fas fa-copy"></i>
+                </button>
                 {% if task.status == 'terminé' and not task.is_archived %}
                 <button type="button" class="btn btn-outline-light archive-task-btn" 
                         data-task-id="{{ task.id }}" 
@@ -523,6 +521,80 @@
         </div>
     </div>
 </div>
+
+{% if not current_user.is_client() %}
+    <!-- Modal de clonage -->
+    <div class="modal fade" id="cloneTaskModal" tabindex="-1" aria-labelledby="cloneTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cloneTaskModalLabel">Cloner la tâche</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Voulez-vous cloner la tâche <strong>"{{ task.title }}"</strong> ?</p>
+                    <div id="cloneChecklistWrapper" class="{% if task.checklist_items|length == 0 %}d-none{% endif %}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="cloneChecklist" checked>
+                            <label class="form-check-label" for="cloneChecklist">
+                                Cloner les sous-tâches (checklist)
+                            </label>
+                            <div class="form-text">
+                                Le temps consommé / l’historique reste indépendant et n’est pas cloné.
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cloneChecklistEmptyNote" class="text-muted small {% if task.checklist_items|length > 0 %}d-none{% endif %}">
+                        Aucune sous-tâche à cloner (checklist vide).
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST">
+                        <input type="hidden" name="clone_checklist" id="cloneChecklistHidden" value="{% if task.checklist_items|length > 0 %}1{% else %}0{% endif %}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-copy me-1"></i>Cloner
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('cloneTaskModal');
+            const wrapper = document.getElementById('cloneChecklistWrapper');
+            const emptyNote = document.getElementById('cloneChecklistEmptyNote');
+            const checkbox = document.getElementById('cloneChecklist');
+            const hidden = document.getElementById('cloneChecklistHidden');
+            if (!modalEl || !wrapper || !emptyNote || !checkbox || !hidden) return;
+
+            const syncHiddenWithCheckbox = () => { hidden.value = checkbox.checked ? '1' : '0'; };
+
+            // Mettre à jour l'UI au moment d'ouvrir le modal (checklist peut évoluer en AJAX).
+            modalEl.addEventListener('show.bs.modal', function() {
+                const hasChecklistItems = document.querySelectorAll('#checklist-items .checklist-item').length > 0;
+
+                if (hasChecklistItems) {
+                    wrapper.classList.remove('d-none');
+                    emptyNote.classList.add('d-none');
+                    // Valeur par défaut: on clone la checklist si elle existe
+                    checkbox.checked = true;
+                    syncHiddenWithCheckbox();
+                } else {
+                    wrapper.classList.add('d-none');
+                    emptyNote.classList.remove('d-none');
+                    hidden.value = '0';
+                }
+            });
+
+            // Synchroniser l'état de la checkbox avec le champ envoyé au serveur.
+            checkbox.addEventListener('change', syncHiddenWithCheckbox);
+            syncHiddenWithCheckbox();
+        });
+    </script>
+{% endif %}
 
 <!-- Modal d'archivage -->
 <div class="modal fade" id="archiveTaskModal" tabindex="-1" aria-labelledby="archiveTaskModalLabel" aria-hidden="true">

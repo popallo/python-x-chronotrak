@@ -1,4 +1,4 @@
-{% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None) %}
+{% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None, today=None) %}
 <div class="kanban-container">
     <!-- Barre de recherche pour le kanban -->
     <div class="kanban-search-container mb-3">
@@ -33,8 +33,9 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_todo %}
-                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
-                        {% if show_actions %}
+                    {% set is_upcoming = today and task.scheduled_for and task.scheduled_for > today %}
+                    <div class="kanban-task {% if is_upcoming %}is-upcoming{% endif %}" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                        {% if show_actions and not is_upcoming %}
                         <div class="kanban-task-actions">
                             <button class="btn btn-sm btn-success" 
                                     onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
@@ -51,6 +52,12 @@
                             <i class="fas fa-folder me-1"></i>{{ task.project.name }}
                             <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
                         </div>
+                        {% if is_upcoming %}
+                            <div class="kanban-task-upcoming-date">
+                                <i class="fas fa-calendar me-1"></i>
+                                <span>À venir le {{ task.scheduled_for.strftime('%d/%m/%Y') }}</span>
+                            </div>
+                        {% endif %}
                         {% if task.estimated_time %}
                             <div class="kanban-task-time">
                                 <i class="fas fa-hourglass-half"></i>

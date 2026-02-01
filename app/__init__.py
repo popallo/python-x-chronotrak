@@ -330,15 +330,26 @@ def create_app(config_name):
         # Importer ici à nouveau pour éviter les erreurs d'import circulaire
         from app.utils.version import get_version, get_build_info
         from app.utils.page_timer import get_elapsed_time
+        from flask_login import current_user
         
         # Obtenir la version - s'assurer qu'elle est correcte
         version = get_version()
+
+        # Tâches épinglées (éviter de faire la requête en template,
+        # et surtout éviter de faire planter la page d'erreur si la DB est en défaut).
+        pinned_tasks = []
+        if getattr(current_user, 'is_authenticated', False):
+            try:
+                pinned_tasks = current_user.pinned_tasks.all()
+            except Exception:
+                pinned_tasks = []
         
         return {
             'now': datetime.now(timezone.utc),
             'version': version,
             'build_info': get_build_info(),
-            'page_load': get_elapsed_time()
+            'page_load': get_elapsed_time(),
+            'pinned_tasks': pinned_tasks
         }
     
     # Filtre pour formater les nombres à la française (avec virgule)

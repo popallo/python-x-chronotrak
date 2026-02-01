@@ -42,6 +42,7 @@ services:
     build: .
     image: forge.apacher.eu/aurelien-dazy/chronotrak:latest
     restart: always
+    init: true
     volumes:
       - chronotrak_data:/app/instance
     env_file:
@@ -51,7 +52,7 @@ services:
     user: root
     command: >
       sh -lc "echo '0 2 * * * cd /app && FLASK_ENV=production flask auto-archive >> /proc/1/fd/1 2>&1' > /etc/crontabs/root &&
-        crond -f -d 8"
+        crond -f -d 8 & wait $!"
     depends_on:
       - web
 

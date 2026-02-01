@@ -13,6 +13,9 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Cache uv
+uv_cache/
+
 # Configurations spécifiques à l'IDE
 .vscode/
 .idea/

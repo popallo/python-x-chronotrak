@@ -490,6 +490,103 @@ def delete_task_recurrence(slug_or_id):
         'next_date': None,
     })
 
+
+@tasks.route('/tasks/<slug_or_id>/recurrence/checklist/sync', methods=['POST'])
+@login_and_client_required
+def sync_recurrence_checklist_to_future(slug_or_id):
+    """
+    Applique la checklist de la tâche "mère" (template_task_id) à toutes les occurrences futures:
+    - uniquement occurrences futures (scheduled_for > aujourd'hui)
+    - uniquement statut "à faire"
+    - uniquement sans temps enregistré
+    - merge additif: on ajoute les items manquants, sans supprimer ceux déjà présents.
+    """
+    task = get_task_by_slug_or_id(slug_or_id)
+    series = task.recurrence_series
+    if not series:
+        return jsonify({'success': False, 'error': "Aucune récurrence sur cette tâche."}), 400
+
+    today = _today_utc_date()
+
+    template_task = Task.query.get(series.template_task_id) or task
+
+    # S'assurer que les occurrences futures existent (horizon glissant)
+    try:
+        _ensure_recurrence_instances(template_task, series, horizon_days=180)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    source_items = ChecklistItem.query.filter(
+        ChecklistItem.task_id == template_task.id
+    ).order_by(ChecklistItem.position.asc()).all()
+
+    if not source_items:
+        return jsonify({'success': True, 'message': "Checklist de référence vide: rien à appliquer."})
+
+    targets = Task.query.filter(
+        Task.recurrence_series_id == series.id,
+        Task.is_archived == False,
+        Task.status == 'à faire',
+        Task.scheduled_for.isnot(None),
+        Task.scheduled_for > today,
+    ).all()
+
+    updated_tasks = 0
+    skipped_time_logged = 0
+    added_items_total = 0
+
+    for t in targets:
+        # Sécurité: ne pas toucher aux occurrences sur lesquelles du temps a été enregistré
+        if t.time_entries:
+            skipped_time_logged += 1
+            continue
+
+        existing_items = ChecklistItem.query.filter(
+            ChecklistItem.task_id == t.id
+        ).order_by(ChecklistItem.position.asc()).all()
+
+        existing_contents = set((i.content or '').strip() for i in existing_items)
+        max_pos = max([i.position for i in existing_items], default=-1)
+
+        added_here = 0
+        for src in source_items:
+            content = (src.content or '').strip()
+            if not content:
+                continue
+            if content in existing_contents:
+                continue
+            max_pos += 1
+            db.session.add(ChecklistItem(
+                content=content,
+                is_checked=False,
+                position=max_pos,
+                task_id=t.id
+            ))
+            existing_contents.add(content)
+            added_here += 1
+
+        if added_here:
+            updated_tasks += 1
+            added_items_total += added_here
+
+    db.session.commit()
+
+    if not targets:
+        return jsonify({'success': True, 'message': "Aucune occurrence future trouvée."})
+
+    msg = f"Checklist appliquée: {added_items_total} élément(s) ajouté(s) sur {updated_tasks} occurrence(s) future(s)."
+    if skipped_time_logged:
+        msg += f" ({skipped_time_logged} occurrence(s) ignorée(s): temps déjà enregistré)"
+
+    return jsonify({
+        'success': True,
+        'message': msg,
+        'updated_tasks': updated_tasks,
+        'added_items_total': added_items_total,
+        'skipped_time_logged': skipped_time_logged,
+    })
+
 @tasks.route('/tasks/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_client_required
 def edit_task(slug_or_id):

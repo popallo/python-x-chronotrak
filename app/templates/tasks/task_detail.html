@@ -263,6 +263,15 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-checklist-size" title="Agrandir/Réduire">
                                     <i class="fas fa-expand-alt"></i>
                                 </button>
+                                {% if task.recurrence_series %}
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary py-0 px-2 me-2"
+                                        id="sync-checklist-future-button"
+                                        data-bs-toggle="tooltip"
+                                        title="Appliquer la checklist aux occurrences futures">
+                                    <i class="fas fa-repeat"></i>
+                                </button>
+                                {% endif %}
                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
                                     <i class="fas fa-code me-1"></i>Shortcode
                                 </button>

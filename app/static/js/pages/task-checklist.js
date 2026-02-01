@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addItemForm = document.getElementById('add-checklist-item-form');
     const addItemInput = document.getElementById('add-checklist-item-input');
     const shortcodeButton = document.getElementById('add-checklist-shortcode-button');
+    const syncChecklistFutureButton = document.getElementById('sync-checklist-future-button');
     const shortcodeModal = document.getElementById('shortcode-modal');
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
@@ -109,6 +110,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+        }
+
+        // Appliquer la checklist aux occurrences futures (récurrence)
+        if (syncChecklistFutureButton) {
+            syncChecklistFutureButton.addEventListener('click', async () => {
+                const ok = window.confirm(
+                    "Appliquer la checklist de référence à toutes les occurrences futures ?\n\n" +
+                    "- N'impacte pas les occurrences passées\n" +
+                    "- Ajoute uniquement les éléments manquants\n" +
+                    "- Ignore les occurrences où du temps a déjà été enregistré"
+                );
+                if (!ok) return;
+
+                syncChecklistFutureButton.disabled = true;
+                const original = syncChecklistFutureButton.innerHTML;
+                syncChecklistFutureButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    const data = await utils.fetchWithCsrf(`/tasks/${taskId}/recurrence/checklist/sync`, {
+                        method: 'POST',
+                        body: JSON.stringify({})
+                    });
+                    utils.handleApiResponse(data);
+                } finally {
+                    syncChecklistFutureButton.disabled = false;
+                    syncChecklistFutureButton.innerHTML = original;
+                }
+            });
         }
     }
     

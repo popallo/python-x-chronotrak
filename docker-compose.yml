@@ -35,6 +35,26 @@ services:
       retries: 3
       start_period: 40s
 
+  # Conteneur dédié aux tâches cron (ne sert aucun port HTTP)
+  # Sépare le "web" du "scheduler" pour fiabiliser l'exécution des jobs.
+  cron:
+    container_name: chronotrak-cron
+    build: .
+    image: forge.apacher.eu/aurelien-dazy/chronotrak:latest
+    restart: always
+    volumes:
+      - chronotrak_data:/app/instance
+    env_file:
+      - ./.env.${ENVIRONMENT:-development}
+    # Dcron (Alpine) lit /etc/crontabs/<user>. On écrit celui de root, puis on garde crond au premier plan.
+    # On loggue vers stdout pour pouvoir vérifier via `docker logs chronotrak-cron`.
+    user: root
+    command: >
+      sh -lc "echo '0 2 * * * cd /app && FLASK_ENV=production flask auto-archive >> /proc/1/fd/1 2>&1' > /etc/crontabs/root &&
+        crond -f -d 8"
+    depends_on:
+      - web
+
 volumes:
   chronotrak_data:
     driver: local

@@ -172,6 +172,24 @@ html.dark-mode .kanban-search-info {
     text-decoration: none;
 }
 
+.kanban-task.is-upcoming {
+    opacity: 0.55;
+}
+
+.kanban-task.is-upcoming:hover {
+    opacity: 0.75;
+}
+
+.kanban-task-upcoming-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+html.dark-mode .kanban-task-upcoming-date {
+    color: var(--dm-text-muted) !important;
+}
+
 .kanban-task-title {
     font-size: 0.95rem;
     line-height: 1.3;

@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from sqlalchemy import case
-from datetime import datetime, timezone
+from sqlalchemy import case, func
+from datetime import datetime, timezone, timedelta
 from app import db
-from app.models.task import Task, TimeEntry, Comment, ChecklistItem, UserPinnedTask
+from app.models.task import Task, TimeEntry, Comment, ChecklistItem, UserPinnedTask, TaskRecurrenceSeries
 from app.models.project import Project
 from app.models.client import Client
 from app.models.user import User
@@ -20,6 +20,109 @@ from app.utils.route_utils import (
 )
 from flask_wtf import FlaskForm
 import json
+
+
+def _today_utc_date():
+    return datetime.utcnow().date()
+
+
+def _delete_future_recurrence_instances(series_id: int, keep_task_id: int | None = None):
+    """
+    Supprime les occurrences futures (planifiées dans le futur) d'une série.
+    On reste conservateur: on ne supprime que les tâches "à faire" sans temps passé.
+    """
+    today = _today_utc_date()
+    q = Task.query.filter(
+        Task.recurrence_series_id == series_id,
+        Task.scheduled_for.isnot(None),
+        Task.scheduled_for > today,
+        Task.status == 'à faire',
+        Task.is_archived == False,
+    )
+    if keep_task_id:
+        q = q.filter(Task.id != keep_task_id)
+
+    tasks_to_delete = q.all()
+    for t in tasks_to_delete:
+        if t.time_entries:
+            # sécurité: ne pas supprimer si du temps a été enregistré
+            continue
+        db.session.delete(t)
+
+
+def _ensure_recurrence_instances(template_task: Task, series: TaskRecurrenceSeries, horizon_days: int = 180):
+    """
+    Matérialise les occurrences futures (jusqu'à horizon_days) pour une tâche récurrente.
+    Idempotent grâce au couple (recurrence_series_id, scheduled_for) unique en base.
+    """
+    today = _today_utc_date()
+    horizon_end = today + timedelta(days=horizon_days)
+
+    # S'assurer que la tâche "template" est correctement attachée
+    template_task.recurrence_series_id = series.id
+    if template_task.scheduled_for is None:
+        template_task.scheduled_for = series.start_date
+
+    existing_dates = {
+        d[0]
+        for d in db.session.query(Task.scheduled_for)
+        .filter(
+            Task.recurrence_series_id == series.id,
+            Task.scheduled_for.isnot(None),
+            Task.scheduled_for <= horizon_end,
+        )
+        .all()
+    }
+
+    # Créer uniquement les occurrences >= aujourd'hui
+    for d in series.iter_dates(horizon_end):
+        if d < today:
+            continue
+        if d in existing_dates:
+            continue
+        cloned = template_task.clone_for_recurrence(scheduled_for=d, clone_checklist_items=True)
+        db.session.add(cloned)
+
+
+def _recurrence_payload(series: TaskRecurrenceSeries | None):
+    if not series:
+        return None
+    return {
+        'id': series.id,
+        'frequency': series.frequency,
+        'interval': series.interval,
+        'start_date': series.start_date.isoformat(),
+        'end_date': series.end_date.isoformat() if series.end_date else None,
+        'count': series.count,
+        'byweekday': series.byweekday,
+        'business_days_only': bool(series.business_days_only),
+    }
+
+
+def _recurrence_summary_with_next(task: Task):
+    series = task.recurrence_series
+    if not series:
+        return {'summary': 'Aucune', 'next_date': None}
+
+    today = _today_utc_date()
+    next_task = (
+        Task.query.filter(
+            Task.recurrence_series_id == series.id,
+            Task.scheduled_for.isnot(None),
+            Task.scheduled_for > today,
+        )
+        .order_by(Task.scheduled_for.asc())
+        .first()
+    )
+    next_date = next_task.scheduled_for.strftime('%d/%m/%Y') if next_task else None
+
+    summary = series.human_summary()
+    if series.end_date:
+        summary += f" (jusqu'au {series.end_date.strftime('%d/%m/%Y')})"
+    elif series.count:
+        summary += f" ({series.count} occurrence(s))"
+
+    return {'summary': summary, 'next_date': next_date}
 
 tasks = Blueprint('tasks', __name__)
 
@@ -38,6 +141,11 @@ def list_tasks():
 
     # Construction de la requête de base
     query = Task.query
+
+    # NOTE: on continue de masquer les tâches planifiées dans le futur sur la liste globale,
+    # pour éviter du bruit. L'affichage "à venir" est géré sur les vues Kanban (projet / mes tâches).
+    today = datetime.utcnow().date()
+    query = query.filter(db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today))
 
     # Filtres
     if status:
@@ -93,6 +201,81 @@ def new_task(slug_or_id):
         )
         # Utiliser la méthode save() du modèle pour générer le slug
         task.save()
+
+        # Optionnel: créer une récurrence dès la création
+        recurrence_frequency = (request.form.get('recurrence_frequency') or '').strip()
+        if recurrence_frequency and recurrence_frequency != 'none':
+            try:
+                interval = int(request.form.get('recurrence_interval') or 1)
+            except ValueError:
+                interval = 1
+            interval = max(1, min(interval, 365))
+
+            start_date_raw = (request.form.get('recurrence_start_date') or '').strip()
+            if start_date_raw:
+                try:
+                    start_date = datetime.strptime(start_date_raw, '%Y-%m-%d').date()
+                except ValueError:
+                    start_date = _today_utc_date()
+            else:
+                start_date = _today_utc_date()
+
+            end_type = (request.form.get('recurrence_end_type') or 'never').strip()
+            end_date = None
+            count = None
+            if end_type == 'until':
+                end_date_raw = (request.form.get('recurrence_end_date') or '').strip()
+                if end_date_raw:
+                    try:
+                        end_date = datetime.strptime(end_date_raw, '%Y-%m-%d').date()
+                    except ValueError:
+                        end_date = None
+            elif end_type == 'count':
+                try:
+                    count = int(request.form.get('recurrence_count') or 0)
+                    if count <= 0:
+                        count = None
+                except ValueError:
+                    count = None
+
+            byweekday = None
+            if recurrence_frequency == 'weekly':
+                days = request.form.getlist('recurrence_byweekday')
+                days_int = []
+                for d in days:
+                    try:
+                        di = int(d)
+                    except ValueError:
+                        continue
+                    if 0 <= di <= 6:
+                        days_int.append(di)
+                byweekday = ",".join(str(d) for d in sorted(set(days_int))) or str(start_date.weekday())
+
+            business_days_only = (request.form.get('recurrence_business_days_only') or '').strip().lower() in {'1', 'true', 'on', 'yes'}
+
+            series = TaskRecurrenceSeries(
+                frequency=recurrence_frequency,
+                interval=interval,
+                start_date=start_date,
+                end_date=end_date,
+                count=count,
+                byweekday=byweekday,
+                business_days_only=business_days_only,
+                template_task_id=task.id,
+            )
+            db.session.add(series)
+            db.session.commit()
+
+            task.recurrence_series_id = series.id
+            task.scheduled_for = start_date
+            _delete_future_recurrence_instances(series.id, keep_task_id=task.id)
+            _ensure_recurrence_instances(task, series, horizon_days=180)
+            db.session.commit()
+            current_app.logger.info(f"Récurrence créée pour la tâche {task.id}: {series.frequency}")
+        else:
+            # Tâche non récurrente: pas de scheduled_for pour éviter de la masquer un jour
+            task.scheduled_for = None
+            db.session.commit()
         
         # Notifier l'assigné si la tâche est assignée
         if user_id:
@@ -138,6 +321,8 @@ def task_details(slug_or_id):
     
     # Formulaire pour la suppression
     delete_form = DeleteTaskForm()
+
+    recurrence_info = _recurrence_summary_with_next(task)
     
     return render_template('tasks/task_detail.html', 
                            task=task, 
@@ -147,7 +332,163 @@ def task_details(slug_or_id):
                            comment_form=comment_form,
                            edit_comment_form=edit_comment_form,
                            form=delete_form,
+                           recurrence_info=recurrence_info,
                            title=task.title)
+
+
+@tasks.route('/tasks/<slug_or_id>/recurrence', methods=['GET'])
+@login_and_client_required
+def get_task_recurrence(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    info = _recurrence_summary_with_next(task)
+    return jsonify({
+        'success': True,
+        'has_recurrence': bool(task.recurrence_series),
+        'recurrence': _recurrence_payload(task.recurrence_series),
+        'summary': info['summary'],
+        'next_date': info['next_date'],
+    })
+
+
+@tasks.route('/tasks/<slug_or_id>/recurrence', methods=['POST'])
+@login_and_client_required
+def upsert_task_recurrence(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    data = request.get_json(silent=True) or {}
+
+    frequency = (data.get('frequency') or '').strip()
+    if frequency not in {'daily', 'weekly', 'monthly'}:
+        return jsonify({'success': False, 'error': "Fréquence invalide"}), 400
+
+    try:
+        interval = int(data.get('interval') or 1)
+    except (ValueError, TypeError):
+        interval = 1
+    interval = max(1, min(interval, 365))
+
+    start_date_raw = (data.get('start_date') or '').strip()
+    if start_date_raw:
+        try:
+            start_date = datetime.strptime(start_date_raw, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = _today_utc_date()
+    else:
+        start_date = _today_utc_date()
+
+    end_type = (data.get('end_type') or 'never').strip()
+    end_date = None
+    count = None
+    if end_type == 'until':
+        end_date_raw = (data.get('end_date') or '').strip()
+        if end_date_raw:
+            try:
+                end_date = datetime.strptime(end_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                end_date = None
+    elif end_type == 'count':
+        try:
+            count = int(data.get('count') or 0)
+            if count <= 0:
+                count = None
+        except (ValueError, TypeError):
+            count = None
+
+    byweekday = None
+    if frequency == 'weekly':
+        days = data.get('byweekday') or []
+        days_int = []
+        for d in days:
+            try:
+                di = int(d)
+            except (ValueError, TypeError):
+                continue
+            if 0 <= di <= 6:
+                days_int.append(di)
+        byweekday = ",".join(str(d) for d in sorted(set(days_int))) or str(start_date.weekday())
+
+    business_days_only = bool(data.get('business_days_only')) if frequency == 'daily' else False
+
+    # Créer ou mettre à jour la série
+    if task.recurrence_series:
+        series = task.recurrence_series
+        template_task = Task.query.get(series.template_task_id) or task
+    else:
+        series = TaskRecurrenceSeries(template_task_id=task.id, start_date=start_date, frequency=frequency, interval=interval)
+        db.session.add(series)
+        db.session.commit()
+        task.recurrence_series_id = series.id
+        template_task = task
+
+    try:
+        # Mettre à jour les paramètres
+        series.frequency = frequency
+        series.interval = interval
+        series.start_date = start_date
+        series.end_date = end_date
+        series.count = count
+        series.byweekday = byweekday
+        series.business_days_only = business_days_only
+
+        # Normaliser la tâche template
+        task.recurrence_series_id = series.id
+        template_task.recurrence_series_id = series.id
+        template_task.scheduled_for = start_date
+
+        # En cas de changement: supprimer/recréer les occurrences futures
+        _delete_future_recurrence_instances(series.id, keep_task_id=template_task.id)
+        _ensure_recurrence_instances(template_task, series, horizon_days=180)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur upsert récurrence: {e}")
+        return jsonify({'success': False, 'error': 'Erreur lors de la sauvegarde de la récurrence'}), 500
+
+    info = _recurrence_summary_with_next(task)
+    return jsonify({
+        'success': True,
+        'message': 'Récurrence enregistrée.',
+        'has_recurrence': True,
+        'recurrence': _recurrence_payload(task.recurrence_series),
+        'summary': info['summary'],
+        'next_date': info['next_date'],
+    })
+
+
+@tasks.route('/tasks/<slug_or_id>/recurrence', methods=['DELETE'])
+@login_and_client_required
+def delete_task_recurrence(slug_or_id):
+    task = get_task_by_slug_or_id(slug_or_id)
+    series = task.recurrence_series
+    if not series:
+        return jsonify({'success': True, 'message': 'Aucune récurrence à supprimer.'})
+
+    try:
+        # Supprimer les occurrences futures, puis détacher la série des tâches restantes
+        _delete_future_recurrence_instances(series.id, keep_task_id=series.template_task_id)
+
+        remaining_tasks = Task.query.filter(Task.recurrence_series_id == series.id).all()
+        for t in remaining_tasks:
+            t.recurrence_series_id = None
+            # on ne garde scheduled_for que si déjà passé/aujourd'hui; sinon ça peut masquer
+            if t.scheduled_for and t.scheduled_for > _today_utc_date():
+                t.scheduled_for = None
+
+        db.session.delete(series)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur suppression récurrence: {e}")
+        return jsonify({'success': False, 'error': 'Erreur lors de la suppression de la récurrence'}), 500
+
+    return jsonify({
+        'success': True,
+        'message': 'Récurrence supprimée (occurrences futures supprimées).',
+        'has_recurrence': False,
+        'recurrence': None,
+        'summary': 'Aucune',
+        'next_date': None,
+    })
 
 @tasks.route('/tasks/<slug_or_id>/edit', methods=['GET', 'POST'])
 @login_and_client_required
@@ -511,6 +852,7 @@ def my_tasks():
 
     # Construction de la requête de base (exclure les tâches archivées)
     query = Task.query.filter_by(user_id=current_user.id, is_archived=False)
+    today = datetime.utcnow().date()
 
     # Filtres
     if status:
@@ -522,14 +864,64 @@ def my_tasks():
     if search:
         query = query.filter(Task.title.ilike(f'%{search}%'))
 
-    # Tri par défaut : position puis date de création décroissante
-    query = query.order_by(Task.position.asc(), Task.created_at.desc())
+    # On veut:
+    # - toutes les tâches visibles (scheduled_for <= aujourd'hui)
+    # - + uniquement la prochaine occurrence future par série (scheduled_for > aujourd'hui)
+    #   pour pouvoir la montrer "à venir" dans À faire.
 
-    # Récupération de toutes les tâches (sans pagination pour le tri par statut)
-    all_tasks = query.all()
+    visible_query = query.filter(db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today))
+    visible_query = visible_query.order_by(Task.position.asc(), Task.created_at.desc())
+    all_tasks = visible_query.all()
+
+    include_upcoming = (not status) or ('à faire' in status)
+    if include_upcoming:
+        # Sous-requête "prochaine date" par série
+        next_subq = (
+            db.session.query(
+                Task.recurrence_series_id.label('sid'),
+                func.min(Task.scheduled_for).label('next_date'),
+            )
+            .filter(
+                Task.user_id == current_user.id,
+                Task.is_archived == False,
+                Task.recurrence_series_id.isnot(None),
+                Task.scheduled_for.isnot(None),
+                Task.scheduled_for > today,
+                Task.status == 'à faire',
+            )
+            .group_by(Task.recurrence_series_id)
+            .subquery()
+        )
+
+        upcoming_next_q = (
+            db.session.query(Task)
+            .join(
+                next_subq,
+                db.and_(
+                    Task.recurrence_series_id == next_subq.c.sid,
+                    Task.scheduled_for == next_subq.c.next_date,
+                ),
+            )
+        )
+
+        # Réappliquer les filtres optionnels (priority/project/search) sur la prochaine occurrence
+        if priority:
+            upcoming_next_q = upcoming_next_q.filter(Task.priority == priority)
+        if project_id:
+            upcoming_next_q = upcoming_next_q.filter(Task.project_id == project_id)
+        if search:
+            upcoming_next_q = upcoming_next_q.filter(Task.title.ilike(f'%{search}%'))
+
+        upcoming_next_tasks = upcoming_next_q.all()
+        all_tasks.extend(upcoming_next_tasks)
 
     # Tri des tâches par statut et par position
-    tasks_todo = sorted([task for task in all_tasks if task.status == 'à faire'], key=lambda t: (t.position, t.created_at))
+    def todo_sort_key(t: Task):
+        if t.scheduled_for and t.scheduled_for > today:
+            return (1, t.scheduled_for, t.created_at or datetime.min)
+        return (0, t.position or 0, t.created_at or datetime.min)
+
+    tasks_todo = sorted([task for task in all_tasks if task.status == 'à faire'], key=todo_sort_key)
     tasks_in_progress = sorted([task for task in all_tasks if task.status == 'en cours'], key=lambda t: (t.position, t.created_at))
     tasks_completed = sorted(
         [task for task in all_tasks if task.status == 'terminé'],

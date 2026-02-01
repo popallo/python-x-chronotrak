@@ -71,6 +71,108 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Récurrence (optionnel) -->
+                    {% if not task %}
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="mb-3"><i class="fas fa-repeat me-2"></i>Récurrence</h6>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="recurrence_frequency" class="form-label">Fréquence</label>
+                                    <select class="form-select" id="recurrence_frequency" name="recurrence_frequency">
+                                        <option value="none" selected>Aucune</option>
+                                        <option value="daily">Quotidienne</option>
+                                        <option value="weekly">Hebdomadaire</option>
+                                        <option value="monthly">Mensuelle</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="recurrence_interval" class="form-label">Intervalle</label>
+                                    <input type="number" min="1" max="365" step="1" class="form-control" id="recurrence_interval" name="recurrence_interval" value="1" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="recurrence_start_date" class="form-label">Début</label>
+                                    <input type="date" class="form-control" id="recurrence_start_date" name="recurrence_start_date" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="recurrence_weekdays_section" class="mb-3 d-none">
+                            <label class="form-label">Jours</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="0" id="recur_form_wd_0" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_0">Lun</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1" id="recur_form_wd_1" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_1">Mar</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="2" id="recur_form_wd_2" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_2">Mer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="3" id="recur_form_wd_3" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_3">Jeu</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="4" id="recur_form_wd_4" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_4">Ven</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="5" id="recur_form_wd_5" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_5">Sam</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="6" id="recur_form_wd_6" name="recurrence_byweekday">
+                                    <label class="form-check-label" for="recur_form_wd_6">Dim</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="recurrence_business_days_section" class="mb-3 d-none">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="recurrence_business_days_only" name="recurrence_business_days_only">
+                                <label class="form-check-label" for="recurrence_business_days_only">Jours ouvrés uniquement (Lun–Ven)</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="recurrence_end_type" class="form-label">Fin</label>
+                                    <select class="form-select" id="recurrence_end_type" name="recurrence_end_type" disabled>
+                                        <option value="never" selected>Sans fin</option>
+                                        <option value="until">Jusqu'au</option>
+                                        <option value="count">Nombre d'occurrences</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3 d-none" id="recurrence_end_date_wrapper">
+                                    <label for="recurrence_end_date" class="form-label">Date de fin</label>
+                                    <input type="date" class="form-control" id="recurrence_end_date" name="recurrence_end_date">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3 d-none" id="recurrence_count_wrapper">
+                                    <label for="recurrence_count" class="form-label">Occurrences</label>
+                                    <input type="number" min="1" max="1000" step="1" class="form-control" id="recurrence_count" name="recurrence_count">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-text">Les occurrences futures seront créées automatiquement et n’apparaîtront qu’à leur date.</div>
+                    </div>
+                    {% endif %}
+
                     <div class="d-flex justify-content-between">
                         {% if task %}
                             <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" class="btn btn-outline-secondary">
@@ -88,4 +190,50 @@
         </div>
     </div>
 </div>
+
+{% if not task %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const freq = document.getElementById('recurrence_frequency');
+        const interval = document.getElementById('recurrence_interval');
+        const startDate = document.getElementById('recurrence_start_date');
+        const endType = document.getElementById('recurrence_end_type');
+        const weekdays = document.getElementById('recurrence_weekdays_section');
+        const businessDays = document.getElementById('recurrence_business_days_section');
+        const endDateWrap = document.getElementById('recurrence_end_date_wrapper');
+        const countWrap = document.getElementById('recurrence_count_wrapper');
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        if (startDate && !startDate.value) startDate.value = `${yyyy}-${mm}-${dd}`;
+
+        function refresh() {
+            const enabled = freq && freq.value !== 'none';
+            if (interval) interval.disabled = !enabled;
+            if (startDate) startDate.disabled = !enabled;
+            if (endType) endType.disabled = !enabled;
+
+            if (!enabled) {
+                weekdays.classList.add('d-none');
+                businessDays.classList.add('d-none');
+                endDateWrap.classList.add('d-none');
+                countWrap.classList.add('d-none');
+                return;
+            }
+
+            weekdays.classList.toggle('d-none', freq.value !== 'weekly');
+            businessDays.classList.toggle('d-none', freq.value !== 'daily');
+
+            endDateWrap.classList.toggle('d-none', endType.value !== 'until');
+            countWrap.classList.toggle('d-none', endType.value !== 'count');
+        }
+
+        if (freq) freq.addEventListener('change', refresh);
+        if (endType) endType.addEventListener('change', refresh);
+        refresh();
+    });
+</script>
+{% endif %}
 {% endblock %}

@@ -35,6 +35,9 @@
 
             <!-- Informations de temps et assignation -->
             <div class="task-meta d-flex flex-wrap gap-1 align-items-center justify-content-end">
+                <span class="badge bg-light text-dark" title="Récurrence">
+                    <i class="fas fa-repeat me-1"></i>{% if task.recurrence_series_id %}Récurrente{% else %}Aucune{% endif %}
+                </span>
                 {% if task.estimated_time %}
                     <span class="badge bg-info" title="Temps estimé">
                         <i class="fas fa-clock me-1"></i>{{ task.estimated_time|format_time }}

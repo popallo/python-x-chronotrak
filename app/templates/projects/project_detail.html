@@ -67,17 +67,17 @@
             <div class="compact-info-item compact-tasks">
                 <i class="fas fa-tasks text-primary me-2"></i>
                 <span class="compact-label">Tâches:</span>
-                <span class="compact-value task-count">{{ project.tasks|length }}</span>
-                {% if project.tasks %}
+                <span class="compact-value task-count">{{ (tasks_todo|length) + (tasks_in_progress|length) + (tasks_done|length) }}</span>
+                {% if (tasks_todo or tasks_in_progress or tasks_done) %}
                     <div class="compact-task-stats">
                         <span class="compact-stat-badge stat-todo" title="À faire">
-                            <i class="fas fa-clock me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'à faire')|list|length }}
+                            <i class="fas fa-clock me-1"></i>{{ tasks_todo|length }}
                         </span>
                         <span class="compact-stat-badge stat-progress" title="En cours">
-                            <i class="fas fa-play me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'en cours')|list|length }}
+                            <i class="fas fa-play me-1"></i>{{ tasks_in_progress|length }}
                         </span>
                         <span class="compact-stat-badge stat-done" title="Terminé">
-                            <i class="fas fa-check me-1"></i>{{ project.tasks|selectattr('status', 'equalto', 'terminé')|list|length }}
+                            <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
                         </span>
                     </div>
                 {% endif %}
@@ -109,7 +109,7 @@
     </div>
     <div class="card-body">
         {% from 'components/kanban_board.html' import kanban_board %}
-        {{ kanban_board(tasks_todo, tasks_in_progress, tasks_done, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives', project_id=project.id)) }}
+        {{ kanban_board(tasks_todo, tasks_in_progress, tasks_done, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives', project_id=project.id), today=now.date()) }}
     </div>
 </div>
 

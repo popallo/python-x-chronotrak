@@ -227,28 +227,22 @@
                                     {% endif %}
                                 </div>
                                 
-                                <!-- Statuts des tâches -->
-                                {% if project.tasks %}
-                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
-                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
-                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
-                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
-                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
-                                    
+                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
+                                {% if project.visible_tasks_total %}
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
                                             <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
                                         </div>
                                         <div class="d-flex gap-1">
                                             <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
                                             </span>
                                             <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
                                             </span>
                                             <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
                                             </span>
                                         </div>
                                     </div>
@@ -339,28 +333,22 @@
                                     {% endif %}
                                 </div>
                                 
-                                <!-- Statuts des tâches -->
-                                {% if project.tasks %}
-                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
-                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
-                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
-                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
-                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
-                                    
+                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
+                                {% if project.visible_tasks_total %}
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
                                             <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
                                         </div>
                                         <div class="d-flex gap-1">
                                             <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
                                             </span>
                                             <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
                                             </span>
                                             <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
                                             </span>
                                         </div>
                                     </div>
@@ -451,28 +439,22 @@
                                     {% endif %}
                                 </div>
                                 
-                                <!-- Statuts des tâches -->
-                                {% if project.tasks %}
-                                    {% set tasks_active = project.tasks|rejectattr('is_archived')|list %}
-                                    {% set tasks_todo = tasks_active|selectattr('status', 'equalto', 'à faire')|list %}
-                                    {% set tasks_in_progress = tasks_active|selectattr('status', 'equalto', 'en cours')|list %}
-                                    {% set tasks_done = tasks_active|selectattr('status', 'equalto', 'terminé')|list %}
-                                    {% set total_remaining = tasks_todo|length + tasks_in_progress|length %}
-                                    
+                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
+                                {% if project.visible_tasks_total %}
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
                                             <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ total_remaining }}</span>
+                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
                                         </div>
                                         <div class="d-flex gap-1">
                                             <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ tasks_todo|length }}
+                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
                                             </span>
                                             <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ tasks_in_progress|length }}
+                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
                                             </span>
                                             <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
+                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
                                             </span>
                                         </div>
                                     </div>

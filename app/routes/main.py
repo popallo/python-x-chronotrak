@@ -6,6 +6,7 @@ from app.models.task import Task, TimeEntry
 from app.models.user import User
 from sqlalchemy import func, case
 from app import db, cache
+from datetime import datetime
 from app.utils.route_utils import (
     get_accessible_clients,
     get_accessible_projects,
@@ -19,6 +20,7 @@ def get_dashboard_stats():
     """Récupère les statistiques du tableau de bord"""
     # Convertir le seuil de crédit en minutes (il est configuré en heures)
     credit_threshold_minutes = current_app.config['CREDIT_THRESHOLD'] * 60
+    today = datetime.utcnow().date()
     
     if current_user.is_client():
         # Pour les clients, montrer uniquement les données de leurs clients associés
@@ -37,7 +39,8 @@ def get_dashboard_stats():
             ).scalar() or 0
             
             total_tasks = db.session.query(func.count(Task.id)).join(Project).filter(
-                Project.client_id.in_(client_ids)
+                Project.client_id.in_(client_ids),
+                db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
             ).scalar() or 0
             
             total_time = db.session.query(func.sum(TimeEntry.minutes)).join(Task).join(Project).filter(
@@ -70,12 +73,14 @@ def get_dashboard_stats():
         # Requête séparée pour les tâches par statut
         tasks_todo = db.session.query(func.count(Task.id)).join(Project).filter(
             Project.client_id.in_(client_ids),
-            Task.status == 'à faire'
+            Task.status == 'à faire',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).scalar() or 0
         
         tasks_in_progress = db.session.query(func.count(Task.id)).join(Project).filter(
             Project.client_id.in_(client_ids),
-            Task.status == 'en cours'
+            Task.status == 'en cours',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).scalar() or 0
         
         # S'assurer que les valeurs ne sont pas None
@@ -110,7 +115,9 @@ def get_dashboard_stats():
             # Requêtes séparées pour de meilleures performances
             total_clients = db.session.query(func.count(Client.id)).scalar() or 0
             total_projects = db.session.query(func.count(Project.id)).scalar() or 0
-            total_tasks = db.session.query(func.count(Task.id)).scalar() or 0
+            total_tasks = db.session.query(func.count(Task.id)).filter(
+                db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
+            ).scalar() or 0
             
             stats = type('Stats', (), {
                 'total_clients': total_clients,
@@ -134,15 +141,18 @@ def get_dashboard_stats():
         
         # Requêtes séparées pour les tâches par statut
         tasks_todo = db.session.query(func.count(Task.id)).filter(
-            Task.status == 'à faire'
+            Task.status == 'à faire',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).scalar() or 0
         
         tasks_in_progress = db.session.query(func.count(Task.id)).filter(
-            Task.status == 'en cours'
+            Task.status == 'en cours',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).scalar() or 0
         
         tasks_done = db.session.query(func.count(Task.id)).filter(
-            Task.status == 'terminé'
+            Task.status == 'terminé',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).scalar() or 0
         
         # S'assurer que les valeurs ne sont pas None
@@ -159,8 +169,16 @@ def get_dashboard_stats():
             Project.remaining_credit > 0
         ).order_by(Project.remaining_credit).limit(5).all()
         
-        urgent_tasks = Task.query.filter_by(priority='urgente', status='à faire').limit(10).all()
-        my_tasks = Task.query.filter_by(user_id=current_user.id, status='en cours').limit(10).all()
+        urgent_tasks = Task.query.filter(
+            Task.priority == 'urgente',
+            Task.status == 'à faire',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
+        ).limit(10).all()
+        my_tasks = Task.query.filter(
+            Task.user_id == current_user.id,
+            Task.status == 'en cours',
+            db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
+        ).limit(10).all()
         recent_time_entries = TimeEntry.query.order_by(TimeEntry.created_at.desc()).limit(10).all()
         
         return {

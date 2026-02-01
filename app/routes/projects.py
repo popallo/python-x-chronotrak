@@ -48,9 +48,13 @@ def list_projects():
         one_month_ago = datetime.utcnow() - timedelta(days=30)
         
         # Sous-requête pour obtenir la dernière activité de chaque projet
+        # (en ignorant les tâches planifiées dans le futur)
+        today = datetime.utcnow().date()
         last_activity_subquery = db.session.query(
             Task.project_id,
             func.max(Task.updated_at).label('last_activity')
+        ).filter(
+            or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
         ).group_by(Task.project_id).subquery()
         
         # Joindre avec la sous-requête pour obtenir la dernière activité
@@ -84,11 +88,22 @@ def list_projects():
         'old_activity': []
     }
     
+    # Pré-calculer des stats "tâches visibles" (exclure archives + occurrences futures)
+    today = datetime.utcnow().date()
+
     for project in projects.items:
         # Déterminer la dernière activité du projet
         last_activity = None
-        if project.tasks:
-            last_activity = max([task.updated_at for task in project.tasks if not task.is_archived], default=project.created_at)
+        visible_tasks = [t for t in project.tasks if (not t.is_archived) and (t.scheduled_for is None or t.scheduled_for <= today)]
+
+        project.visible_tasks_total = len(visible_tasks)
+        project.visible_tasks_todo = sum(1 for t in visible_tasks if t.status == 'à faire')
+        project.visible_tasks_in_progress = sum(1 for t in visible_tasks if t.status == 'en cours')
+        project.visible_tasks_done = sum(1 for t in visible_tasks if t.status == 'terminé')
+        project.visible_tasks_remaining = project.visible_tasks_todo + project.visible_tasks_in_progress
+
+        if visible_tasks:
+            last_activity = max([task.updated_at for task in visible_tasks], default=project.created_at)
         else:
             last_activity = project.created_at
         
@@ -155,13 +170,58 @@ def new_project(client_id):
 def project_details(slug_or_id):
     from app.models.task import TimeEntry, Task
     project = get_project_by_slug_or_id(slug_or_id)
-    tasks = project.tasks
     form = DeleteProjectForm()
+
+    today = datetime.utcnow().date()
+
+    # Inclure toutes les tâches "visibles" (scheduled_for <= aujourd'hui),
+    # + uniquement LA prochaine occurrence future par série (pour afficher "à venir" dans À faire).
+    visible_tasks = Task.query.filter(
+        Task.project_id == project.id,
+        db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today),
+    ).all()
+
+    next_subq = (
+        db.session.query(
+            Task.recurrence_series_id.label('sid'),
+            func.min(Task.scheduled_for).label('next_date'),
+        )
+        .filter(
+            Task.project_id == project.id,
+            Task.is_archived == False,
+            Task.recurrence_series_id.isnot(None),
+            Task.scheduled_for.isnot(None),
+            Task.scheduled_for > today,
+            Task.status == 'à faire',
+        )
+        .group_by(Task.recurrence_series_id)
+        .subquery()
+    )
+
+    upcoming_next_tasks = (
+        db.session.query(Task)
+        .join(
+            next_subq,
+            and_(
+                Task.recurrence_series_id == next_subq.c.sid,
+                Task.scheduled_for == next_subq.c.next_date,
+            ),
+        )
+        .all()
+    )
+
+    tasks = visible_tasks + upcoming_next_tasks
     
     # Trier les tâches par statut et par position (exclure les tâches archivées)
+    def todo_sort_key(t: Task):
+        # Les tâches "à venir" doivent rester en bas, triées par date.
+        if t.scheduled_for and t.scheduled_for > today:
+            return (1, t.scheduled_for, t.created_at or datetime.min)
+        return (0, t.position or 0, t.created_at or datetime.min)
+
     tasks_todo = sorted(
         [task for task in tasks if task.status == 'à faire' and not task.is_archived],
-        key=lambda t: (t.position, t.created_at)
+        key=todo_sort_key
     )
     tasks_in_progress = sorted(
         [task for task in tasks if task.status == 'en cours' and not task.is_archived],

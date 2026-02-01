@@ -22,6 +22,7 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task-status.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-recurrence.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -219,6 +220,37 @@
                                 {% endif %}
                             </span>
                         </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-repeat me-2 text-muted"></i>
+                            <span>
+                                <strong>Récurrence :</strong>
+                                <span id="recurrence-summary-text">{{ recurrence_info.summary }}</span>
+                                <span id="recurrence-next-text" class="text-muted small">
+                                    {% if recurrence_info.next_date %}
+                                        (Prochaine : {{ recurrence_info.next_date }})
+                                    {% endif %}
+                                </span>
+                            </span>
+                            <div class="ms-auto btn-group btn-group-sm" role="group" aria-label="Gérer la récurrence">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        id="recurrence-edit-btn"
+                                        data-task-slug="{{ task.slug }}"
+                                        data-bs-toggle="tooltip"
+                                        title="{% if task.recurrence_series %}Modifier la récurrence{% else %}Ajouter une récurrence{% endif %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-danger"
+                                        id="recurrence-delete-btn"
+                                        data-task-slug="{{ task.slug }}"
+                                        {% if not task.recurrence_series %}disabled{% endif %}
+                                        data-bs-toggle="tooltip"
+                                        title="Supprimer la récurrence">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Checklist Section (deuxième colonne - inversé avec temps) -->
@@ -280,6 +312,126 @@
 
 <!-- Conteneur de toasts -->
 <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<!-- Modal récurrence -->
+<div class="modal fade" id="recurrenceModal" tabindex="-1" aria-labelledby="recurrenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="recurrenceModalLabel">
+                    <i class="fas fa-repeat me-2"></i>Récurrence
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="recurrence-form">
+                    <input type="hidden" id="recurrence-task-slug" value="{{ task.slug }}">
+
+                    <div class="mb-3">
+                        <label for="recurrence-frequency" class="form-label">Fréquence</label>
+                        <select id="recurrence-frequency" class="form-select">
+                            <option value="daily">Quotidienne</option>
+                            <option value="weekly">Hebdomadaire</option>
+                            <option value="monthly">Mensuelle</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="recurrence-interval" class="form-label">Intervalle</label>
+                                <input type="number" min="1" max="365" step="1" id="recurrence-interval" class="form-control" value="1">
+                                <div class="form-text">Ex: 2 = toutes les 2 semaines</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="recurrence-start-date" class="form-label">Début</label>
+                                <input type="date" id="recurrence-start-date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="recurrence-weekdays-section" class="mb-3 d-none">
+                        <label class="form-label">Jours</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="0" id="recur-wd-0">
+                                <label class="form-check-label" for="recur-wd-0">Lun</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="1" id="recur-wd-1">
+                                <label class="form-check-label" for="recur-wd-1">Mar</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="2" id="recur-wd-2">
+                                <label class="form-check-label" for="recur-wd-2">Mer</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="3" id="recur-wd-3">
+                                <label class="form-check-label" for="recur-wd-3">Jeu</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="4" id="recur-wd-4">
+                                <label class="form-check-label" for="recur-wd-4">Ven</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="5" id="recur-wd-5">
+                                <label class="form-check-label" for="recur-wd-5">Sam</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input recurrence-weekday" type="checkbox" value="6" id="recur-wd-6">
+                                <label class="form-check-label" for="recur-wd-6">Dim</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="recurrence-business-days-section" class="mb-3 d-none">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="recurrence-business-days-only">
+                            <label class="form-check-label" for="recurrence-business-days-only">
+                                Jours ouvrés uniquement (Lun–Ven)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fin</label>
+                        <select id="recurrence-end-type" class="form-select">
+                            <option value="never">Sans fin</option>
+                            <option value="until">Jusqu'au</option>
+                            <option value="count">Nombre d'occurrences</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3 d-none" id="recurrence-end-date-wrapper">
+                                <label for="recurrence-end-date" class="form-label">Date de fin</label>
+                                <input type="date" id="recurrence-end-date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3 d-none" id="recurrence-count-wrapper">
+                                <label for="recurrence-count" class="form-label">Occurrences</label>
+                                <input type="number" min="1" max="1000" step="1" id="recurrence-count" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="form-text">
+                    Les occurrences futures sont créées automatiquement et n’apparaissent qu’à leur date.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="recurrence-save-btn">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal pour l'enregistrement du temps -->
 {% if not current_user.is_client() %}

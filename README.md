@@ -48,6 +48,11 @@ Elle permet le suivi des heures allouées aux projets clients et une organisatio
 
 ### 📝 Gestion des tâches
 - Organisation des tâches en tableaux kanban (À faire, En cours, Terminé)
+- Gestion de la **récurrence** des tâches (quotidienne / hebdomadaire / mensuelle)
+- Ajout/modification de la récurrence depuis la page d’une tâche (sans rafraîchissement)
+- Affichage des tâches récurrentes “**à venir**” dans **À faire** (atténuées + date), **une seule occurrence future visible par tâche récurrente** (la prochaine)
+- Suppression de la récurrence : supprime les occurrences futures associées
+- Chaque occurrence est une **nouvelle tâche indépendante** (temps enregistré, commentaires, etc.)
 - Assignation des tâches aux utilisateurs
 - Système de priorités (basse, normale, haute, urgente)
 - Ajout de commentaires sur les tâches
@@ -134,6 +139,17 @@ python scripts/create_admin.py
 # Lancer l'application
 flask run
 ```
+
+#### Migrations (important)
+
+Après une mise à jour du code (ex: `git pull`), pensez à exécuter :
+
+```bash
+source .venv/bin/activate
+flask db upgrade
+```
+
+> Note : assurez-vous de lancer la commande dans **le même environnement** (variables d’env + base) que celui utilisé par l’application.
 
 #### Mettre à jour les dépendances (upgrade)
 

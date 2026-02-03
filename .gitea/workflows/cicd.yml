@@ -100,6 +100,85 @@ jobs:
           export FLASK_ENV=testing
           echo "FLASK_ENV=testing" >> $GITEA_ENV
 
+      - name: Audit de sécurité - Scan Trivy filesystem (dépendances et secrets)
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "🔒 Scan de sécurité Trivy (filesystem) - Dépendances et secrets..."
+          # Installer Trivy
+          apk add --no-cache curl || true
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin || true
+          fi
+          
+          # Scanner le filesystem pour les vulnérabilités dans pyproject.toml et les secrets
+          if command -v trivy >/dev/null 2>&1; then
+            echo "📦 Scan des dépendances Python (pyproject.toml)..."
+            echo "🔍 Scan des secrets dans le code..."
+            # Scanner avec exit-code 0 pour ne pas faire échouer le pipeline sur des warnings
+            # mais afficher les résultats pour information
+            trivy filesystem . \
+              --severity HIGH,CRITICAL \
+              --scanners vuln,secret \
+              --exit-code 0 \
+              --format table || true
+            
+            # Scanner à nouveau avec exit-code 1 pour faire échouer sur les vulnérabilités critiques
+            echo "🔍 Vérification stricte des vulnérabilités..."
+            trivy filesystem . \
+              --severity CRITICAL \
+              --scanners vuln \
+              --exit-code 1 \
+              --format table || {
+                echo "❌ Des vulnérabilités CRITICAL détectées dans les dépendances"
+                exit 1
+              }
+            
+            echo "✅ Scan Trivy filesystem terminé"
+          else
+            echo "⚠️ Trivy non disponible, scan filesystem ignoré"
+          fi
+
+      - name: Audit de sécurité - Bandit (analyse statique du code Python)
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          source .venv/bin/activate
+          
+          echo "🔒 Audit de sécurité du code avec Bandit..."
+          
+          # Vérifier que bandit est installé
+          if ! python -c "import bandit" 2>/dev/null; then
+            echo "⚠️ Bandit non trouvé, installation..."
+            uv pip install bandit || pip install bandit || exit 1
+          fi
+          
+          # Exécuter Bandit sur le code source
+          # La configuration est dans pyproject.toml [tool.bandit]
+          bandit -r app/ \
+            -f json \
+            -o bandit-report.json \
+            --severity-level high \
+            --confidence-level high \
+            -c pyproject.toml || true
+          
+          # Afficher un résumé et faire échouer le pipeline si HIGH détectés
+          if [ -f bandit-report.json ]; then
+            echo "📊 Résumé Bandit:"
+            python -c 'import json, sys; data = json.load(open("bandit-report.json")); metrics = data.get("metrics", {}).get("_totals", {}); high = metrics.get("SEVERITY.HIGH", 0); medium = metrics.get("SEVERITY.MEDIUM", 0); low = metrics.get("SEVERITY.LOW", 0); print(f"  - HIGH: {high}"); print(f"  - MEDIUM: {medium}"); print(f"  - LOW: {low}"); sys.exit(1 if high > 0 else 0)' || {
+              echo "❌ Bandit a détecté des problèmes HIGH de sécurité"
+              exit 1
+            }
+            echo "✅ Aucun problème HIGH détecté"
+          fi
+          
+          # Format texte pour affichage dans les logs
+          bandit -r app/ \
+            --severity-level high \
+            --confidence-level high \
+            -c pyproject.toml \
+            --format txt || echo "⚠️ Bandit a détecté des problèmes de sécurité"
+          
+          echo "✅ Audit Bandit terminé"
+
       - name: Exécution des tests unitaires
         env:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
@@ -322,17 +401,30 @@ jobs:
           echo "=== Utilisation disque Docker ==="
           docker system df || true
 
-      # Analyse de sécurité avec Trivy (uniquement sur main/master)
-      - name: Installation et exécution de Trivy
+      # Analyse de sécurité avec Trivy - Scan de l'image Docker finale (uniquement sur main/master)
+      - name: Scan Trivy - Image Docker finale
         if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
         run: |
-          apk add --no-cache curl
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          echo "🔒 Scan de sécurité Trivy - Image Docker finale..."
+          apk add --no-cache curl || true
+          
+          # Installer Trivy si nécessaire
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          fi
+          
+          # Scanner l'image Docker finale pour les vulnérabilités des packages installés
           # Ignorer les vulnérabilités déjà corrigées (status: fixed)
           trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --severity HIGH,CRITICAL \
             --ignore-status fixed \
-            --exit-code 1
+            --format table \
+            --exit-code 1 || {
+              echo "⚠️ Des vulnérabilités HIGH/CRITICAL détectées dans l'image Docker"
+              exit 1
+            }
+          
+          echo "✅ Scan Trivy image terminé"
 
   deploy:
     needs: build-and-push

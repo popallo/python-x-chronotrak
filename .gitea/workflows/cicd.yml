@@ -179,6 +179,18 @@ jobs:
 
           echo "✅ Audit Bandit terminé"
 
+      - name: Lint et format (Ruff)
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          source .venv/bin/activate
+          echo "🔍 Vérification Ruff (lint + format)..."
+          if ! python -c "import ruff" 2>/dev/null; then
+            uv pip install ruff || pip install ruff
+          fi
+          ruff check app config.py run.py wsgi.py management tests migrations --fix --unsafe-fixes
+          ruff format --check app config.py run.py wsgi.py management tests migrations
+          echo "✅ Ruff OK"
+
       - name: Exécution des tests unitaires
         env:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}

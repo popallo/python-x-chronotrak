@@ -54,7 +54,7 @@ jobs:
           # Installation de uv (gestionnaire de paquets Python ultra-rapide)
           echo "📦 Installation de uv..."
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           uv --version
           
           # Vérifier les versions installées
@@ -77,7 +77,7 @@ jobs:
 
       - name: Création de l'environnement virtuel et installation des dépendances avec uv
         run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           echo "🔧 Création de l'environnement virtuel avec uv..."
           uv venv
           
@@ -91,7 +91,7 @@ jobs:
 
       - name: Configuration de l'environnement de test
         run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           source .venv/bin/activate
           # Créer une clé de chiffrement de test si elle n'existe pas
           export ENCRYPTION_KEY=${ENCRYPTION_KEY:-$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")}
@@ -104,7 +104,7 @@ jobs:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
           FLASK_ENV: testing
         run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           echo "🧪 Exécution des tests..."
           if [ ! -f ".venv/bin/activate" ]; then
             echo "❌ Le venv n'existe pas, création avec uv..."
@@ -135,7 +135,7 @@ jobs:
             exit 0
           fi
           
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           # Vérifier que le venv existe avant de l'activer
           if [ -f ".venv/bin/activate" ]; then
             source .venv/bin/activate

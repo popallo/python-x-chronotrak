@@ -18,7 +18,9 @@ jobs:
           py3-pip \
           git \
           bash \
-          curl
+          curl \
+          nodejs \
+          npm
 
       - name: Checkout du code
         uses: actions/checkout@v3

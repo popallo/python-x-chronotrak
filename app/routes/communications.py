@@ -16,12 +16,14 @@ from app.utils.route_utils import (
 )
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
+from app.utils import get_utc_now
 
 communications = Blueprint('communications', __name__)
 
 def get_communication_stats():
     """Récupère les statistiques des communications"""
-    now = datetime.utcnow()
+    # Convertir en datetime naive pour la comparaison avec les datetimes de la DB (SQLite)
+    now = get_utc_now().replace(tzinfo=None)
     return {
         'total': Communication.query.count(),
         'last_24h': Communication.query.filter(

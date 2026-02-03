@@ -118,11 +118,11 @@ jobs:
             pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-report=html -v || exit 1
             echo "✅ Tous les tests sont passés"
           else
-            echo "⚠️ Aucun test trouvé dans le projet"
-            echo "ℹ️ Le job passe mais prévoir d'ajouter des tests dans un répertoire 'tests/' ou avec le préfixe 'test_'"
+            echo "❌ Aucun test trouvé dans le projet"
+            echo "ℹ️ Le pipeline échoue car aucun test n'a été trouvé"
+            echo "ℹ️ Ajoutez des tests dans un répertoire 'tests/' ou avec le préfixe 'test_'"
             echo "ℹ️ Créez des fichiers comme tests/test_models.py, tests/test_routes.py, etc."
-            # Ne pas faire échouer le pipeline si aucun test n'existe encore
-            exit 0
+            exit 1
           fi
 
       - name: Rapport de couverture (si disponible)

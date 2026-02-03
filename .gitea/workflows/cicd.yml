@@ -19,18 +19,15 @@ jobs:
           git \
           bash \
           curl \
-          xz
+          nodejs \
+          npm
           
-          # Installation de Node.js LTS depuis les binaires officiels (version récente sans warnings de dépréciation)
-          echo "📦 Installation de Node.js LTS..."
-          NODE_VERSION="20.18.0"
-          ARCH="x64"
-          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}-musl.tar.xz" -o /tmp/node.tar.xz
-          tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
-          rm /tmp/node.tar.xz
-          
+          # Vérifier la version de Node.js installée
           node --version
           npm --version
+          
+          # Note: Le warning de dépréciation punycode vient de actions/checkout@v3
+          # C'est un warning non-bloquant qui sera corrigé dans une future version de l'action
 
       - name: Checkout du code
         uses: actions/checkout@v3
@@ -146,18 +143,15 @@ jobs:
           git \
           curl \
           bash \
-          xz
+          nodejs \
+          npm
           
-          # Installation de Node.js LTS depuis les binaires officiels (version récente sans warnings de dépréciation)
-          echo "📦 Installation de Node.js LTS..."
-          NODE_VERSION="20.18.0"
-          ARCH="x64"
-          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}-musl.tar.xz" -o /tmp/node.tar.xz
-          tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
-          rm /tmp/node.tar.xz
-          
+          # Vérifier la version de Node.js installée
           node --version
           npm --version
+          
+          # Note: Le warning de dépréciation punycode vient de actions/checkout@v3
+          # C'est un warning non-bloquant qui sera corrigé dans une future version de l'action
 
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3

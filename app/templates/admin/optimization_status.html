@@ -22,7 +22,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p><strong>Version Python:</strong> {{ python_info.python_version }}</p>
-                            <p><strong>Python 3.13 disponible:</strong> 
+                            <p><strong>Python 3.13 disponible:</strong>
                                 {% if python_info.python_313_available %}
                                     <span class="badge badge-success">Oui</span>
                                 {% else %}
@@ -31,14 +31,14 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>JIT activé:</strong> 
+                            <p><strong>JIT activé:</strong>
                                 {% if python_info.jit_enabled %}
                                     <span class="badge badge-success">Oui</span>
                                 {% else %}
                                     <span class="badge badge-warning">Non</span>
                                 {% endif %}
                             </p>
-                            <p><strong>Optimisations activées:</strong> 
+                            <p><strong>Optimisations activées:</strong>
                                 {% if python_info.optimizations_enabled %}
                                     <span class="badge badge-success">Oui</span>
                                 {% else %}
@@ -63,8 +63,8 @@
             <div class="alert alert-info">
                 <h6><i class="fas fa-info-circle"></i> À propos des optimisations</h6>
                 <p class="mb-0">
-                    Les optimisations Python 3.13 sont automatiquement activées via les variables d'environnement 
-                    définies dans le Dockerfile (production) et config.py (développement). 
+                    Les optimisations Python 3.13 sont automatiquement activées via les variables d'environnement
+                    définies dans le Dockerfile (production) et config.py (développement).
                     Aucune action manuelle n'est requise.
                 </p>
             </div>

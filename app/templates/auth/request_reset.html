@@ -17,7 +17,7 @@
                 <div class="alert alert-info mb-4">
                     <p><i class="fas fa-info-circle me-2"></i>Saisissez votre adresse email. Nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
                 </div>
-                
+
                 <form method="POST" action="">
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
@@ -56,7 +56,7 @@
 {% block scripts %}
 <script type="module">
     import { initAuthPage } from "{{ url_for('static', filename='js/pages/auth.js') }}";
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         initAuthPage();
     });

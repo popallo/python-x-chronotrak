@@ -14,7 +14,7 @@
                     <p><i class="fas fa-info-circle me-2"></i>Cette page vous permet de tester la configuration SMTP de l'application.</p>
                     <p>Si l'envoi réussit, vous recevrez un email de test à l'adresse indiquée.</p>
                 </div>
-                
+
                 <form method="POST" action="">
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
@@ -36,7 +36,7 @@
                 </form>
             </div>
         </div>
-        
+
         <div class="card mt-4">
             <div class="card-header bg-secondary text-white">
                 <h4 class="mb-0">
@@ -47,22 +47,22 @@
                 <dl class="row">
                     <dt class="col-sm-4">Serveur</dt>
                     <dd class="col-sm-8">{{ config.MAIL_SERVER }}</dd>
-                    
+
                     <dt class="col-sm-4">Port</dt>
                     <dd class="col-sm-8">{{ config.MAIL_PORT }}</dd>
-                    
+
                     <dt class="col-sm-4">Sécurité</dt>
                     <dd class="col-sm-8">
                         {% if config.MAIL_USE_TLS %}TLS{% elif config.MAIL_USE_SSL %}SSL{% else %}Aucune{% endif %}
                     </dd>
-                    
+
                     <dt class="col-sm-4">Nom d'utilisateur</dt>
                     <dd class="col-sm-8">{{ config.MAIL_USERNAME or "Non configuré" }}</dd>
-                    
+
                     <dt class="col-sm-4">Expéditeur par défaut</dt>
                     <dd class="col-sm-8">{{ config.MAIL_DEFAULT_SENDER or "Non configuré" }}</dd>
                 </dl>
-                
+
                 <div class="alert alert-warning mt-3">
                     <p><i class="fas fa-exclamation-triangle me-2"></i>Pour modifier ces paramètres, vous devez mettre à jour les variables d'environnement ou le fichier .env de l'application.</p>
                 </div>

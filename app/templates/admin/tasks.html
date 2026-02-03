@@ -10,7 +10,7 @@
     <div class="row mb-4">
         <div class="col">
             <h1 class="h2 mb-4">Gestion des tâches</h1>
-            
+
             <!-- Filtres -->
             <div id="filtersPanel" class="filters-panel">
                 <div id="filtersToggle" class="filters-header">
@@ -133,8 +133,8 @@
                                             <a href="{{ url_for('tasks.edit_task', slug_or_id=task.slug) }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                    data-bs-toggle="modal" 
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
                                                     data-bs-target="#deleteTaskModal{{ task.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -214,9 +214,9 @@
 <script src="{{ url_for('static', filename='js/admin/tasks.js') }}"></script>
 <script type="module">
     import { initCardCollapse } from "{{ url_for('static', filename='js/pages/card_collapse.js') }}";
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         initCardCollapse();
     });
 </script>
-{% endblock %} 
+{% endblock %}

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialisation de Sortable pour les colonnes
 document.addEventListener('DOMContentLoaded', () => {
     const columns = document.querySelectorAll('.dashboard-column');
-    
+
     // Créer une instance de Sortable pour chaque colonne
     columns.forEach(column => {
         new Sortable(column, {
@@ -36,7 +36,7 @@ function saveCardsOrder() {
     const order = Array.from(columns).map(column => {
         return Array.from(column.children).map(card => card.id);
     });
-    
+
     localStorage.setItem('dashboardCardsOrder', JSON.stringify(order));
 }
 
@@ -47,7 +47,7 @@ function restoreCardsOrder() {
 
     const order = JSON.parse(savedOrder);
     const columns = document.querySelectorAll('.dashboard-column');
-    
+
     order.forEach((columnOrder, columnIndex) => {
         const column = columns[columnIndex];
         if (!column) return;

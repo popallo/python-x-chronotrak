@@ -67,7 +67,7 @@
                                             </a>
                                         {% endif %}
                                         {% if current_user.id != user.id %}
-                                            <button class="btn btn-sm btn-danger delete-user-btn" 
+                                            <button class="btn btn-sm btn-danger delete-user-btn"
                                                     data-user-id="{{ user.id }}"
                                                     data-user-name="{{ user.name }}"
                                                     data-is-client="{{ user.is_client()|lower }}"
@@ -97,12 +97,12 @@
             </div>
             <div class="modal-body">
                 <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong id="userName"></strong> ?</p>
-                
+
                 <div id="clientWarning" class="alert alert-warning" style="display: none;">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Cet utilisateur est lié à 
+                    <i class="fas fa-exclamation-triangle me-2"></i>Cet utilisateur est lié à
                     <span id="clientCount"></span> client<span id="clientPlural"></span>.
                 </div>
-                
+
                 <p class="text-danger mt-2">
                     <i class="fas fa-exclamation-triangle me-2"></i>Cette action est irréversible.
                 </p>

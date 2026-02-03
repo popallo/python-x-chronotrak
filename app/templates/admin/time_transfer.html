@@ -3,12 +3,12 @@
 {% block content %}
 <div class="container mt-4">
     <h1 class="mb-4">Transfert de temps entre projets</h1>
-    
+
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('admin.time_transfer') }}">
                 {{ form.hidden_tag() }}
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -21,7 +21,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="form-group">
                             {{ form.target_project_id.label(class="form-label") }}
@@ -34,7 +34,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -48,7 +48,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="form-group">
@@ -62,17 +62,17 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            Le transfert de temps créera automatiquement des tâches "Transfert de temps" et "Réception de temps" 
+                            <i class="fas fa-info-circle"></i>
+                            Le transfert de temps créera automatiquement des tâches "Transfert de temps" et "Réception de temps"
                             sur les projets source et destination respectivement. Ces tâches seront marquées comme terminées.
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-12">
                         {{ form.submit(class="btn btn-primary") }}
@@ -83,4 +83,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

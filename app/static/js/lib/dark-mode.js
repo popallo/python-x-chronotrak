@@ -2,13 +2,13 @@
 function toggleDarkMode() {
     const html = document.documentElement;
     const darkModeIcon = document.getElementById('darkModeIcon');
-    
+
     // Basculer la classe dark-mode sur html
     html.classList.toggle('dark-mode');
-    
+
     // S'assurer que theme-loaded est toujours présent
     html.classList.add('theme-loaded');
-    
+
     // Mettre à jour l'icône et l'attribut Bootstrap
     if (html.classList.contains('dark-mode')) {
         html.setAttribute('data-bs-theme', 'dark');
@@ -29,12 +29,12 @@ function toggleDarkMode() {
 function loadDarkModePreference() {
     const darkMode = localStorage.getItem('darkMode');
     const darkModeIcon = document.getElementById('darkModeIcon');
-    
+
     if (darkMode === 'enabled') {
         document.documentElement.classList.add('dark-mode');
         document.documentElement.setAttribute('data-bs-theme', 'dark');
         document.documentElement.classList.add('theme-loaded');
-        
+
         if (darkModeIcon) {
             darkModeIcon.classList.replace('fa-sun', 'fa-moon');
         }
@@ -49,7 +49,7 @@ function loadDarkModePreference() {
 function initDarkMode() {
     // Chargement des préférences de mode
     loadDarkModePreference();
-    
+
     // Gestionnaire d'événement pour le bouton de basculement
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {

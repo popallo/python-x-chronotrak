@@ -3,7 +3,7 @@
 {% block scripts %}
 <script type="module">
     import { initProjectForm } from "{{ url_for('static', filename='js/pages/project_form.js') }}";
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         initProjectForm();
     });

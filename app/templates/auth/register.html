@@ -89,7 +89,7 @@
 {% block scripts %}
 <script type="module">
     import { initRegistrationForm } from "{{ url_for('static', filename='js/pages/user_registration.js') }}";
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         initRegistrationForm();
     });

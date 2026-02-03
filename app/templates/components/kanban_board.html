@@ -6,14 +6,14 @@
             <span class="input-group-text">
                 <i class="fas fa-search"></i>
             </span>
-            <input type="text" 
-                   class="form-control" 
-                   id="kanban-search" 
+            <input type="text"
+                   class="form-control"
+                   id="kanban-search"
                    placeholder="Rechercher une tâche, projet ou client..."
                    autocomplete="off">
-            <button class="btn btn-outline-secondary" 
-                    type="button" 
-                    id="kanban-clear-search" 
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    id="kanban-clear-search"
                     title="Effacer la recherche">
                 <i class="fas fa-times"></i>
             </button>
@@ -24,7 +24,7 @@
             </small>
         </div>
     </div>
-    
+
     <div class="kanban-board">
         <!-- Colonne "À faire" -->
         <div class="kanban-column todo-column" data-status="à faire">
@@ -37,7 +37,7 @@
                     <div class="kanban-task {% if is_upcoming %}is-upcoming{% endif %}" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
                         {% if show_actions and not is_upcoming %}
                         <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-success" 
+                            <button class="btn btn-sm btn-success"
                                     onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
                                     title="Commencer">
                                 <i class="fas fa-play"></i>
@@ -68,7 +68,7 @@
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Colonne "En cours" -->
         <div class="kanban-column progress-column" data-status="en cours">
             <div class="kanban-title bg-warning text-white d-flex justify-content-between align-items-center">
@@ -79,7 +79,7 @@
                     <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-primary" 
+                            <button class="btn btn-sm btn-primary"
                                     onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
                                     title="Terminer">
                                 <i class="fas fa-check"></i>
@@ -108,7 +108,7 @@
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Colonne "Terminé" -->
         <div class="kanban-column done-column" data-status="terminé">
             <div class="kanban-title bg-success text-white d-flex justify-content-between align-items-center">
@@ -125,7 +125,7 @@
                         {% if show_actions %}
                         <div class="kanban-task-actions">
                             {% if not task.is_archived %}
-                                <button class="btn btn-sm btn-secondary" 
+                                <button class="btn btn-sm btn-secondary"
                                         onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
                                         title="Archiver">
                                     <i class="fas fa-archive"></i>

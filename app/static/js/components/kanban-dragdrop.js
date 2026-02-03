@@ -6,25 +6,25 @@
 // Initialise le drag & drop pour le kanban
 function initKanbanDragDrop() {
     const kanbanColumns = document.querySelectorAll('.kanban-column');
-    
+
     if (!kanbanColumns.length) {
         return;
     }
-    
+
     // Vérifier si Sortable est disponible
     if (typeof Sortable === 'undefined') {
         console.error('SortableJS n\'est pas chargé !');
         return;
     }
-    
+
     // Configuration de Sortable pour chaque colonne
     kanbanColumns.forEach((column) => {
         const kanbanItems = column.querySelector('.kanban-items');
-        
+
         if (!kanbanItems) {
             return;
         }
-        
+
         const status = column.getAttribute('data-status');
         const isDoneColumn = status === 'terminé';
 
@@ -38,7 +38,7 @@ function initKanbanDragDrop() {
                 // Empêcher seulement de sortir de la colonne "terminé" (mais permettre d'y entrer)
                 const toStatus = evt.to.closest('.kanban-column').getAttribute('data-status');
                 const fromStatus = evt.from.closest('.kanban-column').getAttribute('data-status');
-                
+
                 // Bloquer uniquement si on essaie de sortir de "terminé"
                 if (fromStatus === 'terminé') {
                     // Recharger pour remettre l'état visuel si quelque chose a bougé par erreur
@@ -52,16 +52,16 @@ function initKanbanDragDrop() {
                 const taskId = taskCard?.getAttribute('data-task-id');
                 const newStatus = toStatus;
                 const oldStatus = fromStatus;
-                
+
                 if (!taskId) {
                     return;
                 }
-                
+
                 // Si le statut a changé, mettre à jour le statut
                 if (newStatus !== oldStatus) {
                     updateTaskStatus(taskId, newStatus);
                 }
-                
+
                 // Toujours mettre à jour les positions dans la colonne de destination
                 updateTaskPositions(evt.to.closest('.kanban-column'));
                 updateColumnCounters();
@@ -84,9 +84,9 @@ async function updateTaskStatus(taskId, newStatus) {
                 status: newStatus
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (!result.success) {
             throw new Error(result.error || 'Erreur lors de la mise à jour du statut');
         }
@@ -101,7 +101,7 @@ async function updateTaskStatus(taskId, newStatus) {
 async function updateTaskPositions(column) {
     const tasks = column.querySelectorAll('.kanban-task');
     const taskPositions = [];
-    
+
     tasks.forEach((task, index) => {
         const taskId = task.getAttribute('data-task-id');
         if (taskId) {
@@ -111,11 +111,11 @@ async function updateTaskPositions(column) {
             });
         }
     });
-    
+
     if (taskPositions.length === 0) {
         return;
     }
-    
+
     try {
         const response = await fetch('/tasks/update_positions', {
             method: 'POST',
@@ -127,9 +127,9 @@ async function updateTaskPositions(column) {
                 task_positions: taskPositions
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (!result.success) {
             console.error('Erreur lors de la mise à jour des positions:', result.error);
         }

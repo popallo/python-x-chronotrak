@@ -1,142 +1,143 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
-from flask_login import login_required, current_user
+from datetime import datetime
+
 from app import db
-from app.models.project import Project, CreditLog
+from app.forms.project import AddCreditForm, DeleteProjectForm, ProjectForm
 from app.models.client import Client
-from app.forms.project import ProjectForm, AddCreditForm, DeleteProjectForm
-from app.utils.decorators import login_and_client_required, login_and_admin_required
-from app.utils.route_utils import (
-    get_project_by_id,
-    get_project_by_slug_or_id,
-    get_client_by_id,
-    get_accessible_projects,
-    save_to_db,
-    delete_from_db,
-    apply_filters,
-    apply_sorting
-)
-from datetime import datetime, timedelta
-from sqlalchemy import or_, and_, func
+from app.models.project import CreditLog, Project
 from app.models.task import Task
 from app.utils import get_utc_now
+from app.utils.decorators import login_and_admin_required
+from app.utils.route_utils import (
+    apply_filters,
+    apply_sorting,
+    delete_from_db,
+    get_accessible_projects,
+    get_client_by_id,
+    get_project_by_slug_or_id,
+    save_to_db,
+)
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+from sqlalchemy import and_, func, or_
 
-projects = Blueprint('projects', __name__)
+projects = Blueprint("projects", __name__)
 
-@projects.route('/projects')
+
+@projects.route("/projects")
 @login_required
 def list_projects():
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     per_page = 10
-    
+
     # Récupérer les filtres
     filters = {
-        'search': request.args.get('search'),
-        'client_id': request.args.get('client_id', type=int),
-        'favorites_only': request.args.get('favorites_only')
+        "search": request.args.get("search"),
+        "client_id": request.args.get("client_id", type=int),
+        "favorites_only": request.args.get("favorites_only"),
     }
-    
+
     # Appliquer les filtres
     query = get_accessible_projects()
     query, filters_active = apply_filters(query, Project, filters)
-    
+
     # Appliquer le tri par catégories (favoris, activité récente, ancienne)
-    sort_by = request.args.get('sort_by', 'categories')
-    sort_order = request.args.get('sort_order', 'asc')
-    
-    if sort_by == 'categories':
+    sort_by = request.args.get("sort_by", "categories")
+    sort_order = request.args.get("sort_order", "asc")
+
+    if sort_by == "categories":
         # Tri par catégories : favoris d'abord, puis par activité récente
-        from datetime import datetime, timedelta
+        from datetime import timedelta
+
         one_month_ago = get_utc_now() - timedelta(days=30)
-        
+
         # Sous-requête pour obtenir la dernière activité de chaque projet
         # (en ignorant les tâches planifiées dans le futur)
         today = get_utc_now().date()
-        last_activity_subquery = db.session.query(
-            Task.project_id,
-            func.max(Task.updated_at).label('last_activity')
-        ).filter(
-            or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today)
-        ).group_by(Task.project_id).subquery()
-        
-        # Joindre avec la sous-requête pour obtenir la dernière activité
-        query = query.outerjoin(
-            last_activity_subquery, 
-            Project.id == last_activity_subquery.c.project_id
+        last_activity_subquery = (
+            db.session.query(Task.project_id, func.max(Task.updated_at).label("last_activity"))
+            .filter(or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today))
+            .group_by(Task.project_id)
+            .subquery()
         )
-        
+
+        # Joindre avec la sous-requête pour obtenir la dernière activité
+        query = query.outerjoin(last_activity_subquery, Project.id == last_activity_subquery.c.project_id)
+
         # Tri : favoris d'abord, puis par dernière activité (récente d'abord), puis par nom
         query = query.order_by(
             Project.is_favorite.desc(),  # Favoris en premier
             func.coalesce(last_activity_subquery.c.last_activity, Project.created_at).desc(),  # Activité récente
-            Project.name.asc()  # Puis par nom
+            Project.name.asc(),  # Puis par nom
         )
     else:
         # Tri classique
         query = apply_sorting(query, Project, sort_by, sort_order)
-    
+
     projects = query.paginate(page=page, per_page=per_page, error_out=False)
-    
+
     # Récupérer la liste des clients pour le filtre
     clients = Client.query.all() if current_user.is_admin() or current_user.is_technician() else current_user.clients
-    
+
     # Organiser les projets par catégories pour l'affichage
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+
     # Convertir en datetime naive pour la comparaison avec les datetimes de la DB
     one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
-    
-    projects_by_category = {
-        'favorites': [],
-        'recent_activity': [],
-        'old_activity': []
-    }
-    
+
+    projects_by_category = {"favorites": [], "recent_activity": [], "old_activity": []}
+
     # Pré-calculer des stats "tâches visibles" (exclure archives + occurrences futures)
     today = get_utc_now().date()
 
     for project in projects.items:
         # Déterminer la dernière activité du projet
         last_activity = None
-        visible_tasks = [t for t in project.tasks if (not t.is_archived) and (t.scheduled_for is None or t.scheduled_for <= today)]
+        visible_tasks = [
+            t for t in project.tasks if (not t.is_archived) and (t.scheduled_for is None or t.scheduled_for <= today)
+        ]
 
         project.visible_tasks_total = len(visible_tasks)
-        project.visible_tasks_todo = sum(1 for t in visible_tasks if t.status == 'à faire')
-        project.visible_tasks_in_progress = sum(1 for t in visible_tasks if t.status == 'en cours')
-        project.visible_tasks_done = sum(1 for t in visible_tasks if t.status == 'terminé')
+        project.visible_tasks_todo = sum(1 for t in visible_tasks if t.status == "à faire")
+        project.visible_tasks_in_progress = sum(1 for t in visible_tasks if t.status == "en cours")
+        project.visible_tasks_done = sum(1 for t in visible_tasks if t.status == "terminé")
         project.visible_tasks_remaining = project.visible_tasks_todo + project.visible_tasks_in_progress
 
         if visible_tasks:
             last_activity = max([task.updated_at for task in visible_tasks], default=project.created_at)
         else:
             last_activity = project.created_at
-        
-        # S'assurer que last_activity est naive pour la comparaison
-        if last_activity and hasattr(last_activity, 'tzinfo') and last_activity.tzinfo is not None:
-            last_activity = last_activity.replace(tzinfo=None)
-        
-        if project.is_favorite:
-            projects_by_category['favorites'].append(project)
-        elif last_activity >= one_month_ago:
-            projects_by_category['recent_activity'].append(project)
-        else:
-            projects_by_category['old_activity'].append(project)
-    
-    return render_template('projects/projects.html', 
-                         projects=projects,
-                         projects_by_category=projects_by_category,
-                         clients=clients,
-                         filters_active=filters_active,
-                         sort_by=sort_by,
-                         sort_order=sort_order,
-                         pagination=projects,
-                         title='Projets')
 
-@projects.route('/clients/<int:client_id>/projects/new', methods=['GET', 'POST'])
+        # S'assurer que last_activity est naive pour la comparaison
+        if last_activity and hasattr(last_activity, "tzinfo") and last_activity.tzinfo is not None:
+            last_activity = last_activity.replace(tzinfo=None)
+
+        if project.is_favorite:
+            projects_by_category["favorites"].append(project)
+        elif last_activity >= one_month_ago:
+            projects_by_category["recent_activity"].append(project)
+        else:
+            projects_by_category["old_activity"].append(project)
+
+    return render_template(
+        "projects/projects.html",
+        projects=projects,
+        projects_by_category=projects_by_category,
+        clients=clients,
+        filters_active=filters_active,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        pagination=projects,
+        title="Projets",
+    )
+
+
+@projects.route("/clients/<int:client_id>/projects/new", methods=["GET", "POST"])
 @login_required
 def new_project(client_id):
     client = get_client_by_id(client_id)
     if current_user.is_client() and not current_user.has_access_to_client(client_id):
         abort(403)
-        
+
     form = ProjectForm()
     if form.validate_on_submit():
         # Si la gestion de temps est désactivée, on met le crédit à 0
@@ -146,35 +147,33 @@ def new_project(client_id):
             initial_credit_minutes = int(round(initial_credit_hours * 60))
         else:
             initial_credit_minutes = 0
-        
+
         project = Project(
             name=form.name.data,
             description=form.description.data,
             initial_credit=initial_credit_minutes,
             remaining_credit=initial_credit_minutes,  # Initialiser le crédit restant avec le crédit initial
             time_tracking_enabled=form.time_tracking_enabled.data,
-            client_id=client_id
+            client_id=client_id,
         )
         save_to_db(project)
-        
+
         # Créer un log pour le crédit initial si le projet utilise la gestion de temps
         if form.time_tracking_enabled.data and initial_credit_minutes > 0:
-            credit_log = CreditLog(
-                project_id=project.id,
-                amount=initial_credit_minutes,
-                note="Crédit initial"
-            )
+            credit_log = CreditLog(project_id=project.id, amount=initial_credit_minutes, note="Crédit initial")
             save_to_db(credit_log)
-        
-        flash(f'Projet "{form.name.data}" créé avec succès!', 'success')
-        return redirect(url_for('projects.project_details', slug_or_id=project.slug))
-        
-    return render_template('projects/project_form.html', form=form, client=client, title='Nouveau projet')
 
-@projects.route('/projects/<slug_or_id>')
+        flash(f'Projet "{form.name.data}" créé avec succès!', "success")
+        return redirect(url_for("projects.project_details", slug_or_id=project.slug))
+
+    return render_template("projects/project_form.html", form=form, client=client, title="Nouveau projet")
+
+
+@projects.route("/projects/<slug_or_id>")
 @login_required
 def project_details(slug_or_id):
-    from app.models.task import TimeEntry, Task
+    from app.models.task import Task, TimeEntry
+
     project = get_project_by_slug_or_id(slug_or_id)
     form = DeleteProjectForm()
 
@@ -189,8 +188,8 @@ def project_details(slug_or_id):
 
     next_subq = (
         db.session.query(
-            Task.recurrence_series_id.label('sid'),
-            func.min(Task.scheduled_for).label('next_date'),
+            Task.recurrence_series_id.label("sid"),
+            func.min(Task.scheduled_for).label("next_date"),
         )
         .filter(
             Task.project_id == project.id,
@@ -198,7 +197,7 @@ def project_details(slug_or_id):
             Task.recurrence_series_id.isnot(None),
             Task.scheduled_for.isnot(None),
             Task.scheduled_for > today,
-            Task.status == 'à faire',
+            Task.status == "à faire",
         )
         .group_by(Task.recurrence_series_id)
         .subquery()
@@ -217,7 +216,7 @@ def project_details(slug_or_id):
     )
 
     tasks = visible_tasks + upcoming_next_tasks
-    
+
     # Trier les tâches par statut et par position (exclure les tâches archivées)
     def todo_sort_key(t: Task):
         # Les tâches "à venir" doivent rester en bas, triées par date.
@@ -226,159 +225,159 @@ def project_details(slug_or_id):
         return (0, t.position or 0, t.created_at or datetime.min)
 
     tasks_todo = sorted(
-        [task for task in tasks if task.status == 'à faire' and not task.is_archived],
-        key=todo_sort_key
+        [task for task in tasks if task.status == "à faire" and not task.is_archived], key=todo_sort_key
     )
     tasks_in_progress = sorted(
-        [task for task in tasks if task.status == 'en cours' and not task.is_archived],
-        key=lambda t: (t.position, t.created_at)
+        [task for task in tasks if task.status == "en cours" and not task.is_archived],
+        key=lambda t: (t.position, t.created_at),
     )
     # Trier les tâches terminées par date de clôture décroissante (exclure les tâches archivées)
     tasks_done = sorted(
-        [task for task in tasks if task.status == 'terminé' and not task.is_archived],
+        [task for task in tasks if task.status == "terminé" and not task.is_archived],
         key=lambda t: (t.completed_at or datetime.min),
-        reverse=True
+        reverse=True,
     )
-    
+
     # Créer un historique unifié avec crédits et temps consommés
     history_items = []
-    
+
     # Ajouter les logs de crédit
     for log in project.credit_logs:
-        history_items.append({
-            'type': 'credit',
-            'amount': log.amount / 60,  # Convertir les minutes en heures pour l'affichage
-            'note': log.note,
-            'created_at': log.created_at,
-            'task': log.task if log.task_id else None,
-            'user': None  # Les logs de crédit n'ont pas d'utilisateur associé
-        })
-    
+        history_items.append(
+            {
+                "type": "credit",
+                "amount": log.amount / 60,  # Convertir les minutes en heures pour l'affichage
+                "note": log.note,
+                "created_at": log.created_at,
+                "task": log.task if log.task_id else None,
+                "user": None,  # Les logs de crédit n'ont pas d'utilisateur associé
+            }
+        )
+
     # Ajouter les temps consommés
-    time_entries = (
-        db.session.query(TimeEntry)
-        .join(Task)
-        .filter(Task.project_id == project.id)
-        .all()
-    )
-    
+    time_entries = db.session.query(TimeEntry).join(Task).filter(Task.project_id == project.id).all()
+
     for entry in time_entries:
-        history_items.append({
-            'type': 'time',
-            'amount': -entry.minutes,  # Négatif car c'est une consommation
-            'note': f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
-            'created_at': entry.created_at,
-            'task': entry.task,
-            'user': entry.user
-        })
-    
+        history_items.append(
+            {
+                "type": "time",
+                "amount": -entry.minutes,  # Négatif car c'est une consommation
+                "note": f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
+                "created_at": entry.created_at,
+                "task": entry.task,
+                "user": entry.user,
+            }
+        )
+
     # Trier par date de création décroissante
-    history_items.sort(key=lambda x: x['created_at'], reverse=True)
-    
+    history_items.sort(key=lambda x: x["created_at"], reverse=True)
+
     # Limiter l'affichage à 10 éléments pour la vue kanban
     history_items_preview = history_items[:10]
     history_items_total = len(history_items)
-    
-    return render_template('projects/project_detail.html',
-                         project=project,
-                         tasks_todo=tasks_todo,
-                         tasks_in_progress=tasks_in_progress,
-                         tasks_done=tasks_done,
-                         history_items=history_items_preview,
-                         history_items_total=history_items_total,
-                         form=form,
-                         title=project.name)
 
-@projects.route('/projects/<slug_or_id>/history')
+    return render_template(
+        "projects/project_detail.html",
+        project=project,
+        tasks_todo=tasks_todo,
+        tasks_in_progress=tasks_in_progress,
+        tasks_done=tasks_done,
+        history_items=history_items_preview,
+        history_items_total=history_items_total,
+        form=form,
+        title=project.name,
+    )
+
+
+@projects.route("/projects/<slug_or_id>/history")
 @login_required
 def project_history(slug_or_id):
     """Affiche l'historique complet des crédits et débits d'un projet"""
-    from app.models.task import TimeEntry, Task
+    from app.models.task import Task, TimeEntry
+
     project = get_project_by_slug_or_id(slug_or_id)
-    
+
     # Récupération des paramètres de filtrage
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     per_page = 50
-    
+
     # Créer un historique unifié avec crédits et temps consommés
     history_items = []
-    
+
     # Ajouter les logs de crédit
     for log in project.credit_logs:
-        history_items.append({
-            'type': 'credit',
-            'amount': log.amount / 60,  # Convertir les minutes en heures pour l'affichage
-            'note': log.note,
-            'created_at': log.created_at,
-            'task': log.task if log.task_id else None,
-            'user': None  # Les logs de crédit n'ont pas d'utilisateur associé
-        })
-    
+        history_items.append(
+            {
+                "type": "credit",
+                "amount": log.amount / 60,  # Convertir les minutes en heures pour l'affichage
+                "note": log.note,
+                "created_at": log.created_at,
+                "task": log.task if log.task_id else None,
+                "user": None,  # Les logs de crédit n'ont pas d'utilisateur associé
+            }
+        )
+
     # Ajouter les temps consommés
-    time_entries = (
-        db.session.query(TimeEntry)
-        .join(Task)
-        .filter(Task.project_id == project.id)
-        .all()
-    )
-    
+    time_entries = db.session.query(TimeEntry).join(Task).filter(Task.project_id == project.id).all()
+
     for entry in time_entries:
-        history_items.append({
-            'type': 'time',
-            'amount': -entry.minutes,  # Négatif car c'est une consommation
-            'note': f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
-            'created_at': entry.created_at,
-            'task': entry.task,
-            'user': entry.user
-        })
-    
+        history_items.append(
+            {
+                "type": "time",
+                "amount": -entry.minutes,  # Négatif car c'est une consommation
+                "note": f"Temps sur '{entry.task.title}'" + (f" - {entry.description}" if entry.description else ""),
+                "created_at": entry.created_at,
+                "task": entry.task,
+                "user": entry.user,
+            }
+        )
+
     # Trier par date de création décroissante
-    history_items.sort(key=lambda x: x['created_at'], reverse=True)
-    
+    history_items.sort(key=lambda x: x["created_at"], reverse=True)
+
     # Pagination manuelle
     total_items = len(history_items)
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
     paginated_items = history_items[start_idx:end_idx]
-    
+
     # Calculer les informations de pagination
     has_prev = page > 1
     has_next = end_idx < total_items
     prev_page = page - 1 if has_prev else None
     next_page = page + 1 if has_next else None
-    
-    return render_template('projects/project_history.html',
-                         project=project,
-                         history_items=paginated_items,
-                         total_items=total_items,
-                         page=page,
-                         per_page=per_page,
-                         has_prev=has_prev,
-                         has_next=has_next,
-                         prev_page=prev_page,
-                         next_page=next_page,
-                         title=f"Historique - {project.name}")
 
-@projects.route('/projects/<slug_or_id>/edit', methods=['GET', 'POST'])
+    return render_template(
+        "projects/project_history.html",
+        project=project,
+        history_items=paginated_items,
+        total_items=total_items,
+        page=page,
+        per_page=per_page,
+        has_prev=has_prev,
+        has_next=has_next,
+        prev_page=prev_page,
+        next_page=next_page,
+        title=f"Historique - {project.name}",
+    )
+
+
+@projects.route("/projects/<slug_or_id>/edit", methods=["GET", "POST"])
 @login_and_admin_required
 def edit_project(slug_or_id):
-    from app.models.task import TimeEntry, Task
+    from app.models.task import Task, TimeEntry
+
     project = get_project_by_slug_or_id(slug_or_id)
     form = ProjectForm(obj=project)
 
     # Vérifier s'il existe des temps enregistrés sur ce projet
-    any_time_logged = (
-        db.session.query(TimeEntry)
-        .join(Task)
-        .filter(Task.project_id == project.id)
-        .count() > 0
-    )
+    any_time_logged = db.session.query(TimeEntry).join(Task).filter(Task.project_id == project.id).count() > 0
 
     if form.validate_on_submit() and not any_time_logged:
         project.name = form.name.data
         project.description = form.description.data
         project.time_tracking_enabled = form.time_tracking_enabled.data
-        
+
         # Si on active la gestion de temps, on met à jour le crédit initial
         if form.time_tracking_enabled.data:
             # Convertir les heures en minutes (gérer le cas où initial_credit.data est None ou 0)
@@ -387,91 +386,100 @@ def edit_project(slug_or_id):
             print(f"DEBUG: form.initial_credit.data = {form.initial_credit.data}")
             print(f"DEBUG: new_initial_credit = {new_initial_credit} minutes")
             print(f"DEBUG: project.initial_credit avant = {project.initial_credit} minutes")
-            
+
             # Calculer la différence pour ajuster le crédit restant
             credit_difference = new_initial_credit - project.initial_credit
             print(f"DEBUG: credit_difference = {credit_difference} minutes")
-            
+
             # Mettre à jour le crédit initial
             project.initial_credit = new_initial_credit
             print(f"DEBUG: project.initial_credit après = {project.initial_credit} minutes")
-            
+
             # Ajuster le crédit restant de la même différence
             project.remaining_credit += credit_difference
-            print(f"DEBUG: project.remaining_credit avant ajustement = {project.remaining_credit - credit_difference} minutes")
+            print(
+                f"DEBUG: project.remaining_credit avant ajustement = {project.remaining_credit - credit_difference} minutes"
+            )
             print(f"DEBUG: project.remaining_credit après ajustement = {project.remaining_credit} minutes")
-            
+
             # Créer un log si le crédit initial a été modifié
             if credit_difference != 0:
                 credit_log = CreditLog(
                     project_id=project.id,
                     amount=credit_difference,
-                    note=f"Modification du crédit initial: {credit_difference/60:.1f}h"
+                    note=f"Modification du crédit initial: {credit_difference / 60:.1f}h",
                 )
                 save_to_db(credit_log)
         else:
             # Si on désactive la gestion de temps, on met le crédit à 0
             project.initial_credit = 0
             project.remaining_credit = 0
-            
+
         save_to_db(project)
-        
-        flash(f'Projet "{project.name}" mis à jour!', 'success')
-        return redirect(url_for('projects.project_details', slug_or_id=project.slug))
+
+        flash(f'Projet "{project.name}" mis à jour!', "success")
+        return redirect(url_for("projects.project_details", slug_or_id=project.slug))
     elif form.validate_on_submit() and any_time_logged:
         flash("Impossible de modifier le crédit initial : des temps ont déjà été enregistrés sur ce projet.", "warning")
 
-    return render_template('projects/project_form.html', form=form, project=project, title='Modifier le projet', any_time_logged=any_time_logged)
+    return render_template(
+        "projects/project_form.html",
+        form=form,
+        project=project,
+        title="Modifier le projet",
+        any_time_logged=any_time_logged,
+    )
 
-@projects.route('/projects/<slug_or_id>/add_credit', methods=['GET', 'POST'])
+
+@projects.route("/projects/<slug_or_id>/add_credit", methods=["GET", "POST"])
 @login_and_admin_required
 def add_credit(slug_or_id):
     project = get_project_by_slug_or_id(slug_or_id)
     form = AddCreditForm()
-    
+
     if form.validate_on_submit():
         # Convertir les heures en minutes
         amount_minutes = int(round(form.amount.data * 60))
-        
-        credit_log = CreditLog(
-            project_id=project.id,
-            amount=amount_minutes,
-            note=form.note.data
-        )
+
+        credit_log = CreditLog(project_id=project.id, amount=amount_minutes, note=form.note.data)
         project.remaining_credit += amount_minutes
         save_to_db(credit_log)
         save_to_db(project)
-        
-        flash(f'Crédit ajouté avec succès!', 'success')
-        return redirect(url_for('projects.project_details', slug_or_id=project.slug))
-    
-    return render_template('projects/add_credit.html', form=form, project=project)
 
-@projects.route('/projects/<slug_or_id>/delete', methods=['POST'])
+        flash("Crédit ajouté avec succès!", "success")
+        return redirect(url_for("projects.project_details", slug_or_id=project.slug))
+
+    return render_template("projects/add_credit.html", form=form, project=project)
+
+
+@projects.route("/projects/<slug_or_id>/delete", methods=["POST"])
 @login_and_admin_required
 def delete_project(slug_or_id):
     project = get_project_by_slug_or_id(slug_or_id)
     delete_from_db(project)
-    flash(f'Projet "{project.name}" supprimé!', 'success')
-    return redirect(url_for('projects.list_projects'))
+    flash(f'Projet "{project.name}" supprimé!', "success")
+    return redirect(url_for("projects.list_projects"))
 
-@projects.route('/projects/<slug_or_id>/toggle_favorite', methods=['POST'])
+
+@projects.route("/projects/<slug_or_id>/toggle_favorite", methods=["POST"])
 @login_required
 def toggle_favorite(slug_or_id):
     """Route API pour basculer le statut favori d'un projet"""
     project = get_project_by_slug_or_id(slug_or_id)
-    
+
     # Vérifier les permissions
     if current_user.is_client():
         if not current_user.has_access_to_client(project.client_id):
-            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
-    
+            return jsonify({"success": False, "error": "Accès non autorisé"}), 403
+
     # Basculer le statut favori
     project.is_favorite = not project.is_favorite
     save_to_db(project)
-    
-    return jsonify({
-        'success': True, 
-        'is_favorite': project.is_favorite,
-        'message': f'Projet {"ajouté aux" if project.is_favorite else "retiré des"} favoris'
-    })
+
+    return jsonify(
+        {
+            "success": True,
+            "is_favorite": project.is_favorite,
+            "message": f"Projet {'ajouté aux' if project.is_favorite else 'retiré des'} favoris",
+        }
+    )

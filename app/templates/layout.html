@@ -15,34 +15,34 @@
     <meta name="application-name" content="ChronoTrak">
     <meta name="msapplication-TileColor" content="#007bff">
     <meta name="theme-color" content="#007bff">
-    
+
     <!-- CSS critique pour le thème - chargé en premier pour éviter le flash -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
-    
+
     <!-- Styles inline critiques pour éviter le flash blanc -->
     <style>
         /* Masquer le contenu jusqu'à ce que le thème soit chargé */
         html:not(.theme-loaded) body {
             visibility: hidden;
         }
-        
+
         /* Appliquer immédiatement le fond sombre si le thème est activé */
         html.dark-mode {
             background-color: #0f172a;
             color: #f1f5f9;
         }
-        
+
         html.dark-mode body {
             background-color: #0f172a;
             color: #f1f5f9;
         }
-        
+
         /* Fallback pour le mode clair */
         html[data-bs-theme="light"] {
             background-color: #ffffff;
             color: #212529;
         }
-        
+
         html[data-bs-theme="light"] body {
             background-color: #ffffff;
             color: #212529;
@@ -58,29 +58,29 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <!-- Menu prismatique -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/prismatic-nav.css') }}">
-    
+
     <!-- Chargeur de thème précoce - SANS defer pour éviter le flash -->
     <script src="{{ url_for('static', filename='js/theme-loader.js') }}"></script>
-    
+
     <!-- Script inline critique pour éviter le flash blanc -->
     <script>
         // Appliquer le thème immédiatement, avant même que le DOM soit prêt
         (function() {
             const darkMode = localStorage.getItem('darkMode');
             const html = document.documentElement;
-            
+
             if (darkMode === 'enabled') {
                 html.classList.add('dark-mode');
                 html.setAttribute('data-bs-theme', 'dark');
             } else {
                 html.setAttribute('data-bs-theme', 'light');
             }
-            
+
             // Marquer le thème comme chargé
             html.classList.add('theme-loaded');
         })();
     </script>
-    
+
     {% block styles %}{% endblock %}
 </head>
 <body>
@@ -272,7 +272,7 @@
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     <!-- Scripts spécifiques à chaque page -->
     {% block scripts %}{% endblock %}
-    
+
     <!-- Modals globaux pour l'archivage -->
     <div class="modal fade" id="archiveTaskModal" tabindex="-1" aria-labelledby="archiveTaskModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -322,7 +322,7 @@
         // Stocker le token CSRF global
         window.csrfToken = "{{ csrf_token() }}";
     </script>
-    
+
     <!-- Scripts pour le menu prismatique -->
     <script src="{{ url_for('static', filename='js/prismatic-nav.js') }}"></script>
 </body>

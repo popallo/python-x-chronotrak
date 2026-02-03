@@ -1,4 +1,4 @@
-/* 
+/*
  * STYLES DE BASE OPTIMISÉS
  * Ce fichier consolide les styles communs utilisés dans toute l'application
  */
@@ -20,24 +20,24 @@
     --color-secondary-dark: #374151;
     --color-reports: #7c3aed;      /* Violet plus profond */
     --color-reports-dark: #6d28d9;
-    
+
     /* Surcharge des variables Bootstrap */
     --bs-warning-rgb: 217, 119, 6;  /* RGB de notre nouvelle couleur warning */
-    
+
     /* Couleurs de fond */
     --color-bg-light: #f8fafc;
     --color-bg-card: #ffffff;
     --color-bg-elevated: #f1f5f9;
     --color-border: #e2e8f0;
-    
+
     /* Couleurs de texte */
     --color-text: #1e293b;
     --color-text-muted: #64748b;
-    
+
     /* Variables pour les transitions */
     --transition-base: 0.2s ease;
     --transition-smooth: 0.3s ease;
-    
+
     /* Variables pour les ombres */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);

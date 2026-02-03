@@ -14,39 +14,39 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            
+
             const btn = e.target.closest('.archive-task-btn');
             currentTaskId = btn.dataset.taskId;
             currentTaskSlug = btn.dataset.taskSlug;
             currentTaskTitle = btn.dataset.taskTitle;
-            
+
             // Mettre à jour le titre dans le modal
             document.getElementById('archiveTaskTitle').textContent = currentTaskTitle;
-            
+
             // Afficher le modal
             const modal = new bootstrap.Modal(document.getElementById('archiveTaskModal'));
             modal.show();
-            
+
             return false;
         }
-        
+
         if (e.target.closest('.unarchive-task-btn')) {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            
+
             const btn = e.target.closest('.unarchive-task-btn');
             currentTaskId = btn.dataset.taskId;
             currentTaskSlug = btn.dataset.taskSlug;
             currentTaskTitle = btn.dataset.taskTitle;
-            
+
             // Mettre à jour le titre dans le modal
             document.getElementById('unarchiveTaskTitle').textContent = currentTaskTitle;
-            
+
             // Afficher le modal
             const modal = new bootstrap.Modal(document.getElementById('unarchiveTaskModal'));
             modal.show();
-            
+
             return false;
         }
     });
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Supprimer ou masquer l'élément de la page
                 removeTaskFromPage(currentTaskId);
-                
+
                 // Mettre à jour les compteurs sans recharger la page
                 updateCounters();
             } else {
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Supprimer ou masquer l'élément de la page
                 removeTaskFromPage(currentTaskId);
-                
+
                 // Mettre à jour les compteurs sans recharger la page
                 updateCounters();
             } else {
@@ -138,15 +138,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fonction pour supprimer une tâche de la page
     function removeTaskFromPage(taskId) {
         // Chercher l'élément de la tâche dans différents contextes
-        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`) || 
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`) ||
                           document.querySelector(`.kanban-task[data-task-id="${taskId}"]`) ||
                           document.querySelector(`.list-group-item:has([data-task-id="${taskId}"])`);
-        
+
         if (taskElement) {
             // Animation de disparition
             taskElement.style.transition = 'opacity 0.3s ease';
             taskElement.style.opacity = '0';
-            
+
             setTimeout(() => {
                 taskElement.remove();
             }, 300);
@@ -161,14 +161,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentCount = parseInt(doneColumn.textContent) || 0;
             doneColumn.textContent = Math.max(0, currentCount - 1);
         }
-        
+
         // Mettre à jour le compteur dans "Mes tâches" si présent
         const completedBadge = document.querySelector('.card-header:has(.fa-check) .badge');
         if (completedBadge) {
             const currentCount = parseInt(completedBadge.textContent) || 0;
             completedBadge.textContent = Math.max(0, currentCount - 1);
         }
-        
+
         // Mettre à jour le compteur total des archives si présent
         const archivesBadge = document.querySelector('.card-header:has(.fa-archive) .badge');
         if (archivesBadge) {
@@ -187,9 +187,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        
+
         document.body.appendChild(alertDiv);
-        
+
         // Supprimer automatiquement après 5 secondes
         setTimeout(() => {
             if (alertDiv.parentNode) {

@@ -5,14 +5,14 @@
 function initCardCollapse() {
     // Sélectionner toutes les cartes sauf celles du dashboard
     const cards = document.querySelectorAll('.card:has(.card-header):has(.card-body):not(.no-collapse):not(.dashboard-card)');
-    
+
     cards.forEach(card => {
         const cardId = card.id || `card-${Math.random().toString(36).substr(2, 9)}`;
         card.id = cardId;
-        
+
         const cardHeader = card.querySelector('.card-header');
         const cardBody = card.querySelector('.card-body');
-        
+
         // Pour chaque carte, ajouter le bouton de collapse s'il n'existe pas déjà
         if (!cardHeader.querySelector('.card-collapse-btn')) {
             // Créer le bouton de collapse
@@ -21,23 +21,23 @@ function initCardCollapse() {
             collapseBtn.innerHTML = '<i class="fas fa-minus"></i>';
             collapseBtn.setAttribute('data-card-id', cardId);
             collapseBtn.setAttribute('title', 'Réduire/Développer');
-            
+
             // Ajouter le bouton à l'en-tête de la carte
             cardHeader.appendChild(collapseBtn);
-            
+
             // Ajouter l'événement de clic
             collapseBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleCardCollapse(cardId);
             });
         }
-        
+
         // Vérifier l'état initial de la carte
         const isCollapsed = getCookie(`card_${cardId}_collapsed`) === 'true';
         if (isCollapsed) {
             // Appliquer l'état collapsed
             cardBody.classList.add('collapsed');
-            
+
             // Mettre à jour l'icône
             const icon = cardHeader.querySelector('.card-collapse-btn i');
             if (icon) {
@@ -51,33 +51,33 @@ function initCardCollapse() {
 function toggleCardCollapse(cardId) {
     const card = document.getElementById(cardId);
     if (!card) return;
-    
+
     const cardBody = card.querySelector('.card-body');
     const collapseBtn = card.querySelector('.card-collapse-btn i');
-    
+
     const isCurrentlyCollapsed = cardBody.classList.contains('collapsed');
-    
+
     // Basculer la classe collapsed
     if (isCurrentlyCollapsed) {
         // Développer la carte
         cardBody.classList.remove('collapsed');
-        
+
         // Mettre à jour l'icône
         if (collapseBtn) {
             collapseBtn.classList.replace('fa-plus', 'fa-minus');
         }
-        
+
         // Sauvegarder la préférence
         setCookie(`card_${cardId}_collapsed`, 'false', 30);
     } else {
         // Réduire la carte
         cardBody.classList.add('collapsed');
-        
+
         // Mettre à jour l'icône
         if (collapseBtn) {
             collapseBtn.classList.replace('fa-minus', 'fa-plus');
         }
-        
+
         // Sauvegarder la préférence
         setCookie(`card_${cardId}_collapsed`, 'true', 30);
     }
@@ -114,14 +114,14 @@ function resetAllCardPreferences() {
             document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         }
     });
-    
+
     // Réinitialiser l'état visuel de toutes les cartes
     const collapsedCards = document.querySelectorAll('.card-body.collapsed');
     collapsedCards.forEach(cardBody => {
         const card = cardBody.closest('.card');
         if (card) {
             cardBody.classList.remove('collapsed');
-            
+
             // Mettre à jour l'icône
             const icon = card.querySelector('.card-collapse-btn i');
             if (icon) {

@@ -65,7 +65,7 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- Préférences de notification -->
         <div class="card shadow">
             <div class="card-header bg-info text-white">
@@ -76,12 +76,12 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('auth.notification_preferences') }}">
                     {{ notif_form.hidden_tag() }}
-                    
+
                     <div class="form-check form-switch mb-3">
                         {{ notif_form.email_notifications_enabled(class="form-check-input") }}
                         {{ notif_form.email_notifications_enabled.label(class="form-check-label") }}
                     </div>
-                    
+
                     <div class="notification-options" id="notification-options">
                         <div class="mb-3">
                             <label class="form-label">Recevoir des notifications pour :</label>
@@ -105,7 +105,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="d-grid">
                         {{ notif_form.submit(class="btn btn-info") }}
                     </div>

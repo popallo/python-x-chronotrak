@@ -23,23 +23,23 @@ document.addEventListener('DOMContentLoaded', function() {
     autoCloseAlerts();
     initTooltips();
     highlightActiveNavItem();
-    
+
     // Initialiser la fonctionnalité de collapse des cartes sur toutes les pages
     initCardCollapse();
-    
+
     // Détection de la page courante et initialisation spécifique
     const currentPath = window.location.pathname;
-    
+
     // Page d'accueil (bienvenue)
     if (currentPath === '/') {
         initWelcomePage();
     }
-    
+
     // Page des tâches (exclure la page d'édition)
     if ((currentPath.includes('/tasks/') || currentPath.includes('/my-tasks')) && !currentPath.includes('/edit')) {
         initTasksPage();
     }
-    
+
     // Page des projets individuelles - pas d'initialisation spécifique nécessaire
 
     // Page d'inscription utilisateur

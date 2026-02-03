@@ -19,8 +19,18 @@ jobs:
           git \
           bash \
           curl \
-          nodejs \
-          npm
+          xz
+          
+          # Installation de Node.js LTS depuis les binaires officiels (version récente sans warnings de dépréciation)
+          echo "📦 Installation de Node.js LTS..."
+          NODE_VERSION="20.18.0"
+          ARCH="x64"
+          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}-musl.tar.xz" -o /tmp/node.tar.xz
+          tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
+          rm /tmp/node.tar.xz
+          
+          node --version
+          npm --version
 
       - name: Checkout du code
         uses: actions/checkout@v3
@@ -98,19 +108,22 @@ jobs:
           fi
 
       - name: Rapport de couverture (si disponible)
-        if: always()
+        if: success() || failure()
         run: |
+          # Ne s'exécuter que si le code a été checkouté (vérifier la présence de pyproject.toml)
+          if [ ! -f "pyproject.toml" ]; then
+            echo "⚠️ Code non checkouté, impossible de générer le rapport de couverture"
+            exit 0
+          fi
+          
           # Vérifier que le venv existe avant de l'activer
           if [ -f ".venv/bin/activate" ]; then
             source .venv/bin/activate
           else
-            echo "⚠️ Environnement virtuel non trouvé, utilisation de Python système"
-            # Créer un venv minimal si nécessaire pour lire le rapport
-            if [ -f coverage.xml ]; then
-              python -m venv .venv-temp 2>/dev/null || true
-              if [ -f ".venv-temp/bin/activate" ]; then
-                source .venv-temp/bin/activate
-              fi
+            echo "⚠️ Environnement virtuel non trouvé, création d'un venv temporaire..."
+            python -m venv .venv-temp 2>/dev/null || true
+            if [ -f ".venv-temp/bin/activate" ]; then
+              source .venv-temp/bin/activate
             fi
           fi
           
@@ -133,8 +146,18 @@ jobs:
           git \
           curl \
           bash \
-          nodejs \
-          npm
+          xz
+          
+          # Installation de Node.js LTS depuis les binaires officiels (version récente sans warnings de dépréciation)
+          echo "📦 Installation de Node.js LTS..."
+          NODE_VERSION="20.18.0"
+          ARCH="x64"
+          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}-musl.tar.xz" -o /tmp/node.tar.xz
+          tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
+          rm /tmp/node.tar.xz
+          
+          node --version
+          npm --version
 
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v3

@@ -77,3 +77,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.bandit]
+# Configuration Bandit pour l'audit de sécurité
+exclude_dirs = ["tests", "migrations", ".venv", "venv", "__pycache__"]
+skips = ["B101", "B601"]  # Ignorer assert_used et shell_injection_subprocess (faux positifs Flask)

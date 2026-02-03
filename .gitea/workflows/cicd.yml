@@ -517,3 +517,25 @@ jobs:
 
             echo 'Déploiement terminé avec succès'
           "
+
+      # Health check post-déploiement (optionnel : définir le secret PROD_HEALTH_URL, ex. https://ton-domaine.com/health)
+      - name: Health check post-déploiement
+        env:
+          PROD_HEALTH_URL: ${{ secrets.PROD_HEALTH_URL }}
+        run: |
+          if [ -z "$PROD_HEALTH_URL" ]; then
+            echo "ℹ️ PROD_HEALTH_URL non configuré, health check ignoré"
+            exit 0
+          fi
+          apk add --no-cache curl
+          echo "🏥 Vérification de l'application après déploiement..."
+          for i in 1 2 3 4 5 6; do
+            if curl -sf --max-time 10 "$PROD_HEALTH_URL" | grep -q '"status"'; then
+              echo "✅ Health check OK"
+              exit 0
+            fi
+            echo "Tentative $i/6 - attente 10s..."
+            sleep 10
+          done
+          echo "❌ Health check échoué après 6 tentatives"
+          exit 1

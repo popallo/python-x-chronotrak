@@ -15,11 +15,18 @@ jobs:
     env:
       PATH: ${{ env.PATH }}:$HOME/.cargo/bin
     steps:
-      - name: Configuration de la résolution DNS pour 'server'
+      - name: Configuration du runner et résolution DNS
         run: |
-          # Installer les outils nécessaires
-          apk add --no-cache iproute2
+          apk add --no-cache \
+          git \
+          bash \
+          curl \
+          nodejs \
+          npm \
+          netcat-openbsd \
+          iproute2
           
+          # Configuration de la résolution DNS pour 'server'
           # Méthode 1: Utiliser l'IP du gateway Docker (généralement le host)
           GATEWAY_IP=$(ip route | grep default | awk '{print $3}' | head -n1)
           if [ -n "$GATEWAY_IP" ] && [ "$GATEWAY_IP" != "" ]; then
@@ -36,16 +43,6 @@ jobs:
           # Afficher /etc/hosts pour debug
           echo "📋 Contenu de /etc/hosts:"
           cat /etc/hosts | grep -E "(server|localhost)" || echo "⚠️ Aucune entrée pour 'server' trouvée"
-
-      - name: Configuration du runner
-        run: |
-          apk add --no-cache \
-          git \
-          bash \
-          curl \
-          nodejs \
-          npm \
-          netcat-openbsd
           
           # Installation de uv (gestionnaire de paquets Python ultra-rapide)
           echo "📦 Installation de uv..."
@@ -62,7 +59,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Cache des dépendances Python avec uv
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/uv
@@ -203,7 +200,7 @@ jobs:
 
       # Configuration du cache Docker
       - name: Configuration du cache Docker
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ env.CACHE_KEY_HASH }}

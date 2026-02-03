@@ -8,7 +8,89 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: docker
+    steps:
+      - name: Configuration du runner
+        run: |
+          apk add --no-cache \
+          python3 \
+          py3-pip \
+          git \
+          bash \
+          curl
+
+      - name: Checkout du code
+        uses: actions/checkout@v3
+
+      - name: Configuration de Python
+        run: |
+          python3 --version
+          pip3 --version
+
+      - name: Cache des dépendances Python
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Installation des dépendances
+        run: |
+          pip3 install --upgrade pip setuptools wheel
+          pip3 install -e ".[dev]"
+
+      - name: Configuration de l'environnement de test
+        run: |
+          # Créer une clé de chiffrement de test si elle n'existe pas
+          export ENCRYPTION_KEY=${ENCRYPTION_KEY:-$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")}
+          echo "ENCRYPTION_KEY=${ENCRYPTION_KEY}" >> $GITEA_ENV
+          export FLASK_ENV=testing
+          echo "FLASK_ENV=testing" >> $GITEA_ENV
+
+      - name: Exécution des tests unitaires
+        env:
+          ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
+          FLASK_ENV: testing
+        run: |
+          # Vérifier si des tests existent
+          if [ -d "tests" ] || find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
+            echo "✅ Tests trouvés, exécution..."
+            # Exécuter pytest avec rapport de couverture
+            pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-report=html -v || exit 1
+            echo "✅ Tous les tests sont passés"
+          else
+            echo "⚠️ Aucun test trouvé dans le projet"
+            echo "ℹ️ Le job passe mais prévoir d'ajouter des tests dans un répertoire 'tests/' ou avec le préfixe 'test_'"
+            echo "ℹ️ Créez des fichiers comme tests/test_models.py, tests/test_routes.py, etc."
+            # Ne pas faire échouer le pipeline si aucun test n'existe encore
+            exit 0
+          fi
+
+      - name: Rapport de couverture (si disponible)
+        if: always()
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "📊 Rapport de couverture généré"
+            if command -v python3 >/dev/null 2>&1; then
+              python3 -c "
+              import xml.etree.ElementTree as ET
+              try:
+                  tree = ET.parse('coverage.xml')
+                  root = tree.getroot()
+                  line_rate = float(root.get('line-rate', 0)) * 100
+                  print(f'Couverture de code: {line_rate:.2f}%')
+              except:
+                  pass
+              "
+            fi
+          else
+            echo "ℹ️ Aucun rapport de couverture disponible"
+          fi
+
   build-and-push:
+    needs: test
     runs-on: docker
     steps:
       - name: Configuration du runner
@@ -27,12 +109,39 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Calcul du hash des fichiers de dépendances pour le cache
+      - name: Calcul du hash des fichiers de build
+        id: cache-hash
+        run: |
+          # Calculer le hash des fichiers qui affectent le build Docker
+          if command -v sha256sum >/dev/null 2>&1; then
+            DOCKERFILE_HASH=$(sha256sum Dockerfile | cut -d' ' -f1)
+            PYPROJECT_HASH=$(sha256sum pyproject.toml | cut -d' ' -f1)
+          elif command -v sha256 >/dev/null 2>&1; then
+            DOCKERFILE_HASH=$(sha256 -q Dockerfile)
+            PYPROJECT_HASH=$(sha256 -q pyproject.toml)
+          else
+            # Fallback: utiliser md5sum si disponible
+            DOCKERFILE_HASH=$(md5sum Dockerfile | cut -d' ' -f1)
+            PYPROJECT_HASH=$(md5sum pyproject.toml | cut -d' ' -f1)
+          fi
+          
+          # Combiner les hashs pour créer une clé unique
+          CACHE_KEY_HASH=$(echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}" | sha256sum | cut -d' ' -f1 || echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}")
+          
+          echo "DOCKERFILE_HASH=${DOCKERFILE_HASH}" >> $GITEA_ENV
+          echo "PYPROJECT_HASH=${PYPROJECT_HASH}" >> $GITEA_ENV
+          echo "CACHE_KEY_HASH=${CACHE_KEY_HASH}" >> $GITEA_ENV
+          echo "Hash Dockerfile: ${DOCKERFILE_HASH:0:12}..."
+          echo "Hash pyproject.toml: ${PYPROJECT_HASH:0:12}..."
+          echo "Clé de cache: ${CACHE_KEY_HASH:0:16}..."
+
       # Configuration du cache Docker
       - name: Configuration du cache Docker
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ gitea.sha }}-waitress-3.0.1-$(date +%s)
+          key: ${{ runner.os }}-buildx-${{ env.CACHE_KEY_HASH }}
           restore-keys: |
             ${{ runner.os }}-buildx-
 
@@ -79,11 +188,13 @@ jobs:
             docker buildx create --name $BUILDER_NAME --use
           fi
           
-          # Build avec gestion d'erreurs
+          # Build avec gestion d'erreurs et cache optimisé
           echo "Démarrage du build de l'image..."
           docker buildx build --provenance=false --push \
             --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-from=type=registry,ref=forge.apacher.eu/aurelien-dazy/chronotrak:buildcache \
             --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max \
+            --cache-to=type=registry,ref=forge.apacher.eu/aurelien-dazy/chronotrak:buildcache,mode=max \
             --build-arg VERSION="${{ env.VERSION }}" \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \

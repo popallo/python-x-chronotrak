@@ -53,6 +53,8 @@ dev = [
     "pytest-cov>=5.0.0",  # Couverture de code pour les tests
     "bandit>=1.8.0",      # Audit de sécurité du code
     "pip-audit>=2.9.0",   # Vérification des vulnérabilités des dépendances
+    "pre-commit>=4.0.0", # Hooks Git (lint/format au commit)
+    "ruff>=0.8.0",       # Linter et formateur Python
 ]
 
 [tool.pytest.ini_options]
@@ -82,3 +84,36 @@ packages = ["app"]
 # Configuration Bandit pour l'audit de sécurité
 exclude_dirs = ["tests", "migrations", ".venv", "venv", "__pycache__"]
 skips = ["B101", "B601"]  # Ignorer assert_used et shell_injection_subprocess (faux positifs Flask)
+
+[tool.ruff]
+# Linting : cible Python 3.13, répertoires à analyser
+target-version = "py313"
+line-length = 120
+src = ["app", "config.py", "run.py", "wsgi.py", "management", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (imports)
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+ignore = [
+    "E501",   # line too long (géré par formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "B904",   # raise without from inside except
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # assert allowed in tests
+"migrations/*" = ["E501"]  # migrations may have long lines
+
+[tool.ruff.format]
+# Formatage : cohérent avec le lint
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

@@ -50,8 +50,25 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov>=5.0.0",  # Couverture de code pour les tests
     "bandit>=1.8.0",      # Audit de sécurité du code
     "pip-audit>=2.9.0",   # Vérification des vulnérabilités des dépendances
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "unit: Tests unitaires",
+    "integration: Tests d'intégration",
+    "slow: Tests lents",
 ]
 
 [build-system]

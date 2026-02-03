@@ -140,4 +140,4 @@ body:has(.prismatic-nav) {
 .prismatic-nav:not(.scrolled) ~ .prismatic-bar {
     opacity: 0;
     transition: opacity 0.4s;
-} 
+}

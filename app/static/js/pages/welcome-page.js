@@ -8,7 +8,7 @@ import { toggleDarkMode, loadDarkModePreference } from '../lib/dark-mode.js';
 function initWelcomeDarkMode() {
     // Charger la préférence de thème actuelle
     loadDarkModePreference();
-    
+
     // Mettre à jour l'icône en fonction du mode actuel
     const darkModeIcon = document.getElementById('darkModeIcon');
     if (darkModeIcon) {
@@ -18,7 +18,7 @@ function initWelcomeDarkMode() {
             darkModeIcon.classList.replace('fa-moon', 'fa-sun');
         }
     }
-    
+
     // Ajouter l'écouteur d'événement au bouton
     const welcomeDarkModeToggle = document.getElementById('welcomeDarkModeToggle');
     if (welcomeDarkModeToggle) {
@@ -32,12 +32,12 @@ function initWelcomeDarkMode() {
 function equalizeCardHeights() {
     const featureCards = document.querySelectorAll('.features-card .card-body');
     if (featureCards.length < 2) return; // Ne rien faire s'il n'y a pas assez de cartes
-    
+
     // Réinitialiser les hauteurs en cas de redimensionnement
     featureCards.forEach(card => {
         card.style.height = 'auto';
     });
-    
+
     // Calculer la hauteur maximale
     let maxHeight = 0;
     featureCards.forEach(card => {
@@ -46,7 +46,7 @@ function equalizeCardHeights() {
             maxHeight = height;
         }
     });
-    
+
     // Appliquer la hauteur maximale à toutes les cartes
     featureCards.forEach(card => {
         card.style.height = `${maxHeight}px`;
@@ -57,10 +57,10 @@ function equalizeCardHeights() {
 function initWelcomePage() {
     // Initialiser le bouton dark mode
     initWelcomeDarkMode();
-    
+
     // Égaliser la hauteur des cartes
     equalizeCardHeights();
-    
+
     // Recalculer en cas de redimensionnement
     window.addEventListener('resize', function() {
         // Utiliser un debounce pour éviter trop d'appels pendant le redimensionnement

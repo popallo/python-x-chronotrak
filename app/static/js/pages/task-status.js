@@ -7,7 +7,7 @@ function updateStatusInterface(data) {
     statusButtons.forEach(btn => {
         const status = btn.dataset.status;
         btn.classList.remove('btn-info', 'btn-warning', 'btn-success', 'btn-outline-info', 'btn-outline-warning', 'btn-outline-success');
-        
+
         if (status === data.status) {
             if (status === 'à faire') btn.classList.add('btn-info');
             else if (status === 'en cours') btn.classList.add('btn-warning');
@@ -18,7 +18,7 @@ function updateStatusInterface(data) {
             else if (status === 'terminé') btn.classList.add('btn-outline-success');
         }
     });
-    
+
     // Mettre à jour la date de fin si la tâche est terminée
     const completionDateElement = document.querySelector('.completion-date');
     if (completionDateElement) {
@@ -33,7 +33,7 @@ function updateStatusInterface(data) {
             completionDateElement.innerHTML = '';
         }
     }
-    
+
     // Afficher le message de succès
     showToast('success', 'Statut mis à jour avec succès');
 }
@@ -46,7 +46,7 @@ function showToast(type, message) {
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
-    
+
     // Ajouter une icône en fonction du type de message
     let icon = '';
     switch(type) {
@@ -60,7 +60,7 @@ function showToast(type, message) {
             icon = '<i class="fas fa-times-circle me-2"></i>';
             break;
     }
-    
+
     toast.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">
@@ -69,13 +69,13 @@ function showToast(type, message) {
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
-    
+
     toastContainer.appendChild(toast);
     const bsToast = new bootstrap.Toast(toast, {
         delay: type === 'warning' ? 5000 : 3000 // Les avertissements restent plus longtemps
     });
     bsToast.show();
-    
+
     // Supprimer le toast après qu'il soit caché
     toast.addEventListener('hidden.bs.toast', () => {
         toast.remove();
@@ -114,18 +114,18 @@ async function handleStatusUpdate(e) {
 document.addEventListener('DOMContentLoaded', function() {
     const statusButtons = document.querySelectorAll('.status-btn');
     if (!statusButtons.length) return;
-    
+
     statusButtons.forEach(button => {
         button.addEventListener('click', function() {
             const taskId = this.dataset.taskId;
             const newStatus = this.dataset.status;
-            
+
             // Désactiver tous les boutons pendant la requête
             statusButtons.forEach(btn => btn.disabled = true);
-            
+
             // Ajouter une classe pour indiquer le traitement
             this.classList.add('processing');
-            
+
             fetch('/tasks/update_status', {
                 method: 'POST',
                 headers: {
@@ -156,4 +156,4 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-}); 
+});

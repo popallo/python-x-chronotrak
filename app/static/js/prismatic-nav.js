@@ -17,18 +17,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const windowHeight = window.innerHeight;
         const documentHeight = document.documentElement.scrollHeight;
         const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
-        
+
         // Mettre à jour l'indicateur de scroll
         scrollIndicator.style.width = `${scrollPercentage}%`;
         scrollIndicator.classList.add('visible');
-        
+
         // Déterminer la direction du scroll
         const scrollingDown = scrollTop > lastScrollTop;
-        
+
         // Gérer l'état du menu
         if (scrollTop > SCROLL_THRESHOLD) {
             nav.classList.add('scrolled');
-            
+
             // Afficher le menu si on scrolle vers le haut
             if (!scrollingDown && !isMenuVisible) {
                 showMenu();
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isScrolling) {
             isScrolling = true;
             clearTimeout(scrollTimeout);
-            
+
             scrollTimeout = setTimeout(() => {
                 isScrolling = false;
                 setTimeout(() => {
@@ -109,4 +109,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialiser l'état du menu
     handleScroll();
-}); 
+});

@@ -7,40 +7,40 @@ import { CONFIG, utils } from '../utils.js';
 // Gestionnaire pour les boutons de changement de statut
 function initStatusToggle() {
     const statusButtons = document.querySelectorAll('.status-btn');
-    
+
     statusButtons.forEach(button => {
         button.addEventListener('click', function(event) {
             // Vérifier si le bouton est déjà le statut actif
-            if (this.classList.contains('btn-info') || 
-                this.classList.contains('btn-warning') || 
+            if (this.classList.contains('btn-info') ||
+                this.classList.contains('btn-warning') ||
                 this.classList.contains('btn-success')) {
                 // Ce statut est déjà sélectionné, ne rien faire
                 event.preventDefault();
                 return false;
             }
-            
+
             // Empêcher les actions si le bouton est déjà occupé
-            if (this.classList.contains('processing') || 
+            if (this.classList.contains('processing') ||
                 this.innerHTML.includes('fa-spinner')) {
                 event.preventDefault();
                 return false;
             }
-            
+
             // Marquer le bouton comme en cours de traitement
             this.classList.add('processing');
-            
+
             const taskId = this.dataset.taskId;
             const newStatus = this.dataset.status;
             const currentButton = this;
-            
+
             // Désactiver tous les boutons pendant le traitement
             statusButtons.forEach(btn => {
                 btn.disabled = true;
             });
-            
+
             // Afficher un indicateur de chargement
             currentButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
+
             // Appel AJAX pour mettre à jour le statut
             fetch('/tasks/update_status', {
                 method: 'POST',
@@ -98,36 +98,36 @@ function updateTaskStatusUI(statusButtons, newStatus, currentButton) {
             else if (btn.dataset.status === 'en cours') btn.classList.add('btn-outline-warning');
             else if (btn.dataset.status === 'terminé') btn.classList.add('btn-outline-success');
         }
-        btn.innerHTML = btn.dataset.status === 'à faire' ? 'À faire' : 
+        btn.innerHTML = btn.dataset.status === 'à faire' ? 'À faire' :
                         btn.dataset.status === 'en cours' ? 'En cours' : 'Terminé';
     });
-    
+
     // Mettre à jour le badge de statut
     const statusBadge = document.querySelector('.status-badge');
     if (statusBadge) {
         statusBadge.className = `badge status-badge ${newStatus}`;
         statusBadge.textContent = newStatus;
     }
-    
+
     // Ajouter un message de succès temporaire
     const statusMsg = document.createElement('div');
     statusMsg.className = 'alert alert-success mt-2 status-update-msg';
-    
+
     // Créer l'icône et le texte séparément pour éviter XSS
     const icon = document.createElement('i');
     icon.className = 'fas fa-check me-2';
     statusMsg.appendChild(icon);
-    
+
     const text = document.createTextNode('Statut mis à jour avec succès!');
     statusMsg.appendChild(text);
-    
+
     document.querySelector('.status-toggle').appendChild(statusMsg);
-    
+
     // Supprimer le message après quelques secondes
     setTimeout(() => {
         statusMsg.remove();
     }, 3000);
-    
+
     // Gérer la date de fin
     updateCompletionDate(newStatus);
 }
@@ -137,37 +137,37 @@ function updateCompletionDate(newStatus) {
     // Trouver la section où se trouve ou devrait se trouver la date de fin
     const infoColumn = document.querySelector('.col-md-6:last-child');
     if (!infoColumn) return;
-    
+
     // Position où insérer/mettre à jour la date (après la ligne "Créée le")
     const createdDateElem = Array.from(infoColumn.querySelectorAll('p'))
         .find(p => p.textContent.includes('Créée le'));
-    
+
     if (!createdDateElem) return; // Sortir si on ne trouve pas de référence
-    
+
     // Supprimer d'abord tous les éléments de date de complétion existants
     const existingCompletedDates = infoColumn.querySelectorAll('.completed-date');
     existingCompletedDates.forEach(elem => elem.remove());
-    
+
     // Pour les éléments générés par le serveur (sans classe spécifique)
     const serverCompletedDates = Array.from(infoColumn.querySelectorAll('p'))
         .filter(p => p.textContent.includes('Terminée le') && !p.classList.contains('completed-date'));
     serverCompletedDates.forEach(elem => elem.remove());
-    
+
     // Si le statut est "terminé", ajouter un nouvel élément
     if (newStatus === 'terminé') {
         const now = new Date();
         const formattedDate = now.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'});
-        
+
         // Créer un nouvel élément avec une classe spécifique
         const completedDateElem = document.createElement('p');
         completedDateElem.className = 'completed-date';
-        
+
         // Utiliser textContent pour éviter XSS
         const strong = document.createElement('strong');
         strong.textContent = 'Terminée le : ';
         completedDateElem.appendChild(strong);
         completedDateElem.appendChild(document.createTextNode(formattedDate));
-        
+
         // Insérer après la date de création
         createdDateElem.after(completedDateElem);
     }
@@ -175,7 +175,7 @@ function updateCompletionDate(newStatus) {
 
 // Réinitialiser le texte du bouton (en cas d'erreur)
 function resetButton(button) {
-    button.innerHTML = button.dataset.status === 'à faire' ? 'À faire' : 
+    button.innerHTML = button.dataset.status === 'à faire' ? 'À faire' :
                       button.dataset.status === 'en cours' ? 'En cours' : 'Terminé';
     button.disabled = false;
 }
@@ -189,13 +189,13 @@ function initCommentManagement() {
             const commentId = this.dataset.commentId;
             const commentContent = document.querySelector(`#comment-${commentId} .comment-content`);
             const editForm = document.querySelector(`#edit-form-${commentId}`);
-            
+
             // Masquer le contenu et afficher le formulaire
             commentContent.style.display = 'none';
             editForm.style.display = 'block';
         });
     });
-    
+
     // Boutons d'annulation
     const cancelButtons = document.querySelectorAll('.cancel-edit-btn');
     cancelButtons.forEach(button => {
@@ -203,13 +203,13 @@ function initCommentManagement() {
             const commentId = this.dataset.commentId;
             const commentContent = document.querySelector(`#comment-${commentId} .comment-content`);
             const editForm = document.querySelector(`#edit-form-${commentId}`);
-            
+
             // Réafficher le contenu et masquer le formulaire
             commentContent.style.display = 'block';
             editForm.style.display = 'none';
         });
     });
-    
+
     // Timer pour les commentaires
     updateCommentTimers();
 }
@@ -220,7 +220,7 @@ function updateCommentTimers() {
         if (timer) {
             const minutesText = timer.textContent.trim();
             let minutes = parseInt(minutesText);
-            
+
             if (!isNaN(minutes) && minutes > 0) {
                 // Mettre à jour le timer chaque minute
                 const intervalId = setInterval(() => {
@@ -230,7 +230,7 @@ function updateCommentTimers() {
                         const editButton = timer.closest('.comment-header').querySelector('.edit-comment-btn');
                         if (editButton) editButton.remove();
                         timer.remove();
-                        
+
                         // Fermer le formulaire d'édition si ouvert
                         const commentItem = timer.closest('.comment-item');
                         const commentId = commentItem.id.split('-')[1];
@@ -240,7 +240,7 @@ function updateCommentTimers() {
                             commentContent.style.display = 'block';
                             editForm.style.display = 'none';
                         }
-                        
+
                         clearInterval(intervalId);
                     } else {
                         timer.textContent = `${minutes} min`;
@@ -273,19 +273,19 @@ function initCommentMentions() {
         const lineHeight = parseInt(inputStyle.lineHeight);
         const fontSize = parseInt(inputStyle.fontSize);
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
+
         // Calculer la position du curseur
         const textBeforeCursor = commentInput.value.substring(0, match.index);
         const lines = textBeforeCursor.split('\n');
         const currentLineNumber = lines.length - 1;
         const currentLineText = lines[currentLineNumber];
-        
+
         // Position horizontale basée sur la position du @
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         context.font = inputStyle.font;
         const textWidth = context.measureText(currentLineText).width;
-        
+
         // Calculer la position exacte
         const left = inputRect.left + Math.min(textWidth, inputRect.width - mentionDropdown.offsetWidth);
         const top = inputRect.top + scrollTop + ((currentLineNumber + 1) * lineHeight);
@@ -294,7 +294,7 @@ function initCommentMentions() {
         mentionDropdown.style.position = 'absolute';
         mentionDropdown.style.left = `${left}px`;
         mentionDropdown.style.top = `${top}px`;
-        
+
         // S'assurer que le dropdown est visible dans la fenêtre
         const viewportHeight = window.innerHeight;
         const dropdownHeight = mentionDropdown.offsetHeight;
@@ -337,7 +337,7 @@ function initCommentMentions() {
 
         if (match) {
             const searchTerm = match[1].toLowerCase();
-            const filteredUsers = mentionableUsers.filter(user => 
+            const filteredUsers = mentionableUsers.filter(user =>
                 user.name.toLowerCase().includes(searchTerm) ||
                 user.email.toLowerCase().includes(searchTerm)
             );
@@ -346,23 +346,23 @@ function initCommentMentions() {
                 if (!mentionDropdown) {
                     mentionDropdown = createMentionDropdown();
                 }
-                
+
                 // Créer les éléments DOM de manière sécurisée pour éviter XSS
                 mentionDropdown.innerHTML = '';
                 filteredUsers.forEach(user => {
                     const item = document.createElement('div');
                     item.className = 'mention-item';
                     item.setAttribute('data-user-id', user.id);
-                    
+
                     const strong = document.createElement('strong');
                     strong.textContent = user.name;
                     item.appendChild(strong);
-                    
+
                     const small = document.createElement('small');
                     small.className = 'text-muted d-block';
                     small.textContent = user.email;
                     item.appendChild(small);
-                    
+
                     mentionDropdown.appendChild(item);
                 });
 
@@ -399,16 +399,16 @@ function initCommentMentions() {
         const endPos = commentInput.selectionStart;
         const beforeMention = commentInput.value.substring(0, startPos);
         const afterMention = commentInput.value.substring(endPos);
-        
+
         const newText = `${beforeMention}@${userName}${afterMention}`;
         commentInput.value = newText;
-        
+
         // Mettre à jour la liste des mentions
         const mentionsInput = commentInput.closest('form').querySelector('input[name="mentions"]');
         const mentions = JSON.parse(mentionsInput.value || '[]');
         mentions.push({ id: userId, name: userName });
         mentionsInput.value = JSON.stringify(mentions);
-        
+
         // Placer le curseur après la mention
         const newCursorPos = startPos + userName.length + 1;
         commentInput.setSelectionRange(newCursorPos, newCursorPos);
@@ -436,7 +436,7 @@ export function initTasksPage() {
     if (document.querySelector('.status-btn')) {
         initStatusToggle();
     }
-    
+
     if (document.querySelector('.edit-comment-btn')) {
         initCommentManagement();
     }
@@ -444,13 +444,13 @@ export function initTasksPage() {
     if (document.querySelector('.comment-input')) {
         initCommentMentions();
     }
-    
+
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-    
+
     // Initialize tooltip for delete button separately
     const deleteBtn = document.querySelector('.delete-task-btn');
     if (deleteBtn) {

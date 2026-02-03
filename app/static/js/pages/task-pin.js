@@ -3,10 +3,10 @@ import { CONFIG, utils } from '../utils.js';
 // Fonction pour récupérer le nom du projet de manière robuste
 function getProjectName() {
     // Essayer plusieurs sélecteurs pour trouver le nom du projet
-    const projectNameElement = document.querySelector('.project-name') || 
+    const projectNameElement = document.querySelector('.project-name') ||
                               document.querySelector('a[href*="/projects/"]') ||
                               document.querySelector('.d-flex.align-items-center a[href*="/projects/"]');
-    
+
     return projectNameElement?.textContent?.trim() || '';
 }
 
@@ -33,13 +33,13 @@ function updateNavigationMenu(data) {
     const noTasksMessage = dropdownMenu.querySelector('.dropdown-item-text.text-muted');
     const separator = dropdownMenu.querySelector('.dropdown-divider');
     const viewAllLink = dropdownMenu.querySelector('.dropdown-item[href*="my-tasks"]');
-    
+
     if (data.is_pinned) {
         // Supprimer le message "aucune tâche épinglée" s'il existe
         if (noTasksMessage) {
             noTasksMessage.closest('li').remove();
         }
-        
+
         // Si la tâche n'est pas déjà dans le menu, l'ajouter
         if (!taskItem) {
             const newItem = document.createElement('li');
@@ -60,14 +60,14 @@ function updateNavigationMenu(data) {
                 </a>
             </li>
             `;
-            
+
             // Insérer avant le séparateur ou à la fin
             if (separator) {
                 dropdownMenu.insertBefore(newItem, separator);
             } else {
                 dropdownMenu.appendChild(newItem);
             }
-            
+
             // Ajouter le gestionnaire d'événements au nouveau formulaire
             const newForm = newItem.querySelector('.menu-pin-form');
             if (newForm) {
@@ -79,21 +79,21 @@ function updateNavigationMenu(data) {
         if (taskItem) {
             taskItem.closest('li').remove();
         }
-        
+
         // Vérifier s'il reste des tâches épinglées
         const remainingTasks = dropdownMenu.querySelectorAll('.dropdown-item:not([href*="my-tasks"])');
         if (remainingTasks.length === 0) {
             // Supprimer le séparateur et le lien "Voir toutes mes tâches"
             if (separator) separator.closest('li').remove();
             if (viewAllLink) viewAllLink.closest('li').remove();
-            
+
             // Ajouter le message "aucune tâche épinglée"
             const noTasksItem = document.createElement('li');
             noTasksItem.innerHTML = '<span class="dropdown-item-text text-muted">Aucune tâche épinglée</span>';
             dropdownMenu.appendChild(noTasksItem);
         }
     }
-    
+
     // Mettre à jour le compteur dans le menu déroulant
     updatePinnedCount();
 }
@@ -102,13 +102,13 @@ function updateNavigationMenu(data) {
 function setupPinForm(form) {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const button = form.querySelector('button');
         button.disabled = true;
-        
+
         // Récupérer le token CSRF depuis window.csrfToken ou depuis un élément meta
         const csrfToken = window.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content;
-        
+
         fetch(form.action, {
             method: 'POST',
             headers: {
@@ -149,21 +149,21 @@ function updatePinInterface(data) {
             const icon = toolbarButton.querySelector('i.fa-thumbtack');
             if (icon) {
                 clearInterval(checkIcon);
-                
+
                 // Gérer la classe text-warning
                 if (data.is_pinned) {
                     icon.classList.add('text-warning');
                 } else {
                     icon.classList.remove('text-warning');
                 }
-                
+
                 // Mettre à jour le tooltip
                 const tooltipText = data.is_pinned ? 'Désépingler la tâche' : 'Épingler la tâche';
                 toolbarButton.setAttribute('data-bs-original-title', tooltipText);
                 toolbarButton.setAttribute('title', tooltipText);
             }
         }, 50);
-        
+
         // Arrêter la vérification après 2 secondes au cas où
         setTimeout(() => clearInterval(checkIcon), 2000);
     }
@@ -195,12 +195,12 @@ function updatePinInterface(data) {
 
             const newTaskItem = document.createElement('li');
             newTaskItem.setAttribute('data-task-id', data.task_id);
-            
+
             // Récupérer le statut actuel
             const statusBtn = document.querySelector('.status-btn.btn-warning, .status-btn.btn-info, .status-btn.btn-success');
             const status = statusBtn?.dataset.status || 'à faire';
-            const statusColor = statusBtn?.classList.contains('btn-info') ? 'info' : 
-                              statusBtn?.classList.contains('btn-warning') ? 'warning' : 
+            const statusColor = statusBtn?.classList.contains('btn-info') ? 'info' :
+                              statusBtn?.classList.contains('btn-warning') ? 'warning' :
                               statusBtn?.classList.contains('btn-success') ? 'success' : 'info';
 
             newTaskItem.innerHTML = `
@@ -240,7 +240,7 @@ function updatePinInterface(data) {
                 taskItem.remove();
             }
         }
-        
+
         // Mettre à jour le compteur de manière robuste
         updatePinnedCount();
     }
@@ -253,13 +253,13 @@ function updatePinInterface(data) {
 function updatePinnedCount() {
     const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
     if (!dropdownMenu) return;
-    
+
     // Compter les tâches épinglées (exclure les éléments spéciaux)
     const pinnedTasks = dropdownMenu.querySelectorAll('li[data-task-id]');
     const count = pinnedTasks.length;
-    
+
     const badge = document.querySelector('#pinnedTasksDropdown .badge');
-    
+
     if (count > 0) {
         if (badge) {
             badge.textContent = count;
@@ -274,17 +274,17 @@ function updatePinnedCount() {
             badge.remove();
         }
     }
-    
+
     // Gérer l'affichage du message "aucune tâche épinglée"
     const noTasksMessage = dropdownMenu.querySelector('.dropdown-item-text.text-muted');
     const separator = dropdownMenu.querySelector('.dropdown-divider');
     const viewAllLink = dropdownMenu.querySelector('.dropdown-item.text-center');
-    
+
     if (count === 0) {
         // Supprimer le séparateur et le lien "Voir toutes mes tâches"
         if (separator) separator.closest('li').remove();
         if (viewAllLink) viewAllLink.closest('li').remove();
-        
+
         // Ajouter le message "aucune tâche épinglée" s'il n'existe pas déjà
         if (!noTasksMessage) {
             const noTasksItem = document.createElement('li');
@@ -296,14 +296,14 @@ function updatePinnedCount() {
         if (noTasksMessage) {
             noTasksMessage.closest('li').remove();
         }
-        
+
         // S'assurer que le séparateur et le lien "Voir toutes mes tâches" existent
         if (!separator) {
             const separatorItem = document.createElement('li');
             separatorItem.innerHTML = '<hr class="dropdown-divider">';
             dropdownMenu.appendChild(separatorItem);
         }
-        
+
         if (!viewAllLink) {
             const viewAllItem = document.createElement('li');
             viewAllItem.innerHTML = '<a class="dropdown-item text-center" href="/tasks/my-tasks">Voir toutes mes tâches</a>';
@@ -316,15 +316,15 @@ function updatePinnedCount() {
 function showToast(type, message) {
     createToastContainer();
     const toastContainer = document.getElementById('toast-container');
-    
+
     const toast = document.createElement('div');
     toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} border-0`;
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
-    
+
     const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle';
-    
+
     toast.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">
@@ -333,7 +333,7 @@ function showToast(type, message) {
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
-    
+
     toastContainer.appendChild(toast);
     const bsToast = new bootstrap.Toast(toast, {
         autohide: true,
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.menu-pin-form').forEach(form => {
         setupPinForm(form);
     });
-    
+
     // Gérer les formulaires d'épinglage dans le menu de navigation
     const dropdownMenu = document.querySelector('#pinnedTasksDropdown + .dropdown-menu');
     if (dropdownMenu) {
@@ -366,4 +366,4 @@ document.addEventListener('DOMContentLoaded', function() {
             setupPinForm(form);
         });
     }
-}); 
+});

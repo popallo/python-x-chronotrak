@@ -5,9 +5,9 @@
 function initNotificationPreferences() {
     const enabledSwitch = document.getElementById('email_notifications_enabled');
     const optionsDiv = document.getElementById('notification-options');
-    
+
     if (!enabledSwitch || !optionsDiv) return;
-    
+
     function toggleOptions() {
         const optionsInputs = optionsDiv.querySelectorAll('input');
         if (enabledSwitch.checked) {
@@ -22,10 +22,10 @@ function initNotificationPreferences() {
             });
         }
     }
-    
+
     // État initial
     toggleOptions();
-    
+
     // Écouteur d'événement
     enabledSwitch.addEventListener('change', toggleOptions);
 }

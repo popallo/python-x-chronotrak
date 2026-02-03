@@ -25,7 +25,7 @@ Ce document décrit les règles d'envoi d'emails implémentées dans ChronoTrak 
 
 - **Comportement :** Si l'email est lié à un projet (via `project_id`), les utilisateurs clients ayant accès à ce projet reçoivent l'email
 - **Préférences :** Les préférences de notification du client sont respectées
-- **Types concernés :** 
+- **Types concernés :**
   - `task_status_change` : Changements de statut des tâches
   - `task_comment_added` : Nouveaux commentaires et réponses aux commentaires
   - `task_time_logged` : Enregistrement de temps
@@ -208,4 +208,4 @@ curl -X POST http://localhost:5000/admin/test-email -d "recipient=test@example.c
 
 # Vérifier les communications récentes
 python scripts/check_communications.py --hours 1
-``` 
+```

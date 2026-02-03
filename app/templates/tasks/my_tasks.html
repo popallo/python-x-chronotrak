@@ -42,7 +42,7 @@
                         <option value="urgente" {% if request.args.get('priority') == 'urgente' %}selected{% endif %}>Urgente</option>
                     </select>
                 </div>
-                
+
                 <!-- Filtre par projet -->
                 <div class="col-md-6 mb-3">
                     <label for="project_id" class="form-label">Projet</label>
@@ -55,7 +55,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <!-- Filtre par client -->
                 <div class="col-md-6 mb-3">
                     <label for="client_id" class="form-label">Client</label>
@@ -68,13 +68,13 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <!-- Recherche par titre -->
                 <div class="col-md-6 mb-3">
                     <label for="search" class="form-label">Recherche par titre</label>
                     <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher une tâche..." value="{{ request.args.get('search', '') }}">
                 </div>
-                
+
                 <!-- Options de tri -->
                 <div class="col-md-6 mb-3">
                     <label for="sort_by" class="form-label">Trier par</label>
@@ -87,7 +87,7 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="filters-actions">
                 <button type="button" id="resetFilters" class="btn btn-outline-secondary">
                     <i class="fas fa-undo me-1"></i>Réinitialiser
@@ -97,7 +97,7 @@
                 </button>
             </div>
         </form>
-        
+
         <!-- Filtres actifs -->
         {% if filters_active %}
         <div id="activeFilters" class="active-filters">
@@ -107,7 +107,7 @@
                     <span class="remove-filter">×</span>
                 </div>
             {% endif %}
-            
+
             {% if request.args.get('project_id') %}
                 {% set project = get_project_by_id(request.args.get('project_id')|int) %}
                 {% if project %}
@@ -117,7 +117,7 @@
                 </div>
                 {% endif %}
             {% endif %}
-            
+
             {% if request.args.get('client_id') %}
                 {% set client = get_client_by_id(request.args.get('client_id')|int) %}
                 {% if client %}
@@ -127,7 +127,7 @@
                 </div>
                 {% endif %}
             {% endif %}
-            
+
             {% if request.args.get('search') %}
                 <div class="filter-badge" data-type="search" data-value="{{ request.args.get('search') }}">
                     Recherche: {{ request.args.get('search') }}

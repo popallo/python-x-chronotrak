@@ -18,7 +18,7 @@
                     <p><i class="fas fa-check-circle me-2"></i>Un email contenant les instructions pour réinitialiser votre mot de passe a été envoyé à votre adresse email.</p>
                     <p class="mb-0">Si vous ne recevez pas l'email dans les prochaines minutes, vérifiez votre dossier spam ou réessayez.</p>
                 </div>
-                
+
                 <div class="text-center">
                     <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt me-2"></i>Retour à la connexion
@@ -40,9 +40,9 @@
 {% block scripts %}
 <script type="module">
     import { initAuthPage } from "{{ url_for('static', filename='js/pages/auth.js') }}";
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         initAuthPage();
     });
 </script>
-{% endblock %} 
+{% endblock %}

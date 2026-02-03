@@ -32,7 +32,7 @@ function createCommentElement(comment) {
     const div = document.createElement('div');
     div.className = `comment-item ${comment.is_own_comment ? 'own-comment' : ''}`;
     div.id = `comment-${comment.id}`;
-    
+
     div.innerHTML = `
         <div class="comment-header">
             <span class="comment-author">${comment.user_name}</span>
@@ -40,7 +40,7 @@ function createCommentElement(comment) {
                 <span class="comment-time">${comment.created_at}</span>
                 <div class="d-inline-block ms-2">
                     <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn"
                             data-comment-id="${comment.id}" title="Modifier">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -82,12 +82,12 @@ function handleEditButtonClick(e) {
     const commentElement = document.getElementById(`comment-${commentId}`) || document.getElementById(`reply-${commentId}`);
     const contentElement = commentElement.querySelector('.comment-content');
     const editForm = document.getElementById(`edit-form-${commentId}`);
-    
+
     if (editForm && contentElement) {
         // Afficher le formulaire d'édition
         contentElement.style.display = 'none';
         editForm.style.display = 'block';
-        
+
         // Remplir le contenu actuel
         const textarea = editForm.querySelector('textarea');
         if (textarea) {
@@ -248,7 +248,7 @@ async function handleEditSubmit(e) {
             const commentId = form.id.replace('edit-form-', '');
             const commentElement = document.getElementById(`comment-${commentId}`) || document.getElementById(`reply-${commentId}`);
             const contentElement = commentElement.querySelector('.comment-content');
-            
+
             if (contentElement) {
                 contentElement.textContent = data.comment.content;
             }
@@ -272,10 +272,10 @@ function handleReplyButtonClick(e) {
     const button = e.target.closest('.reply-button');
     const commentId = button.dataset.commentId;
     const replyForm = document.getElementById(`reply-form-${commentId}`);
-    
+
     if (replyForm) {
         replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-        
+
         // Gérer l'annulation
         const cancelButton = replyForm.querySelector('.cancel-reply-btn');
         if (cancelButton) {
@@ -314,15 +314,15 @@ async function handleReplySubmit(e) {
             // Extraire l'ID du commentaire parent depuis l'URL de l'action
             const urlParts = form.action.split('/');
             const commentId = urlParts[urlParts.length - 2]; // Avant-dernière partie de l'URL (avant "reply")
-            
+
             const commentElement = document.getElementById(`comment-${commentId}`);
-            
+
             if (!commentElement) {
                 throw new Error('Élément de commentaire non trouvé');
             }
-            
+
             let repliesContainer = commentElement.querySelector('.comment-replies');
-            
+
             if (!repliesContainer) {
                 // Créer le conteneur de réponses s'il n'existe pas
                 repliesContainer = document.createElement('div');
@@ -353,7 +353,7 @@ function createReplyElement(reply) {
     const div = document.createElement('div');
     div.className = `comment-reply ${reply.is_own_comment ? 'own-comment' : ''}`;
     div.id = `reply-${reply.id}`;
-    
+
     div.innerHTML = `
         <div class="comment-header">
             <span class="comment-author">${reply.user_name}</span>
@@ -362,7 +362,7 @@ function createReplyElement(reply) {
                 ${reply.is_own_comment ? `
                     <div class="d-inline-block ms-2">
                         <span class="edit-timer" title="Temps restant pour éditer">10 min</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn" 
+                        <button type="button" class="btn btn-sm btn-outline-secondary edit-comment-btn"
                                 data-comment-id="${reply.id}" title="Modifier">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -443,11 +443,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const commentElement = document.getElementById(`comment-${commentId}`) || document.getElementById(`reply-${commentId}`);
             const contentElement = commentElement.querySelector('.comment-content');
             const editForm = document.getElementById(`edit-form-${commentId}`);
-            
+
             if (editForm && contentElement) {
                 contentElement.style.display = 'block';
                 editForm.style.display = 'none';
             }
         }
     });
-}); 
+});

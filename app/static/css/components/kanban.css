@@ -314,24 +314,24 @@ html.dark-mode .kanban-task-upcoming-date {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .kanban-column {
         min-width: auto;
         min-height: 200px;
     }
-    
+
     .kanban-task {
         padding: 0.5rem;
     }
-    
+
     .kanban-task-title {
         font-size: 0.85rem;
     }
-    
+
     .kanban-task-meta {
         font-size: 0.7rem;
     }
-    
+
     .kanban-task-time {
         font-size: 0.65rem;
     }

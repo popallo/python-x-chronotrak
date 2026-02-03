@@ -105,6 +105,7 @@ ignore = [
     "E501",   # line too long (géré par formatter)
     "B008",   # do not perform function calls in argument defaults
     "B904",   # raise without from inside except
+    "E712",   # SQLAlchemy filters use == True/False (column expressions)
 ]
 
 [tool.ruff.lint.per-file-ignores]

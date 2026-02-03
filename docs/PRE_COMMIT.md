@@ -58,13 +58,19 @@ git reset
 
 # 1) Commit « config Ruff + pre-commit » uniquement
 git add .pre-commit-config.yaml pyproject.toml docs/PRE_COMMIT.md
+# Si le lockfile a changé (nouvelles deps dev) :
+git add uv.lock
+git status   # vérifier : seulement config + doc
 git commit -m "chore: add pre-commit and Ruff (config and dev deps)"
 
-# 2) Commit « corrections appliquées par Ruff »
-git add -A
-git status   # vérifier que ce sont bien les fichiers modifiés par Ruff
+# 2) Commit « corrections appliquées par Ruff » (uniquement les fichiers Python)
+git add config.py run.py wsgi.py
+find app management tests migrations scripts -name "*.py" -print0 | xargs -0 git add
+git status   # vérifier : seulement fichiers Python
 git commit -m "style: apply Ruff formatting and lint fixes"
 ```
+
+Les autres fichiers modifiés (templates, static, docker, etc.) restent en working tree pour des commits séparés si besoin.
 
 ## Contourner le hook (exceptionnel)
 

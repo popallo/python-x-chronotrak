@@ -40,16 +40,28 @@ jobs:
 
       - name: Création de l'environnement virtuel Python
         run: |
+          echo "🔧 Création de l'environnement virtuel..."
           python -m venv .venv
+          if [ ! -f ".venv/bin/activate" ]; then
+            echo "❌ Échec de la création du venv"
+            exit 1
+          fi
           source .venv/bin/activate
           python --version
           pip --version
+          echo "✅ Environnement virtuel créé avec succès"
 
       - name: Installation des dépendances
         run: |
+          echo "📦 Installation des dépendances..."
+          if [ ! -f ".venv/bin/activate" ]; then
+            echo "❌ Le venv n'existe pas, création..."
+            python -m venv .venv
+          fi
           source .venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install -e ".[dev]"
+          echo "✅ Dépendances installées avec succès"
 
       - name: Configuration de l'environnement de test
         run: |
@@ -65,6 +77,11 @@ jobs:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
           FLASK_ENV: testing
         run: |
+          echo "🧪 Exécution des tests..."
+          if [ ! -f ".venv/bin/activate" ]; then
+            echo "❌ Le venv n'existe pas, création..."
+            python -m venv .venv
+          fi
           source .venv/bin/activate
           # Vérifier si des tests existent
           if [ -d "tests" ] || find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
@@ -83,7 +100,20 @@ jobs:
       - name: Rapport de couverture (si disponible)
         if: always()
         run: |
-          source .venv/bin/activate
+          # Vérifier que le venv existe avant de l'activer
+          if [ -f ".venv/bin/activate" ]; then
+            source .venv/bin/activate
+          else
+            echo "⚠️ Environnement virtuel non trouvé, utilisation de Python système"
+            # Créer un venv minimal si nécessaire pour lire le rapport
+            if [ -f coverage.xml ]; then
+              python -m venv .venv-temp 2>/dev/null || true
+              if [ -f ".venv-temp/bin/activate" ]; then
+                source .venv-temp/bin/activate
+              fi
+            fi
+          fi
+          
           if [ -f coverage.xml ]; then
             echo "📊 Rapport de couverture généré"
             python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); line_rate = float(root.get('line-rate', 0)) * 100; print(f'Couverture de code: {line_rate:.2f}%')" || echo "Impossible de lire le rapport de couverture"

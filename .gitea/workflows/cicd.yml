@@ -33,18 +33,26 @@ jobs:
           npm --version
           python --version
           
-          # Configuration de la résolution DNS pour 'server'
-          # Méthode 1: Utiliser l'IP du gateway Docker (généralement le host)
+          # Configuration de la résolution DNS pour 'server' et le hostname complet
+          # Utiliser l'IP du gateway Docker (généralement le host)
           GATEWAY_IP=$(ip route | grep default | awk '{print $3}' | head -n1)
           if [ -n "$GATEWAY_IP" ] && [ "$GATEWAY_IP" != "" ]; then
+            # Ajouter 'server' pour la compatibilité avec actions/checkout
             echo "$GATEWAY_IP server" >> /etc/hosts
-            echo "✅ Ajouté 'server' -> $GATEWAY_IP dans /etc/hosts (via gateway)"
-          fi
-          
-          # Méthode 2: Essayer de ping le host via le gateway pour vérifier
-          if [ -n "$GATEWAY_IP" ]; then
-            echo "🔍 Test de connectivité vers $GATEWAY_IP:3000..."
-            timeout 2 nc -zv $GATEWAY_IP 3000 2>&1 || echo "⚠️ Port 3000 non accessible directement"
+            echo "✅ Ajouté 'server' -> $GATEWAY_IP dans /etc/hosts"
+            
+            # Ajouter aussi le hostname complet si détecté (format server-xxxxx)
+            # Essayer de trouver le hostname depuis le réseau Docker
+            for hostname_pattern in "server-" "gitea"; do
+              # Chercher dans les noms de conteneurs Docker accessibles
+              if command -v docker >/dev/null 2>&1; then
+                DOCKER_HOSTNAME=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -i "$hostname_pattern" | head -n1 || echo "")
+                if [ -n "$DOCKER_HOSTNAME" ]; then
+                  echo "$GATEWAY_IP $DOCKER_HOSTNAME" >> /etc/hosts
+                  echo "✅ Ajouté '$DOCKER_HOSTNAME' -> $GATEWAY_IP dans /etc/hosts"
+                fi
+              fi
+            done
           fi
           
           # Afficher /etc/hosts pour debug

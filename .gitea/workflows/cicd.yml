@@ -10,12 +10,12 @@ on:
 jobs:
   test:
     runs-on: docker
+    container:
+      image: python:3.13-alpine
     steps:
       - name: Configuration du runner
         run: |
           apk add --no-cache \
-          python3 \
-          py3-pip \
           git \
           bash \
           curl \
@@ -27,8 +27,8 @@ jobs:
 
       - name: Configuration de Python
         run: |
-          python3 --version
-          pip3 --version
+          python --version
+          pip --version
 
       - name: Cache des dépendances Python
         uses: actions/cache@v3
@@ -40,7 +40,7 @@ jobs:
 
       - name: Création de l'environnement virtuel Python
         run: |
-          python3 -m venv .venv
+          python -m venv .venv
           source .venv/bin/activate
           python --version
           pip --version

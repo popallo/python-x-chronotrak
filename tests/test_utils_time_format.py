@@ -1,7 +1,7 @@
 """
 Tests unitaires pour les fonctions de formatage de temps.
 """
-import pytest
+
 from app.utils.time_format import format_time
 
 

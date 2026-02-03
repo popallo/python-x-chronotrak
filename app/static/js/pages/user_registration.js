@@ -5,9 +5,9 @@
 function initRegistrationForm() {
     const roleSelect = document.getElementById('role-select');
     const clientField = document.querySelector('.client-field');
-    
+
     if (!roleSelect || !clientField) return;
-    
+
     // Fonction pour afficher/masquer le champ clients en fonction du rôle
     function toggleClientField() {
         if (roleSelect.value === 'client') {
@@ -16,10 +16,10 @@ function initRegistrationForm() {
             clientField.style.display = 'none';
         }
     }
-    
+
     // Initialiser l'état du champ client
     toggleClientField();
-    
+
     // Configurer l'écouteur d'événements
     roleSelect.addEventListener('change', toggleClientField);
 }

@@ -42,8 +42,8 @@
                     <form method="GET" class="row g-3">
                         <div class="col-md-4">
                             <label for="search" class="form-label">Rechercher</label>
-                            <input type="text" class="form-control" id="search" name="search" 
-                                   value="{{ request.args.get('search', '') }}" 
+                            <input type="text" class="form-control" id="search" name="search"
+                                   value="{{ request.args.get('search', '') }}"
                                    placeholder="Titre de la tâche...">
                         </div>
                         <div class="col-md-4">
@@ -51,7 +51,7 @@
                             <select class="form-select" id="project_id" name="project_id">
                                 <option value="">Tous les projets</option>
                                 {% for project in projects %}
-                                    <option value="{{ project.id }}" 
+                                    <option value="{{ project.id }}"
                                             {% if request.args.get('project_id', '') == project.id|string %}selected{% endif %}>
                                         {{ project.name }}
                                     </option>
@@ -118,7 +118,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" 
+                                                <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}"
                                                    class="text-decoration-none">
                                                     {{ task.project.name }}
                                                 </a>
@@ -145,13 +145,13 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}" 
+                                                    <a href="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}"
                                                        class="btn btn-outline-primary" title="Voir la tâche">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <button type="button" class="btn btn-outline-success unarchive-task-btn" 
-                                                            data-task-id="{{ task.id }}" 
-                                                            data-task-title="{{ task.title }}" 
+                                                    <button type="button" class="btn btn-outline-success unarchive-task-btn"
+                                                            data-task-id="{{ task.id }}"
+                                                            data-task-title="{{ task.title }}"
                                                             data-task-slug="{{ task.slug }}"
                                                             title="Désarchiver">
                                                         <i class="fas fa-undo"></i>
@@ -175,7 +175,7 @@
                                             </a>
                                         </li>
                                     {% endif %}
-                                    
+
                                     {% for page_num in archived_tasks.iter_pages() %}
                                         {% if page_num %}
                                             {% if page_num != archived_tasks.page %}
@@ -195,7 +195,7 @@
                                             </li>
                                         {% endif %}
                                     {% endfor %}
-                                    
+
                                     {% if archived_tasks.has_next %}
                                         <li class="page-item">
                                             <a class="page-link" href="{{ url_for('tasks.archives', page=archived_tasks.next_num, **query_params) }}">

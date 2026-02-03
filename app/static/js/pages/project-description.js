@@ -6,19 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const descriptionModal = document.getElementById('descriptionModal');
     const fullDescriptionText = document.getElementById('fullDescriptionText');
     const descriptionElements = document.querySelectorAll('.description-text');
-    
+
     if (!descriptionModal || !fullDescriptionText || !descriptionElements.length) {
         return;
     }
-    
+
     // Gérer l'ouverture du modal
     descriptionElements.forEach(element => {
         const fullDescription = element.getAttribute('data-full-description');
         const displayedText = element.textContent.trim();
-        
+
         // Vérifier si la description est déjà complète
         const isDescriptionComplete = isDescriptionFullyDisplayed(fullDescription, displayedText);
-        
+
         if (!isDescriptionComplete) {
             // Description tronquée - activer le clic
             element.addEventListener('click', function() {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fullDescriptionText.innerHTML = formatDescription(fullDescription);
                 }
             });
-            
+
             // Ajouter les styles et attributs pour indiquer que c'est cliquable
             element.style.textDecoration = 'underline';
             element.style.textDecorationStyle = 'dotted';
@@ -43,23 +43,23 @@ document.addEventListener('DOMContentLoaded', function() {
             element.removeAttribute('data-bs-target');
         }
     });
-    
+
     // Fonction pour vérifier si la description est déjà complète
     function isDescriptionFullyDisplayed(fullDescription, displayedText) {
         if (!fullDescription || !displayedText) return false;
-        
+
         // Nettoyer les deux textes pour la comparaison
         const cleanFull = fullDescription.trim();
         const cleanDisplayed = displayedText.replace(/\.\.\.$/, '').trim();
-        
+
         // Vérifier si le texte affiché correspond au texte complet
         return cleanFull === cleanDisplayed || cleanFull.length <= 100;
     }
-    
+
     // Fonction pour formater la description (gérer les retours à la ligne)
     function formatDescription(text) {
         if (!text) return '';
-        
+
         // Remplacer les retours à la ligne par des <br>
         return text
             .replace(/\n/g, '<br>')

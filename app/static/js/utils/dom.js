@@ -27,7 +27,7 @@ function initTooltips() {
 // Met en surbrillance l'élément de navigation actif
 function highlightActiveNavItem() {
     const currentUrl = window.location.pathname;
-    
+
     document.querySelectorAll('.nav-link').forEach(function(link) {
         const href = link.getAttribute('href');
         if (href && currentUrl.includes(href) && href !== '/') {

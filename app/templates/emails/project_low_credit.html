@@ -21,14 +21,14 @@
                 <p>Le crédit du projet "{{ project.name }}" est très bas!</p>
                 <p class="credit-info">Crédit restant: {{ project.remaining_credit|format_time }}</p>
             </div>
-            
+
             <h3>Détails du projet:</h3>
             <ul>
                 <li><strong>Client:</strong> {{ project.client.name }}</li>
             </ul>
-            
+
             <p>Veuillez prendre les mesures nécessaires pour éviter l'interruption du service.</p>
-            
+
             <p style="margin-top: 20px;">
                 <a href="{{ url }}" style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
                     Voir le projet

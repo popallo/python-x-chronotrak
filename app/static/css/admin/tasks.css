@@ -152,4 +152,4 @@ select[multiple] option:checked {
     border-top: 5px solid var(--bs-body-color);
     pointer-events: none;
     opacity: 0.5;
-} 
+}

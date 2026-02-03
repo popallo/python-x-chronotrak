@@ -23,22 +23,22 @@ function initFilters(config = {}) {
     const filterForm = document.getElementById(formId);
     const resetButton = document.getElementById('resetFilters');
     const activeFiltersList = document.getElementById('activeFilters');
-    
+
     // Vérifier si les éléments existent
     if (!filtersToggle || !filtersPanel || !filtersBody) {
         console.warn('Éléments de filtres non trouvés, initialisation ignorée');
         return;
     }
-    
+
     // État local des filtres
     let filtersVisible = !filtersBody.classList.contains('hidden');
-    
+
     /**
      * Basculer la visibilité du panneau de filtres
      */
     function toggleFilters() {
         filtersVisible = !filtersVisible;
-        
+
         if (filtersVisible) {
             filtersBody.classList.remove('hidden');
             filtersPanel.classList.remove('collapsed');
@@ -53,18 +53,18 @@ function initFilters(config = {}) {
             }
         }
     }
-    
+
     /**
      * Réinitialiser les filtres
      */
     function resetFilters(e) {
         if (e) e.preventDefault();
-        
+
         if (!filterForm) return;
-        
+
         // Réinitialiser les champs du formulaire
         filterForm.reset();
-        
+
         // Réinitialiser les select2 s'ils sont utilisés
         const selects = filterForm.querySelectorAll('select');
         selects.forEach(select => {
@@ -72,7 +72,7 @@ function initFilters(config = {}) {
                 window.jQuery(select).val(null).trigger('change');
             }
         });
-        
+
         // Appliquer le comportement de reset configuré
         if (resetBehavior === 'redirect') {
             window.location.href = window.location.pathname;
@@ -80,17 +80,17 @@ function initFilters(config = {}) {
             filterForm.submit();
         }
     }
-    
+
     /**
      * Supprimer un filtre actif
      */
     function removeFilter(e) {
         const filterElement = e.target.closest('.filter-badge');
         if (!filterElement || !filterForm) return;
-        
+
         const filterType = filterElement.dataset.type;
         const filterValue = filterElement.dataset.value;
-        
+
         // Trouver et réinitialiser le champ correspondant dans le formulaire
         const formElement = filterForm.elements[filterType];
         if (formElement) {
@@ -102,7 +102,7 @@ function initFilters(config = {}) {
                         option.selected = false;
                     }
                 }
-                
+
                 // Mettre à jour select2 si utilisé
                 if (window.jQuery && window.jQuery(formElement).data('select2')) {
                     const currentValues = window.jQuery(formElement).val() || [];
@@ -114,20 +114,20 @@ function initFilters(config = {}) {
                 formElement.value = '';
             }
         }
-        
+
         // Soumettre le formulaire pour appliquer les changements
         filterForm.submit();
     }
-    
+
     // Configurer les écouteurs d'événements
     if (filtersToggle) {
         filtersToggle.addEventListener('click', toggleFilters);
     }
-    
+
     if (resetButton) {
         resetButton.addEventListener('click', resetFilters);
     }
-    
+
     // Écouteur pour les badges de filtres actifs
     if (activeFiltersList) {
         const removeButtons = activeFiltersList.querySelectorAll('.remove-filter');
@@ -135,13 +135,13 @@ function initFilters(config = {}) {
             button.addEventListener('click', removeFilter);
         });
     }
-    
+
     // Si des paramètres de filtre sont dans l'URL, afficher automatiquement le panneau
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.toString() && !filtersVisible) {
         toggleFilters();
     }
-    
+
     // Retourner l'API publique si nécessaire
     return {
         toggleFilters,

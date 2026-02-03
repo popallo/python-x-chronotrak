@@ -12,10 +12,10 @@ import { initDarkMode } from '../lib/dark-mode.js';
  */
 function initAuthPage(options = {}) {
     const { turnstileEnabled = false } = options;
-    
+
     // Initialiser le mode sombre
     initDarkMode();
-    
+
     // Initialiser Turnstile si nécessaire
     if (turnstileEnabled) {
         import('../lib/turnstile.js').then(({ initTurnstile }) => {

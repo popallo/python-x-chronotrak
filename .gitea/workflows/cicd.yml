@@ -25,28 +25,28 @@ jobs:
           py3-pip \
           build-base \
           libffi-dev
-          
+
           # Créer un lien symbolique python -> python3 si nécessaire
           if ! command -v python >/dev/null 2>&1; then
             ln -s $(which python3) /usr/local/bin/python || true
           fi
-          
+
           # Installation de uv (gestionnaire de paquets Python ultra-rapide)
           echo "📦 Installation de uv..."
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          
+
           # Vérifier la version de Python disponible
           PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
           echo "Python disponible: $PYTHON_VERSION"
-          
+
           # Si Python 3.13 n'est pas disponible, uv peut l'installer automatiquement
           # Vérifier si Python 3.13 est requis et disponible via uv
           if ! python3 -c "import sys; assert sys.version_info >= (3, 13)" 2>/dev/null; then
             echo "⚠️ Python 3.13 requis mais version $PYTHON_VERSION détectée"
             echo "ℹ️ uv installera automatiquement Python 3.13 lors de la création du venv"
           fi
-          
+
           # Vérifier les versions installées
           node --version
           npm --version
@@ -69,22 +69,22 @@ jobs:
       - name: Création de l'environnement virtuel et installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          
+
           # Installer Python 3.13 via uv si nécessaire
           echo "🐍 Vérification/installation de Python 3.13 via uv..."
           uv python install 3.13 || echo "⚠️ uv python install a échoué, utilisation de Python système"
-          
+
           echo "🔧 Création de l'environnement virtuel avec uv (Python 3.13)..."
           uv venv --python 3.13 || uv venv || {
             echo "⚠️ Échec de création du venv avec Python 3.13, tentative avec Python système"
             uv venv
           }
-          
+
           echo "📦 Installation des dépendances avec uv sync (depuis uv.lock)..."
           # Installer les dépendances principales + extras dev (pytest-cov, etc.)
           # uv sync installe les dev dependencies par défaut, mais pour les extras il faut --extra dev
           uv sync --extra dev || uv sync --all-extras
-          
+
           echo "✅ Environnement virtuel créé et dépendances installées avec succès"
           source .venv/bin/activate
           python --version
@@ -109,7 +109,7 @@ jobs:
           if ! command -v trivy >/dev/null 2>&1; then
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin || true
           fi
-          
+
           # Scanner le filesystem pour les vulnérabilités dans pyproject.toml et les secrets
           if command -v trivy >/dev/null 2>&1; then
             echo "📦 Scan des dépendances Python (pyproject.toml)..."
@@ -121,7 +121,7 @@ jobs:
               --scanners vuln,secret \
               --exit-code 0 \
               --format table || true
-            
+
             # Scanner à nouveau avec exit-code 1 pour faire échouer sur les vulnérabilités critiques
             echo "🔍 Vérification stricte des vulnérabilités..."
             trivy filesystem . \
@@ -132,7 +132,7 @@ jobs:
                 echo "❌ Des vulnérabilités CRITICAL détectées dans les dépendances"
                 exit 1
               }
-            
+
             echo "✅ Scan Trivy filesystem terminé"
           else
             echo "⚠️ Trivy non disponible, scan filesystem ignoré"
@@ -142,15 +142,15 @@ jobs:
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           source .venv/bin/activate
-          
+
           echo "🔒 Audit de sécurité du code avec Bandit..."
-          
+
           # Vérifier que bandit est installé
           if ! python -c "import bandit" 2>/dev/null; then
             echo "⚠️ Bandit non trouvé, installation..."
             uv pip install bandit || pip install bandit || exit 1
           fi
-          
+
           # Exécuter Bandit sur le code source
           # La configuration est dans pyproject.toml [tool.bandit]
           bandit -r app/ \
@@ -159,7 +159,7 @@ jobs:
             --severity-level high \
             --confidence-level high \
             -c pyproject.toml || true
-          
+
           # Afficher un résumé et faire échouer le pipeline si HIGH détectés
           if [ -f bandit-report.json ]; then
             echo "📊 Résumé Bandit:"
@@ -169,15 +169,27 @@ jobs:
             }
             echo "✅ Aucun problème HIGH détecté"
           fi
-          
+
           # Format texte pour affichage dans les logs
           bandit -r app/ \
             --severity-level high \
             --confidence-level high \
             -c pyproject.toml \
             --format txt || echo "⚠️ Bandit a détecté des problèmes de sécurité"
-          
+
           echo "✅ Audit Bandit terminé"
+
+      - name: Lint et format (Ruff)
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          source .venv/bin/activate
+          echo "🔍 Vérification Ruff (lint + format)..."
+          if ! python -c "import ruff" 2>/dev/null; then
+            uv pip install ruff || pip install ruff
+          fi
+          ruff check app config.py run.py wsgi.py management tests migrations --fix --unsafe-fixes
+          ruff format --check app config.py run.py wsgi.py management tests migrations
+          echo "✅ Ruff OK"
 
       - name: Exécution des tests unitaires
         env:
@@ -192,13 +204,13 @@ jobs:
             uv sync --extra dev || uv sync --all-extras
           fi
           source .venv/bin/activate
-          
+
           # Vérifier que pytest-cov est installé
           if ! python -c "import pytest_cov" 2>/dev/null; then
             echo "⚠️ pytest-cov non trouvé, installation..."
             uv pip install pytest-cov || pip install pytest-cov
           fi
-          
+
           # Vérifier si des tests existent
           if [ -d "tests" ] || find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
             echo "✅ Tests trouvés, exécution..."
@@ -221,7 +233,7 @@ jobs:
             echo "⚠️ Code non checkouté, impossible de générer le rapport de couverture"
             exit 0
           fi
-          
+
           export PATH="$HOME/.local/bin:$PATH"
           # Vérifier que le venv existe avant de l'activer
           if [ -f ".venv/bin/activate" ]; then
@@ -233,7 +245,7 @@ jobs:
               source .venv-temp/bin/activate
             fi
           fi
-          
+
           if [ -f coverage.xml ]; then
             echo "📊 Rapport de couverture généré"
             python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); line_rate = float(root.get('line-rate', 0)) * 100; print(f'Couverture de code: {line_rate:.2f}%')" || echo "Impossible de lire le rapport de couverture"
@@ -255,11 +267,11 @@ jobs:
           bash \
           nodejs \
           npm
-          
+
           # Vérifier la version de Node.js installée
           node --version
           npm --version
-          
+
       - name: Checkout du code avec actions/checkout
         uses: actions/checkout@v6
         with:
@@ -281,10 +293,10 @@ jobs:
             DOCKERFILE_HASH=$(md5sum Dockerfile | cut -d' ' -f1)
             PYPROJECT_HASH=$(md5sum pyproject.toml | cut -d' ' -f1)
           fi
-          
+
           # Combiner les hashs pour créer une clé unique
           CACHE_KEY_HASH=$(echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}" | sha256sum | cut -d' ' -f1 || echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}")
-          
+
           echo "DOCKERFILE_HASH=${DOCKERFILE_HASH}" >> $GITEA_ENV
           echo "PYPROJECT_HASH=${PYPROJECT_HASH}" >> $GITEA_ENV
           echo "CACHE_KEY_HASH=${CACHE_KEY_HASH}" >> $GITEA_ENV
@@ -327,15 +339,15 @@ jobs:
       - name: Build et push de l'image Docker
         run: |
           set -e
-          
+
           # Nettoyage préventif des anciens conteneurs BuildKit
           echo "Nettoyage préventif des conteneurs BuildKit..."
           docker container ls -q --filter "name=buildx_buildkit" | xargs -r docker container stop || true
           docker container ls -aq --filter "name=buildx_buildkit" | xargs -r docker container rm || true
-          
+
           # Gestion intelligente du builder
           BUILDER_NAME="chronotrak-builder"
-          
+
           if docker buildx ls | grep -q "$BUILDER_NAME"; then
             echo "Utilisation du builder existant: $BUILDER_NAME"
             docker buildx use $BUILDER_NAME
@@ -343,7 +355,7 @@ jobs:
             echo "Création d'un nouveau builder: $BUILDER_NAME"
             docker buildx create --name $BUILDER_NAME --use
           fi
-          
+
           # Build avec gestion d'erreurs et cache optimisé
           echo "Démarrage du build de l'image..."
           docker buildx build --provenance=false --push \
@@ -356,7 +368,7 @@ jobs:
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \
             --progress=plain \
             .
-          
+
           echo "Build terminé avec succès"
 
       # Gestion du cache et nettoyage SÉCURISÉ
@@ -369,30 +381,30 @@ jobs:
             mv /tmp/.buildx-cache-new /tmp/.buildx-cache
             echo "Cache mis à jour"
           fi
-          
+
           # Nettoyage CIBLÉ des conteneurs BuildKit seulement
           echo "Nettoyage ciblé des conteneurs BuildKit..."
           BUILDKIT_CONTAINERS=$(docker container ls -aq --filter "name=buildx_buildkit" --filter "label=org.mobyproject.buildkit.worker.executor=oci" 2>/dev/null || echo "")
-          
+
           if [ ! -z "$BUILDKIT_CONTAINERS" ]; then
             echo "Suppression des conteneurs BuildKit: $BUILDKIT_CONTAINERS"
             docker container rm -f $BUILDKIT_CONTAINERS 2>/dev/null || true
           else
             echo "Aucun conteneur BuildKit à supprimer"
           fi
-          
+
           # Nettoyage du cache BuildKit uniquement (pas docker system)
           echo "Nettoyage du cache BuildKit..."
           docker buildx prune -f --reserved-space=1GB 2>/dev/null || true
-          
+
           # Nettoyage des images build temporaires sans tag (plus sûr)
           echo "Nettoyage des images temporaires..."
           docker image prune -f --filter "dangling=true" 2>/dev/null || true
-          
+
           # Nettoyage des volumes BuildKit uniquement (SÉCURISÉ)
           echo "Nettoyage des volumes BuildKit..."
           docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
-          
+
           # Affichage des statistiques pour monitoring
           echo "=== État final des builders ==="
           docker buildx ls
@@ -407,12 +419,12 @@ jobs:
         run: |
           echo "🔒 Scan de sécurité Trivy - Image Docker finale..."
           apk add --no-cache curl || true
-          
+
           # Installer Trivy si nécessaire
           if ! command -v trivy >/dev/null 2>&1; then
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
           fi
-          
+
           # Scanner l'image Docker finale pour les vulnérabilités des packages installés
           # Ignorer les vulnérabilités déjà corrigées (status: fixed)
           trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest \
@@ -423,7 +435,7 @@ jobs:
               echo "⚠️ Des vulnérabilités HIGH/CRITICAL détectées dans l'image Docker"
               exit 1
             }
-          
+
           echo "✅ Scan Trivy image terminé"
 
   deploy:
@@ -460,12 +472,12 @@ jobs:
             set -ex
             echo 'Création du répertoire de sauvegarde'
             mkdir -p ${{ secrets.PROJECT_DIRECTORY }}/backups
-            
+
             echo 'Sauvegarde de la base de données'
             cd ${{ secrets.PROJECT_DIRECTORY }}
-            
+
             BACKUP_DATE=\$(date +'%Y%m%d_%H%M%S')
-            
+
             docker run --rm -v docker-chronotrak_chronotrak_data:/app/instance -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
               if [ -f /app/instance/chronotrak.db ]; then
                 cp /app/instance/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
@@ -475,13 +487,13 @@ jobs:
                 touch /backup/chronotrak_\${BACKUP_DATE}_empty.txt
               fi
             \"
-            
+
             cd ${{ secrets.PROJECT_DIRECTORY }}/backups
             ls -t chronotrak_*.db | tail -n +11 | xargs -r rm
-            
+
             echo 'Sauvegarde terminée'
           "
-      
+
       # Déploiement sur le serveur de production
       - name: Déploiement sur le serveur de production
         run: |
@@ -489,19 +501,19 @@ jobs:
             set -ex
             echo 'Début du déploiement'
             cd ${{ secrets.PROJECT_DIRECTORY }}
-            
+
             # Login au registre
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
-            
+
             # Pull et déploiement
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
-            
+
             # Nettoyage post-déploiement
             docker system prune -f
             # Nettoyage des volumes BuildKit uniquement sur le serveur de production
             docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
             docker logout forge.apacher.eu
-            
+
             echo 'Déploiement terminé avec succès'
           "

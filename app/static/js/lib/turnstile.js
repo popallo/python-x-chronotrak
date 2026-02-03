@@ -9,7 +9,7 @@ export function initTurnstile() {
 
     // Récupérer tous les éléments avec la classe turnstile-container
     const containers = document.querySelectorAll('.turnstile-container');
-    
+
     containers.forEach(container => {
         const siteKey = container.dataset.siteKey;
         if (!siteKey) {
@@ -37,4 +37,4 @@ export function initTurnstile() {
             }
         });
     });
-} 
+}

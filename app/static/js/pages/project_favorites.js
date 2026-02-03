@@ -19,25 +19,25 @@ function initProjectFavorites() {
 function initializeDragAndDrop() {
     const projectCards = document.querySelectorAll('.project-card[draggable="true"]');
     const favoritesDropZone = document.getElementById('favorites-drop-zone');
-    
+
     if (!favoritesDropZone) return;
-    
+
     projectCards.forEach(card => {
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragend', handleDragEnd);
     });
-    
+
     favoritesDropZone.addEventListener('dragover', handleDragOver);
     favoritesDropZone.addEventListener('dragleave', handleDragLeave);
     favoritesDropZone.addEventListener('drop', handleDrop);
-    
+
     // Afficher la zone de drop quand on commence à glisser
     document.addEventListener('dragstart', function(e) {
         if (e.target.classList.contains('project-card')) {
             favoritesDropZone.style.display = 'block';
         }
     });
-    
+
     // Masquer la zone de drop quand on arrête de glisser
     document.addEventListener('dragend', function(e) {
         if (e.target.classList.contains('project-card')) {
@@ -101,7 +101,7 @@ function handleDrop(e) {
     e.preventDefault();
     const dropZone = e.target.closest('.favorites-drop-zone');
     dropZone.classList.remove('drag-over');
-    
+
     const projectSlug = e.dataTransfer.getData('project-slug');
     if (projectSlug) {
         toggleFavorite(projectSlug);
@@ -116,10 +116,10 @@ async function toggleFavorite(projectSlug) {
         const data = await utils.fetchWithCsrf(`/projects/${projectSlug}/toggle_favorite`, {
             method: 'POST'
         });
-        
+
         if (data.success) {
             utils.showToast('success', data.message);
-            
+
             // Recharger la page pour mettre à jour l'affichage
             setTimeout(() => {
                 window.location.reload();

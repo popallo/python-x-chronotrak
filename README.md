@@ -13,11 +13,11 @@
 
 *Simplifiez le suivi de vos prestations et la gestion de vos projets*
 
-[Fonctionnalités](#-fonctionnalités) • 
-[Installation](#-installation) • 
-[Configuration](#-configuration) • 
-[Sécurité](#-sécurité) • 
-[Contribuer](#-contribuer) • 
+[Fonctionnalités](#-fonctionnalités) •
+[Installation](#-installation) •
+[Configuration](#-configuration) •
+[Sécurité](#-sécurité) •
+[Contribuer](#-contribuer) •
 [Licence](#-licence)
 
 </div>
@@ -26,7 +26,7 @@
 
 ## 📋 Vue d'ensemble
 
-**ChronoTrak** est une application web open sourc, développée à l'aide du framework Python `Flask`, qui part d'un besoin personnel en gestion de projet avec du crédit de temps pour des prestations diverses. 
+**ChronoTrak** est une application web open sourc, développée à l'aide du framework Python `Flask`, qui part d'un besoin personnel en gestion de projet avec du crédit de temps pour des prestations diverses.
 
 Elle permet le suivi des heures allouées aux projets clients et une organisation des tâches en mode kanban.
 

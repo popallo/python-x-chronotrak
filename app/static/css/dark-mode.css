@@ -23,23 +23,23 @@ html.dark-mode body {
     background-color: var(--dm-bg-main);
     color: var(--dm-text);
 }
-  
+
   /* ===== Éléments de base ===== */
   html.dark-mode body .navbar-dark {
     background-color: var(--dm-bg-card) !important;
     border-bottom: 1px solid var(--dm-border);
   }
-  
+
   html.dark-mode body .footer {
     background-color: var(--dm-bg-card) !important;
     color: var(--dm-text);
     border-top: 1px solid var(--dm-border);
   }
-  
+
   html.dark-mode body .text-muted {
     color: var(--dm-text-muted) !important;
   }
-  
+
   /* ===== Cartes et conteneurs ===== */
   html.dark-mode body .card,
   html.dark-mode body .modal-content,
@@ -49,19 +49,19 @@ html.dark-mode body {
     color: var(--dm-text);
     border-color: var(--dm-border);
   }
-  
-  html.dark-mode body .card-header, 
-  html.dark-mode body .modal-header, 
+
+  html.dark-mode body .card-header,
+  html.dark-mode body .modal-header,
   html.dark-mode body .modal-footer {
     background-color: var(--dm-bg-elevated);
     border-color: var(--dm-border);
   }
-  
+
   html.dark-mode body .card-footer {
     background-color: var(--dm-bg-card);
     border-color: var(--dm-border);
   }
-  
+
   /* ===== Formulaires et contrôles ===== */
   html.dark-mode body .form-control,
   html.dark-mode body .form-select,
@@ -70,7 +70,7 @@ html.dark-mode body {
     border-color: var(--dm-border);
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .form-control:focus,
   html.dark-mode body .form-select:focus {
     background-color: var(--dm-bg-elevated);
@@ -78,7 +78,7 @@ html.dark-mode body {
     border-color: #4c4c4c;
     box-shadow: 0 0 0 0.25rem rgba(66, 70, 73, 0.5);
   }
-  
+
   html.dark-mode body select:disabled,
   html.dark-mode body input:disabled {
     background-color: var(--dm-bg-main);
@@ -86,187 +86,187 @@ html.dark-mode body {
     color: #6c757d;
     opacity: 0.8;
   }
-  
+
   /* Support pour les champs de type date */
   html.dark-mode body input[type="date"] {
     color-scheme: dark;
   }
-  
+
   html.dark-mode body input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8);
   }
-  
+
   /* ===== Tableaux ===== */
   html.dark-mode body .table {
     --bs-table-color: var(--dm-text) !important;
     --bs-table-bg: #1a1a1a !important;
     --bs-table-accent-bg: transparent !important;
   }
-  
+
   html.dark-mode body .table>:not(caption)>*>* {
     color: var(--dm-text) !important;
     background-color: #1a1a1a !important;
     border-color: var(--dm-border) !important;
     box-shadow: none !important;
   }
-  
+
   html.dark-mode body .table>tbody>tr:nth-of-type(odd)>* {
     background-color: #252525 !important;
   }
-  
+
   html.dark-mode body .table>tbody>tr:nth-of-type(even)>* {
     background-color: var(--dm-bg-card) !important;
   }
-  
+
   html.dark-mode body .table>thead>tr>* {
     background-color: var(--dm-bg-elevated) !important;
     color: #ffffff !important;
   }
-  
+
   html.dark-mode body .table-hover>tbody>tr:hover>* {
     background-color: #333333 !important;
     color: #ffffff !important;
   }
-  
+
   /* ===== Composants interactifs ===== */
   html.dark-mode body .dropdown-item {
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .dropdown-item:hover {
     background-color: var(--dm-bg-elevated);
     color: #ffffff;
   }
-  
+
   html.dark-mode body .dropdown-divider {
     border-color: var(--dm-border);
   }
-  
+
   html.dark-mode body .list-group-item-action:hover {
     background-color: var(--dm-bg-elevated);
     color: #ffffff;
   }
-  
+
   html.dark-mode body .close {
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .progress {
     background-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .alert {
     background-color: var(--dm-bg-elevated);
     color: var(--dm-text);
     border-color: var(--dm-border);
   }
-  
+
   /* ===== Pagination ===== */
   html.dark-mode body .page-link {
     background-color: var(--dm-bg-elevated);
     border-color: var(--dm-border);
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .page-link:hover {
     background-color: var(--dm-border);
     border-color: #4c4c4c;
     color: #ffffff;
   }
-  
+
   html.dark-mode body .page-item.disabled .page-link {
     background-color: var(--dm-bg-main);
     border-color: var(--dm-border);
     color: #6c757d;
   }
-  
+
   html.dark-mode body .page-item.active .page-link {
     background-color: #28a745;
     border-color: #1e7e34;
     color: #ffffff;
   }
-  
+
   /* ===== Composants spécifiques ===== */
   /* Kanban */
   html.dark-mode body .kanban-column {
     background-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .kanban-title {
     background-color: var(--dm-border);
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .kanban-task {
     background-color: var(--dm-bg-card);
     color: var(--dm-text);
     border-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .progress-column .kanban-title {
     background-color: #41413a;
   }
-  
+
   html.dark-mode body .done-column .kanban-title {
     background-color: #2e3e33;
   }
-  
+
   /* Panneau de filtres */
   html.dark-mode body .filters-panel {
     background-color: var(--dm-bg-elevated);
     border-color: var(--dm-border);
   }
-  
+
   html.dark-mode body .filter-badge {
     background-color: var(--dm-border);
     color: var(--dm-text);
   }
-  
+
   html.dark-mode body .filter-badge .remove-filter {
     background-color: #495057;
     color: #ced4da;
   }
-  
+
   html.dark-mode body .filter-badge .remove-filter:hover {
     background-color: #6c757d;
   }
-  
+
   html.dark-mode body .filters-actions {
     border-color: var(--dm-border);
   }
-  
+
   /* Formulaire d'édition */
   html.dark-mode body .edit-comment-form {
     background-color: var(--dm-bg-elevated);
   }
-  
+
   /* Carte d'info crédit */
   html.dark-mode body .credit-info-card {
     background-color: var(--dm-bg-elevated);
     border-color: #444 !important;
   }
-  
+
   html.dark-mode body .credit-info-card .card-body {
     background-color: var(--dm-bg-elevated);
   }
-  
+
   /* Conserver les couleurs d'état */
   html.dark-mode body .credit-info-card .text-success {
     color: #4CAF50 !important;
   }
-  
+
   html.dark-mode body .credit-info-card .text-warning {
     color: #FFC107 !important;
   }
-  
+
   html.dark-mode body .credit-info-card .text-danger {
     color: #FF5252 !important;
   }
-  
+
   html.dark-mode body .credit-info-card .progress {
     background-color: #444;
   }
-  
+
   /* Bouton de basculement du mode sombre */
   .dark-mode-toggle {
     cursor: pointer;
@@ -279,28 +279,28 @@ html.dark-mode body {
     justify-content: center;
     transition: background-color 0.3s;
   }
-  
+
   .dark-mode-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .dark-mode-toggle i {
     font-size: 1.2rem;
   }
-  
+
   html.dark-mode body .dark-mode-toggle {
     color: #e0e0e0;
   }
-  
+
   html.dark-mode body .dark-mode-toggle:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
-  
+
   /* Bouton de page d'accueil */
   html.dark-mode body .welcome-dark-mode-toggle {
     background-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .welcome-dark-mode-toggle i {
     color: var(--dm-text);
   }
@@ -315,7 +315,7 @@ html.dark-mode body {
     font-size: 0.75rem;
     opacity: 0.95;
   }
-  
+
   html.dark-mode body .tooltip-inner {
     max-width: 200px;
     padding: 0.5rem 0.75rem;
@@ -325,19 +325,19 @@ html.dark-mode body {
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
-  
+
   html.dark-mode body .tooltip.bs-tooltip-top .tooltip-arrow::before {
     border-top-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
     border-bottom-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .tooltip.bs-tooltip-start .tooltip-arrow::before {
     border-left-color: var(--dm-bg-elevated);
   }
-  
+
   html.dark-mode body .tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: var(--dm-bg-elevated);
   }

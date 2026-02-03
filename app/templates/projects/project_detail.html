@@ -86,9 +86,9 @@
             <div class="compact-info-item compact-description">
                 <i class="fas fa-align-left text-primary me-2"></i>
                 <span class="compact-label">Description:</span>
-                <span class="compact-value description-text" 
+                <span class="compact-value description-text"
                       data-full-description="{{ project.description }}"
-                      data-bs-toggle="modal" 
+                      data-bs-toggle="modal"
                       data-bs-target="#descriptionModal"
                       style="cursor: pointer;">
                     {{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}

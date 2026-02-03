@@ -16,9 +16,9 @@ async function changeTaskStatus(taskSlug, newStatus) {
                 status: newStatus
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             // Recharger la page pour voir les changements
             window.location.reload();
@@ -36,7 +36,7 @@ async function archiveTask(taskSlug) {
     if (!confirm('Êtes-vous sûr de vouloir archiver cette tâche ?')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`/tasks/${taskSlug}/archive`, {
             method: 'POST',
@@ -45,9 +45,9 @@ async function archiveTask(taskSlug) {
                 'X-CSRFToken': window.csrfToken
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             // Recharger la page pour voir les changements
             window.location.reload();
@@ -69,7 +69,7 @@ function extractTaskSearchData(taskElement) {
     const title = taskElement.querySelector('.kanban-task-title')?.textContent?.trim() || '';
     const meta = taskElement.querySelector('.kanban-task-meta')?.textContent?.trim() || '';
     const time = taskElement.querySelector('.kanban-task-time')?.textContent?.trim() || '';
-    
+
     return {
         title: title.toLowerCase(),
         meta: meta.toLowerCase(),
@@ -97,33 +97,33 @@ function filterKanbanTasks(searchTerm) {
             task.style.display = 'block';
             task.classList.remove('kanban-task-filtered');
         });
-        
+
         // Masquer l'info de recherche
         document.getElementById('kanban-search-info').style.display = 'none';
-        
+
         // Mettre à jour les compteurs
         updateColumnCounters();
         return;
     }
-    
+
     const searchLower = searchTerm.toLowerCase().trim();
     let visibleCount = 0;
-    
+
     // Filtrer les tâches
     document.querySelectorAll('.kanban-task').forEach(task => {
         const taskId = task.getAttribute('data-task-id');
         const taskData = originalTaskData.get(taskId);
-        
+
         if (!taskData) {
             task.style.display = 'none';
             task.classList.add('kanban-task-filtered');
             return;
         }
-        
+
         const matches = taskData.fullText.includes(searchLower) ||
                        taskData.title.includes(searchLower) ||
                        taskData.meta.includes(searchLower);
-        
+
         if (matches) {
             task.style.display = 'block';
             task.classList.remove('kanban-task-filtered');
@@ -133,11 +133,11 @@ function filterKanbanTasks(searchTerm) {
             task.classList.add('kanban-task-filtered');
         }
     });
-    
+
     // Afficher l'info de recherche
     const searchInfo = document.getElementById('kanban-search-info');
     const searchCount = document.getElementById('kanban-search-count');
-    
+
     if (visibleCount > 0) {
         searchInfo.style.display = 'block';
         searchCount.textContent = visibleCount;
@@ -145,7 +145,7 @@ function filterKanbanTasks(searchTerm) {
         searchInfo.style.display = 'block';
         searchCount.textContent = '0';
     }
-    
+
     // Mettre à jour les compteurs des colonnes
     updateColumnCounters();
 }
@@ -174,14 +174,14 @@ function clearKanbanSearch() {
 function initKanbanSearch() {
     const searchInput = document.getElementById('kanban-search');
     const clearButton = document.getElementById('kanban-clear-search');
-    
+
     if (!searchInput) {
         return; // Pas de kanban sur cette page
     }
-    
+
     // Sauvegarder les données originales
     saveOriginalTaskData();
-    
+
     // Événement de recherche en temps réel
     searchInput.addEventListener('input', function() {
         clearTimeout(kanbanSearchTimeout);
@@ -189,12 +189,12 @@ function initKanbanSearch() {
             filterKanbanTasks(this.value);
         }, 150); // Délai de 150ms pour éviter trop de recherches
     });
-    
+
     // Bouton pour effacer la recherche
     if (clearButton) {
         clearButton.addEventListener('click', clearKanbanSearch);
     }
-    
+
     // Raccourci clavier pour effacer (Escape)
     searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -210,7 +210,7 @@ function initKanban() {
     if (!window.csrfToken) {
         console.warn('Token CSRF non trouvé pour le kanban');
     }
-    
+
     // Initialiser le système de recherche
     initKanbanSearch();
 }

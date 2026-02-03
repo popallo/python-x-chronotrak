@@ -52,8 +52,8 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
-            # Mise à jour de la date de dernière connexion
-            user.last_login = get_utc_now()
+            # Mise à jour de la date de dernière connexion (convertir en naive pour SQLite)
+            user.last_login = get_utc_now().replace(tzinfo=None)
             db.session.commit()
             
             next_page = request.args.get('next')

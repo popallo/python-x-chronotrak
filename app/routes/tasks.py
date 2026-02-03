@@ -23,7 +23,7 @@ import json
 
 
 def _today_utc_date():
-    return datetime.utcnow().date()
+    return get_utc_now().date()
 
 
 def _delete_future_recurrence_instances(series_id: int, keep_task_id: int | None = None):
@@ -144,7 +144,7 @@ def list_tasks():
 
     # NOTE: on continue de masquer les tâches planifiées dans le futur sur la liste globale,
     # pour éviter du bruit. L'affichage "à venir" est géré sur les vues Kanban (projet / mes tâches).
-    today = datetime.utcnow().date()
+    today = get_utc_now().date()
     query = query.filter(db.or_(Task.scheduled_for.is_(None), Task.scheduled_for <= today))
 
     # Filtres
@@ -619,7 +619,8 @@ def edit_task(slug_or_id):
         
         # Si la tâche est marquée comme terminée
         if task.status == 'terminé' and not task.completed_at:
-            task.completed_at = get_utc_now()
+            # Convertir en datetime naive pour SQLite
+            task.completed_at = get_utc_now().replace(tzinfo=None)
         elif task.status != 'terminé':
             task.completed_at = None
             
@@ -949,7 +950,7 @@ def my_tasks():
 
     # Construction de la requête de base (exclure les tâches archivées)
     query = Task.query.filter_by(user_id=current_user.id, is_archived=False)
-    today = datetime.utcnow().date()
+    today = get_utc_now().date()
 
     # Filtres
     if status:

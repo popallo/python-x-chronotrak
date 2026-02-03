@@ -10,7 +10,33 @@ on:
 jobs:
   test:
     runs-on: docker
+    container:
+      image: python:3.13-alpine
+    env:
+      PATH: ${{ env.PATH }}:$HOME/.cargo/bin
     steps:
+      - name: Configuration de la résolution DNS pour 'server'
+        run: |
+          # Installer les outils nécessaires
+          apk add --no-cache iproute2
+          
+          # Méthode 1: Utiliser l'IP du gateway Docker (généralement le host)
+          GATEWAY_IP=$(ip route | grep default | awk '{print $3}' | head -n1)
+          if [ -n "$GATEWAY_IP" ] && [ "$GATEWAY_IP" != "" ]; then
+            echo "$GATEWAY_IP server" >> /etc/hosts
+            echo "✅ Ajouté 'server' -> $GATEWAY_IP dans /etc/hosts (via gateway)"
+          fi
+          
+          # Méthode 2: Essayer de ping le host via le gateway pour vérifier
+          if [ -n "$GATEWAY_IP" ]; then
+            echo "🔍 Test de connectivité vers $GATEWAY_IP:3000..."
+            timeout 2 nc -zv $GATEWAY_IP 3000 2>&1 || echo "⚠️ Port 3000 non accessible directement"
+          fi
+          
+          # Afficher /etc/hosts pour debug
+          echo "📋 Contenu de /etc/hosts:"
+          cat /etc/hosts | grep -E "(server|localhost)" || echo "⚠️ Aucune entrée pour 'server' trouvée"
+
       - name: Configuration du runner
         run: |
           apk add --no-cache \
@@ -19,74 +45,49 @@ jobs:
           curl \
           nodejs \
           npm \
-          python3 \
-          py3-pip
+          netcat-openbsd
           
-          # Vérifier la version de Python installée
-          PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-          echo "Version Python installée: $PYTHON_VERSION"
-          
-          # Vérifier si Python 3.13+ est requis et disponible
-          PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
-          PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
-          
-          if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 13 ]); then
-            echo "⚠️ Python 3.13+ requis mais version $PYTHON_VERSION installée"
-            echo "ℹ️ Installation de Python 3.13 depuis les sources..."
-            # Note: Installation complète de Python 3.13 prendrait trop de temps
-            # Pour l'instant, on continue avec la version disponible
-            # Le projet devra être compatible ou Python 3.13 devra être pré-installé sur le runner
-          fi
+          # Installation de uv (gestionnaire de paquets Python ultra-rapide)
+          echo "📦 Installation de uv..."
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv --version
           
           # Vérifier les versions installées
           node --version
           npm --version
-          python3 --version
-          pip3 --version
+          python --version
 
       - name: Checkout du code
         uses: actions/checkout@v6
 
-      - name: Configuration de Python
-        run: |
-          python3 --version
-          pip3 --version
-
-      - name: Cache des dépendances Python
+      - name: Cache des dépendances Python avec uv
         uses: actions/cache@v3
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-uv-
 
-      - name: Création de l'environnement virtuel Python
+      - name: Création de l'environnement virtuel et installation des dépendances avec uv
         run: |
-          echo "🔧 Création de l'environnement virtuel..."
-          python3 -m venv .venv
-          if [ ! -f ".venv/bin/activate" ]; then
-            echo "❌ Échec de la création du venv"
-            exit 1
-          fi
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "🔧 Création de l'environnement virtuel avec uv..."
+          uv venv
+          
+          echo "📦 Installation des dépendances avec uv sync (depuis uv.lock)..."
+          uv sync --dev
+          
+          echo "✅ Environnement virtuel créé et dépendances installées avec succès"
           source .venv/bin/activate
           python --version
-          pip --version
-          echo "✅ Environnement virtuel créé avec succès"
-
-      - name: Installation des dépendances
-        run: |
-          echo "📦 Installation des dépendances..."
-          if [ ! -f ".venv/bin/activate" ]; then
-            echo "❌ Le venv n'existe pas, création..."
-            python3 -m venv .venv
-          fi
-          source .venv/bin/activate
-          pip install --upgrade pip setuptools wheel
-          pip install -e ".[dev]"
-          echo "✅ Dépendances installées avec succès"
+          uv --version
 
       - name: Configuration de l'environnement de test
         run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
           source .venv/bin/activate
           # Créer une clé de chiffrement de test si elle n'existe pas
           export ENCRYPTION_KEY=${ENCRYPTION_KEY:-$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")}
@@ -99,10 +100,12 @@ jobs:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
           FLASK_ENV: testing
         run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
           echo "🧪 Exécution des tests..."
           if [ ! -f ".venv/bin/activate" ]; then
-            echo "❌ Le venv n'existe pas, création..."
-            python3 -m venv .venv
+            echo "❌ Le venv n'existe pas, création avec uv..."
+            uv venv
+            uv sync --dev
           fi
           source .venv/bin/activate
           # Vérifier si des tests existent
@@ -128,12 +131,13 @@ jobs:
             exit 0
           fi
           
+          export PATH="$HOME/.cargo/bin:$PATH"
           # Vérifier que le venv existe avant de l'activer
           if [ -f ".venv/bin/activate" ]; then
             source .venv/bin/activate
           else
             echo "⚠️ Environnement virtuel non trouvé, création d'un venv temporaire..."
-            python3 -m venv .venv-temp 2>/dev/null || true
+            uv venv .venv-temp 2>/dev/null || python -m venv .venv-temp 2>/dev/null || true
             if [ -f ".venv-temp/bin/activate" ]; then
               source .venv-temp/bin/activate
             fi

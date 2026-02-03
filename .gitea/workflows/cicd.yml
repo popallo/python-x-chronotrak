@@ -11,20 +11,27 @@ jobs:
   test:
     runs-on: docker
     container:
-      image: python:3.13-alpine
-    env:
-      PATH: ${{ env.PATH }}:$HOME/.cargo/bin
+      image: python:3.13-slim
     steps:
       - name: Configuration du runner et résolution DNS
         run: |
-          apk add --no-cache \
+          # Installer les outils de base
+          apt-get update && apt-get install -y --no-install-recommends \
           git \
-          bash \
           curl \
-          nodejs \
-          npm \
-          netcat-openbsd \
-          iproute2
+          ca-certificates \
+          iproute2 \
+          netcat-traditional \
+          gnupg
+          
+          # Installation de Node.js LTS depuis NodeSource
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y --no-install-recommends nodejs
+          
+          # Vérifier les versions
+          node --version
+          npm --version
+          python --version
           
           # Configuration de la résolution DNS pour 'server'
           # Méthode 1: Utiliser l'IP du gateway Docker (généralement le host)

@@ -26,17 +26,9 @@ jobs:
           node --version
           npm --version
           
-          # Note: Le warning de dépréciation punycode vient de actions/checkout@v3
-          # C'est un warning non-bloquant qui sera corrigé dans une future version de l'action
 
       - name: Checkout du code
-        run: |
-          # Utilisation directe de git pour éviter le warning deprecated de actions/checkout@v3
-          git init
-          git remote add origin http://server:3000/***/python-x-chronotrak || true
-          git fetch --depth=1 origin ${{ gitea.ref_name }} || git fetch --depth=1 origin main || git fetch --depth=1 origin master
-          git checkout ${{ gitea.sha }}
-          git submodule update --init --recursive || true
+        uses: actions/checkout@v6
 
       - name: Configuration de Python
         run: |
@@ -156,11 +148,8 @@ jobs:
           node --version
           npm --version
           
-          # Note: Le warning de dépréciation punycode vient de actions/checkout@v3
-          # C'est un warning non-bloquant qui sera corrigé dans une future version de l'action
-
       - name: Checkout du code avec actions/checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

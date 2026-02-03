@@ -15,9 +15,10 @@ from app.utils.route_utils import (
     apply_filters,
     apply_sorting
 )
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, func
 from app.models.task import Task
+from app.utils import get_utc_now
 
 projects = Blueprint('projects', __name__)
 
@@ -45,11 +46,11 @@ def list_projects():
     if sort_by == 'categories':
         # Tri par catégories : favoris d'abord, puis par activité récente
         from datetime import datetime, timedelta
-        one_month_ago = datetime.utcnow() - timedelta(days=30)
+        one_month_ago = get_utc_now() - timedelta(days=30)
         
         # Sous-requête pour obtenir la dernière activité de chaque projet
         # (en ignorant les tâches planifiées dans le futur)
-        today = datetime.utcnow().date()
+        today = get_utc_now().date()
         last_activity_subquery = db.session.query(
             Task.project_id,
             func.max(Task.updated_at).label('last_activity')
@@ -80,7 +81,8 @@ def list_projects():
     
     # Organiser les projets par catégories pour l'affichage
     from datetime import datetime, timedelta
-    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    # Convertir en datetime naive pour la comparaison avec les datetimes de la DB
+    one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
     
     projects_by_category = {
         'favorites': [],
@@ -89,7 +91,7 @@ def list_projects():
     }
     
     # Pré-calculer des stats "tâches visibles" (exclure archives + occurrences futures)
-    today = datetime.utcnow().date()
+    today = get_utc_now().date()
 
     for project in projects.items:
         # Déterminer la dernière activité du projet
@@ -106,6 +108,10 @@ def list_projects():
             last_activity = max([task.updated_at for task in visible_tasks], default=project.created_at)
         else:
             last_activity = project.created_at
+        
+        # S'assurer que last_activity est naive pour la comparaison
+        if last_activity and hasattr(last_activity, 'tzinfo') and last_activity.tzinfo is not None:
+            last_activity = last_activity.replace(tzinfo=None)
         
         if project.is_favorite:
             projects_by_category['favorites'].append(project)
@@ -172,7 +178,7 @@ def project_details(slug_or_id):
     project = get_project_by_slug_or_id(slug_or_id)
     form = DeleteProjectForm()
 
-    today = datetime.utcnow().date()
+    today = get_utc_now().date()
 
     # Inclure toutes les tâches "visibles" (scheduled_for <= aujourd'hui),
     # + uniquement LA prochaine occurrence future par série (pour afficher "à venir" dans À faire).

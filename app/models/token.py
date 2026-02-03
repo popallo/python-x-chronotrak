@@ -24,7 +24,8 @@ class PasswordResetToken(db.Model):
         """
         self.user_id = user_id
         self.token = str(uuid.uuid4())
-        self.created_at = get_utc_now()
+        # Convertir en datetime naive pour SQLite
+        self.created_at = get_utc_now().replace(tzinfo=None)
         self.expires_at = self.created_at + timedelta(hours=expires_in)
         self.is_used = False
     

@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 from app.utils.encryption import EncryptedType
 from cryptography.fernet import Fernet
 from flask import current_app
@@ -27,7 +27,7 @@ class Client(db.Model):
     _phone = db.Column('phone', EncryptedType, nullable=True)  # Chiffré (nom interne)
     _address = db.Column('address', EncryptedType, nullable=True)  # Chiffré (nom interne)
     _notes = db.Column('notes', EncryptedType, nullable=True)  # Chiffré (nom interne)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Relations
     projects = db.relationship('Project', backref='client', lazy='joined', cascade='all, delete-orphan')

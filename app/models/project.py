@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 from app.utils.slug_utils import update_slug
 
 class Project(db.Model):
@@ -11,7 +11,7 @@ class Project(db.Model):
     remaining_credit = db.Column(db.Integer, nullable=False, default=0)  # en minutes
     time_tracking_enabled = db.Column(db.Boolean, nullable=True, default=True)  # Indique si le projet utilise la gestion de temps
     is_favorite = db.Column(db.Boolean, nullable=False, default=False)  # Indique si le projet est en favori
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Clé étrangère
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
@@ -100,8 +100,8 @@ class Project(db.Model):
             from app.utils.email import send_low_credit_notification
             from flask import current_app
             
-            # Vérifier si on est dans un contexte d'application (pour les tests)
-            if current_app:
+            # Vérifier si on est dans un contexte d'application et pas en mode test
+            if current_app and not current_app.config.get('TESTING', False):
                 # Utilisation d'un thread pour éviter de bloquer la requête
                 from threading import Thread
                 thread = Thread(target=send_low_credit_notification, args=(self,))
@@ -114,7 +114,7 @@ class CreditLog(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=True)
     amount = db.Column(db.Float, nullable=False)  # Peut être positif (ajout) ou négatif (déduction)
     note = db.Column(db.String(200), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relations
     task = db.relationship('Task', backref='credit_logs', lazy=True)

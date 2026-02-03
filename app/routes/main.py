@@ -7,6 +7,7 @@ from app.models.user import User
 from sqlalchemy import func, case
 from app import db, cache
 from datetime import datetime
+from app.utils import get_utc_now
 from app.utils.route_utils import (
     get_accessible_clients,
     get_accessible_projects,
@@ -20,7 +21,7 @@ def get_dashboard_stats():
     """Récupère les statistiques du tableau de bord"""
     # Convertir le seuil de crédit en minutes (il est configuré en heures)
     credit_threshold_minutes = current_app.config['CREDIT_THRESHOLD'] * 60
-    today = datetime.utcnow().date()
+    today = get_utc_now().date()
     
     if current_user.is_client():
         # Pour les clients, montrer uniquement les données de leurs clients associés

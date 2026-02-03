@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 import calendar
 from app.utils.encryption import EncryptedType
 from flask import current_app
@@ -36,11 +36,12 @@ class TaskRecurrenceSeries(db.Model):
     monthly_use_last_day = db.Column(db.Boolean, nullable=False, default=False)
     monthly_day = db.Column(db.Integer, nullable=True)  # 1..31
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relation 1-1 vers la tâche "template" (la tâche sur laquelle l'utilisateur a configuré la récurrence)
-    template_task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False, unique=True)
+    # use_alter=True pour gérer la dépendance circulaire avec Task
+    template_task_id = db.Column(db.Integer, db.ForeignKey('task.id', use_alter=True), nullable=False, unique=True)
 
     def _parsed_byweekday(self):
         if not self.byweekday:
@@ -170,8 +171,8 @@ class ChecklistItem(db.Model):
     content = db.Column(db.String(255), nullable=False)
     is_checked = db.Column(db.Boolean, default=False)
     position = db.Column(db.Integer, default=0)  # Pour maintenir l'ordre des éléments
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Clé étrangère
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
@@ -190,8 +191,8 @@ class Task(db.Model):
     actual_minutes = db.Column(db.Integer, nullable=True)  # en minutes
     # Date "d'apparition" (utilisée pour masquer les occurrences futures des tâches récurrentes)
     scheduled_for = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime, nullable=True)
     is_pinned = db.Column(db.Boolean, nullable=False, default=False)  # Pour épingler les tâches importantes
     is_archived = db.Column(db.Boolean, nullable=False, default=False)  # Pour archiver les tâches terminées
@@ -369,7 +370,8 @@ class Task(db.Model):
     def archive(self):
         """Archive la tâche"""
         self.is_archived = True
-        self.archived_at = datetime.utcnow()
+        # Convertir en datetime naive pour SQLite
+        self.archived_at = datetime.now(timezone.utc).replace(tzinfo=None)
         
         # S'assurer que completed_at est défini pour les tâches terminées
         if self.status == 'terminé' and not self.completed_at:
@@ -387,7 +389,7 @@ class Task(db.Model):
     def should_be_archived():
         """Retourne les tâches qui devraient être archivées (terminées depuis plus de 2 semaines)"""
         from datetime import timedelta
-        two_weeks_ago = datetime.utcnow() - timedelta(weeks=2)
+        two_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=2)
         
         # Utiliser completed_at si disponible, sinon updated_at comme fallback
         # Cela gère les cas où des tâches ont été marquées comme terminées avant l'implémentation de completed_at
@@ -416,7 +418,7 @@ class TimeEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     minutes = db.Column(db.Integer, nullable=False)  # en minutes
     description = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relation
     user = db.relationship('User', backref='time_entries', lazy=True)
@@ -432,7 +434,7 @@ class TimeEntry(db.Model):
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     _content = db.Column('content', EncryptedType, nullable=False)  # Contenu chiffré (nom interne)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Clés étrangères
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
@@ -475,4 +477,4 @@ class UserPinnedTask(db.Model):
     __tablename__ = 'user_pinned_task'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

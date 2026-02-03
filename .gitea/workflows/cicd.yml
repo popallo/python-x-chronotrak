@@ -10,65 +10,48 @@ on:
 jobs:
   test:
     runs-on: docker
-    container:
-      image: python:3.13-slim
     steps:
-      - name: Configuration du runner et résolution DNS
+      - name: Configuration du runner
         run: |
-          # Installer les outils de base
-          apt-get update && apt-get install -y --no-install-recommends \
+          # Installer les outils de base (Alpine)
+          apk add --no-cache \
           git \
           curl \
           ca-certificates \
-          iproute2 \
-          netcat-traditional \
-          gnupg
+          bash \
+          nodejs \
+          npm \
+          python3 \
+          py3-pip \
+          build-base \
+          libffi-dev
           
-          # Installation de Node.js LTS depuis NodeSource
-          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          apt-get install -y --no-install-recommends nodejs
-          
-          # Vérifier les versions
-          node --version
-          npm --version
-          python --version
-          
-          # Configuration de la résolution DNS pour 'server' et le hostname complet
-          # Utiliser l'IP du gateway Docker (généralement le host)
-          GATEWAY_IP=$(ip route | grep default | awk '{print $3}' | head -n1)
-          if [ -n "$GATEWAY_IP" ] && [ "$GATEWAY_IP" != "" ]; then
-            # Ajouter 'server' pour la compatibilité avec actions/checkout
-            echo "$GATEWAY_IP server" >> /etc/hosts
-            echo "✅ Ajouté 'server' -> $GATEWAY_IP dans /etc/hosts"
-            
-            # Ajouter aussi le hostname complet si détecté (format server-xxxxx)
-            # Essayer de trouver le hostname depuis le réseau Docker
-            for hostname_pattern in "server-" "gitea"; do
-              # Chercher dans les noms de conteneurs Docker accessibles
-              if command -v docker >/dev/null 2>&1; then
-                DOCKER_HOSTNAME=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -i "$hostname_pattern" | head -n1 || echo "")
-                if [ -n "$DOCKER_HOSTNAME" ]; then
-                  echo "$GATEWAY_IP $DOCKER_HOSTNAME" >> /etc/hosts
-                  echo "✅ Ajouté '$DOCKER_HOSTNAME' -> $GATEWAY_IP dans /etc/hosts"
-                fi
-              fi
-            done
+          # Créer un lien symbolique python -> python3 si nécessaire
+          if ! command -v python >/dev/null 2>&1; then
+            ln -s $(which python3) /usr/local/bin/python || true
           fi
-          
-          # Afficher /etc/hosts pour debug
-          echo "📋 Contenu de /etc/hosts:"
-          cat /etc/hosts | grep -E "(server|localhost)" || echo "⚠️ Aucune entrée pour 'server' trouvée"
           
           # Installation de uv (gestionnaire de paquets Python ultra-rapide)
           echo "📦 Installation de uv..."
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          uv --version
+          
+          # Vérifier la version de Python disponible
+          PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+          echo "Python disponible: $PYTHON_VERSION"
+          
+          # Si Python 3.13 n'est pas disponible, uv peut l'installer automatiquement
+          # Vérifier si Python 3.13 est requis et disponible via uv
+          if ! python3 -c "import sys; assert sys.version_info >= (3, 13)" 2>/dev/null; then
+            echo "⚠️ Python 3.13 requis mais version $PYTHON_VERSION détectée"
+            echo "ℹ️ uv installera automatiquement Python 3.13 lors de la création du venv"
+          fi
           
           # Vérifier les versions installées
           node --version
           npm --version
-          python --version
+          python --version || python3 --version
+          uv --version
 
       - name: Checkout du code
         uses: actions/checkout@v6
@@ -86,8 +69,16 @@ jobs:
       - name: Création de l'environnement virtuel et installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          echo "🔧 Création de l'environnement virtuel avec uv..."
-          uv venv
+          
+          # Installer Python 3.13 via uv si nécessaire
+          echo "🐍 Vérification/installation de Python 3.13 via uv..."
+          uv python install 3.13 || echo "⚠️ uv python install a échoué, utilisation de Python système"
+          
+          echo "🔧 Création de l'environnement virtuel avec uv (Python 3.13)..."
+          uv venv --python 3.13 || uv venv || {
+            echo "⚠️ Échec de création du venv avec Python 3.13, tentative avec Python système"
+            uv venv
+          }
           
           echo "📦 Installation des dépendances avec uv sync (depuis uv.lock)..."
           uv sync --dev

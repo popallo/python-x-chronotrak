@@ -81,7 +81,9 @@ jobs:
           }
           
           echo "📦 Installation des dépendances avec uv sync (depuis uv.lock)..."
-          uv sync --dev
+          # Installer les dépendances principales + extras dev (pytest-cov, etc.)
+          # uv sync installe les dev dependencies par défaut, mais pour les extras il faut --extra dev
+          uv sync --extra dev || uv sync --all-extras
           
           echo "✅ Environnement virtuel créé et dépendances installées avec succès"
           source .venv/bin/activate
@@ -108,9 +110,16 @@ jobs:
           if [ ! -f ".venv/bin/activate" ]; then
             echo "❌ Le venv n'existe pas, création avec uv..."
             uv venv
-            uv sync --dev
+            uv sync --extra dev || uv sync --all-extras
           fi
           source .venv/bin/activate
+          
+          # Vérifier que pytest-cov est installé
+          if ! python -c "import pytest_cov" 2>/dev/null; then
+            echo "⚠️ pytest-cov non trouvé, installation..."
+            uv pip install pytest-cov || pip install pytest-cov
+          fi
+          
           # Vérifier si des tests existent
           if [ -d "tests" ] || find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
             echo "✅ Tests trouvés, exécution..."

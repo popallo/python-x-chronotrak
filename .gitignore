@@ -15,6 +15,7 @@ __pycache__/
 
 # Cache uv
 uv_cache/
+.uv-cache/
 
 # Configurations spécifiques à l'IDE
 .vscode/

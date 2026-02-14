@@ -10,8 +10,7 @@
  */
 import { CONFIG, utils } from '../utils.js';
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialisation des éléments DOM
+function initChecklistPage() {
     const checklistContainer = document.getElementById('checklist-container');
     if (!checklistContainer) return;
 
@@ -34,6 +33,32 @@ document.addEventListener('DOMContentLoaded', function() {
     initChecklistSync();
     initChecklistSizeToggle();
     updateChecklistProgress();
+
+    document.addEventListener('time-logged-from-checklist', function(e) {
+        const checklistItemId = e.detail && e.detail.checklistItemId;
+        if (!checklistItemId || !taskId) return;
+        const container = document.getElementById('checklist-items');
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll(':scope > .checklist-item')).filter(
+            el => !el.classList.contains('sortable-ghost')
+        );
+        const ids = items.map(el => parseInt(el.dataset.id, 10));
+        const idx = ids.indexOf(parseInt(checklistItemId, 10));
+        if (idx === -1 || idx === ids.length - 1) return;
+        ids.splice(idx, 1);
+        ids.push(parseInt(checklistItemId, 10));
+        const itemsData = ids.map((id, position) => ({ id, position }));
+        reorderChecklist(taskId, itemsData);
+    });
+
+    const deleteChecklistConfirmBtn = document.getElementById('deleteChecklistItemConfirmBtn');
+    if (deleteChecklistConfirmBtn) {
+        deleteChecklistConfirmBtn.addEventListener('click', function() {
+            const modalEl = document.getElementById('deleteChecklistItemModal');
+            const itemId = modalEl && modalEl.dataset.pendingChecklistItemId;
+            if (itemId) deleteChecklistItem(taskId, itemId);
+        });
+    }
 
     // ==========================================================================
     // Gestion de la taille de la checklist
@@ -214,18 +239,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleDeleteClick() {
         const itemId = this.closest('.checklist-item').dataset.id;
-        deleteChecklistItem(taskId, itemId);
+        const modalEl = document.getElementById('deleteChecklistItemModal');
+        if (modalEl) {
+            modalEl.dataset.pendingChecklistItemId = itemId;
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            deleteChecklistItem(taskId, itemId);
+        }
     }
 
     function handleCopyToTime() {
         const checklistItem = this.closest('.checklist-item');
         const content = checklistItem.querySelector('.checklist-content').textContent;
-        const timeModal = new bootstrap.Modal(document.getElementById('timeEntryModal'));
+        const itemId = checklistItem.dataset.id;
+        const modalEl = document.getElementById('timeEntryModal');
+        const timeModal = new bootstrap.Modal(modalEl);
         const descriptionInput = document.querySelector('#timeEntryModal textarea[name="description"]');
 
+        if (itemId) modalEl.dataset.checklistItemId = itemId;
         timeModal.show();
 
-        document.getElementById('timeEntryModal').addEventListener('shown.bs.modal', function() {
+        modalEl.addEventListener('shown.bs.modal', function() {
             descriptionInput.value = content;
             descriptionInput.focus();
         }, { once: true });
@@ -309,10 +344,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function deleteChecklistItem(taskId, itemId) {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
-            return;
-        }
-
         const data = await utils.fetchWithCsrf(`/tasks/${taskId}/checklist/${itemId}`, {
             method: 'DELETE',
             body: JSON.stringify({
@@ -322,6 +353,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (data.success) {
             updateChecklist(data.checklist);
+            const modalEl = document.getElementById('deleteChecklistItemModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                delete modalEl.dataset.pendingChecklistItemId;
+            }
         }
     }
 
@@ -340,18 +377,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateItemsOrder() {
-        const items = Array.from(document.querySelectorAll('.checklist-item'));
+        const container = document.getElementById('checklist-items');
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll(':scope > .checklist-item')).filter(
+            el => !el.classList.contains('sortable-ghost')
+        );
         const itemsData = items.map((item, index) => {
-            const checkbox = item.querySelector('.checklist-checkbox');
-            // Convertir l'ID en entier pour s'assurer qu'il correspond à la DB
             const itemId = parseInt(item.dataset.id, 10);
-            return {
-                id: itemId,
-                position: index,
-                is_checked: checkbox ? checkbox.checked : false
-            };
+            return { id: itemId, position: index };
         });
-
         reorderChecklist(taskId, itemsData);
     }
 
@@ -506,4 +540,10 @@ document.addEventListener('DOMContentLoaded', function() {
         utils.showToast('danger', message);
     }
 
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChecklistPage);
+} else {
+    initChecklistPage();
+}

@@ -28,12 +28,12 @@
 {% endblock %}
 
 {% block content %}
-<!-- Barre d'actions fixe -->
+<div class="task-detail-layout">
+<!-- Barre d'actions fixe : même retrait que les cartes -->
 <div class="action-toolbar sticky-top shadow-sm py-2 bg-secondary text-white rounded">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="h4 mb-0">{{ task.title }}</h1>
-            <div class="d-flex gap-2">
+    <div class="action-toolbar-inner d-flex align-items-center gap-3">
+        <h1 class="task-page-title mb-0 me-auto"><i class="fas fa-tasks me-2" aria-hidden="true"></i>{{ task.title }}</h1>
+        <div class="d-flex gap-2 flex-shrink-0">
                 {% if task.project.time_tracking_enabled %}
                 <span id="remaining-credit-badge" class="badge {% if task.project.remaining_credit < 120 %}bg-danger{% elif task.project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
                     <i class="fas fa-clock me-1"></i>{{ task.project.remaining_credit|format_time }}
@@ -81,7 +81,6 @@
                     <i class="fas fa-trash"></i>
                 </button>
                 {% endif %}
-            </div>
         </div>
     </div>
 </div>
@@ -89,274 +88,102 @@
 <!-- Espace pour compenser la barre fixe -->
 <div class="toolbar-spacer"></div>
 
-<!-- Bloc d'informations principal -->
-<div class="card mb-4 no-collapse">
-    <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations</h5>
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            <!-- Première colonne -->
-            <div class="col-md-6">
-                <!-- Badges de temps -->
-                <div class="d-flex gap-2 mb-3">
-                    <span class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps estimé pour la tâche">
-                        <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time if task.estimated_time else 'Non défini' }}
-                    </span>
-                </div>
-
-                <!-- Statut -->
-                <div class="mb-3">
-                    <div class="status-toggle">
-                        <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
-                            <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn"
-                                    data-status="à faire" data-task-id="{{ task.id }}">
-                                <i class="fas fa-list me-1"></i>À faire
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn"
-                                    data-status="en cours" data-task-id="{{ task.id }}">
-                                <i class="fas fa-spinner me-1"></i>En cours
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn"
-                                    data-status="terminé" data-task-id="{{ task.id }}">
-                                <i class="fas fa-check me-1"></i>Terminé
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {% if task.description %}
-                    <div class="mb-3 task-info-description">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-align-left me-2 text-muted mt-1"></i>
-                            <div class="min-w-0 flex-grow-1">
-                                <strong>Description :</strong>
-                                <p class="mb-0 task-info-description-text">{{ task.description }}</p>
-                                {% if task.description|length > 250 %}
-                                <a href="#"
-                                   class="task-info-description-more text-primary text-decoration-none"
-                                   data-full-description="{{ task.description|e }}"
-                                   data-bs-toggle="modal"
-                                   data-bs-target="#taskDescriptionModal">
-                                    Voir la description complète
-                                </a>
-                                {% endif %}
+<!-- Une carte = Description + Informations (même largeur que Outils) -->
+<div class="card no-collapse task-detail-card task-detail-main-card mb-4">
+    <div class="card-body task-detail-main-body">
+        <div class="row g-3 align-items-stretch">
+            <div class="col-lg-8">
+                <div class="task-detail-block task-detail-desc-block h-100 d-flex flex-column min-h-0">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <h6 class="task-tool-title mb-0"><i class="fas fa-file-alt me-1"></i>Description</h6>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="status-toggle">
+                                <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
+                                    <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn"
+                                            data-status="à faire" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-list me-1"></i>À faire
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn"
+                                            data-status="en cours" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-spinner me-1"></i>En cours
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn"
+                                            data-status="terminé" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-check me-1"></i>Terminé
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                {% endif %}
-
-                <div class="d-flex flex-column gap-2">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-project-diagram me-2 text-muted"></i>
-                        <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none project-name">{{ task.project.name }}</a>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-building me-2 text-muted"></i>
-                        <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-user me-2 text-muted"></i>
-                        <span>{{ task.assigned_to.name if task.user_id else 'Non assigné' }}</span>
-                    </div>
-                </div>
-
-                <!-- Pièces jointes (colonne gauche, au-dessus du temps pour rester visible) -->
-                <div id="task-attachments-container" class="task-attachments-container p-2 mt-3" data-task-slug="{{ task.slug }}">
-                    <h6 class="task-attachments-title mb-2">
-                        <i class="fas fa-paperclip me-1"></i>Pièces jointes
-                        <span class="badge bg-secondary ms-1" id="attachments-count">{{ task_attachments|length }}</span>
-                    </h6>
-                    <ul id="task-attachments-list" class="list-group list-group-flush list-group-sm">
-                        {% for att in task_attachments %}
-                        <li class="list-group-item d-flex align-items-center py-1 px-2 task-attachment-item" data-attachment-id="{{ att.id }}">
-                            <a href="{{ url_for('tasks.download_task_attachment', slug_or_id=task.slug, file_id=att.id) }}" class="text-decoration-none flex-grow-1 text-truncate me-2" title="Télécharger {{ att.name }}">
-                                <i class="fas fa-file-alt me-1 text-muted"></i>
-                                <span class="task-attachment-name">{{ att.name }}</span>
-                                <small class="text-muted">({{ (att.size / 1024)|round(1) }} Ko)</small>
+                    <div class="task-detail-desc-content flex-grow-1 min-h-0 overflow-auto">
+                        {% if task.description %}
+                        <div class="task-info-description mb-3">
+                            <p class="mb-0 task-info-description-text">{{ task.description }}</p>
+                            {% if task.description|length > 250 %}
+                            <a href="#"
+                               class="task-info-description-more text-primary text-decoration-none mt-1 d-inline-block"
+                               data-full-description="{{ task.description|e }}"
+                               data-bs-toggle="modal"
+                               data-bs-target="#taskDescriptionModal">
+                                Voir la description complète
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-attachment-btn" title="Supprimer" data-attachment-id="{{ att.id }}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </li>
+                            {% endif %}
+                        </div>
                         {% else %}
-                        <li id="task-attachments-empty" class="list-group-item text-muted small py-1 px-2">Aucune pièce jointe</li>
-                        {% endfor %}
-                    </ul>
-                    <form id="task-attachments-upload-form" class="mt-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="input-group input-group-sm">
-                            <input type="file" name="files" id="task-attachments-input" class="form-control form-control-sm" multiple
-                                   accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz"
-                                   aria-label="Ajouter des fichiers">
-                            <button type="submit" class="btn btn-outline-primary btn-sm" id="task-attachments-submit">
-                                <i class="fas fa-upload me-1"></i>Ajouter
-                            </button>
-                        </div>
-                        <div class="form-text small">Types autorisés : csv, pdf, zip, doc, docx, xls, xlsx, 7z, tar, gz. Plusieurs fichiers possibles.</div>
-                    </form>
-                </div>
-
-                <!-- Historique de temps -->
-                <div class="time-history p-2 mt-3 flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-history me-2 text-muted"></i>
-                            <small class="text-muted">Temps consommé</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-time-size" title="Agrandir/Réduire">
-                                <i class="fas fa-expand-alt"></i>
-                            </button>
-                            <span id="total-time-badge" class="badge bg-light text-dark" data-bs-toggle="tooltip" title="Temps total passé sur la tâche">
-                                <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
-                            </span>
+                        <p class="text-muted small mb-0">Aucune description.</p>
+                        {% endif %}
+                        <hr class="my-3">
+                        <div class="task-contexte small">
+                            <strong class="d-block mb-2 text-muted">Contexte</strong>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-1">
+                                    <i class="fas fa-project-diagram me-2 text-muted"></i>
+                                    <span class="text-muted">Projet :</span>
+                                    <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none project-name">{{ task.project.name }}</a>
+                                </li>
+                                <li class="mb-1">
+                                    <i class="fas fa-building me-2 text-muted"></i>
+                                    <span class="text-muted">Client :</span>
+                                    <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
+                                </li>
+                                <li>
+                                    <i class="fas fa-user me-2 text-muted"></i>
+                                    <span class="text-muted">Assigné à :</span> {{ task.assigned_to.name if task.user_id else 'Non assigné' }}
+                                </li>
+                            </ul>
                         </div>
                     </div>
-                    {% if time_entries %}
-                        <div class="list-group list-group-flush">
-                            {% for entry in time_entries %}
-                                <div class="list-group-item py-1 px-2 time-entry-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-minus me-1 text-danger"></i>
-                                            <span class="text-danger">
-                                                {{ entry.hours|format_time }}
-                                            </span>
-                                        </div>
-                                        <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
-                                    </div>
-                                    <small class="text-muted d-block">{{ entry.user.name }}</small>
-                                    {% if entry.description %}
-                                    <small class="text-muted d-block mt-1">{{ entry.description }}</small>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-muted small">Aucun temps enregistré</div>
-                    {% endif %}
                 </div>
             </div>
-
-            <!-- Deuxième colonne -->
-            <div class="col-md-6">
-                <div class="d-flex flex-column h-100">
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex align-items-center">
+            <div class="col-lg-4">
+                <div class="task-detail-block task-detail-info-block h-100">
+                    <h6 class="task-tool-title mb-2"><i class="fas fa-info-circle me-1"></i>Informations</h6>
+                    <div class="task-info-compact">
+                        <div class="d-flex align-items-center mb-2">
                             <i class="fas fa-flag me-2 text-muted"></i>
-                            <span class="badge bg-{{ task.priority }}">{{ task.priority }}</span>
+                            <span class="badge bg-{{ task.priority|priority_color }}">{{ task.priority }}</span>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-calendar me-2 text-muted"></i>
-                            <span>Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</span>
-                        </div>
+                        <div class="small text-muted mb-1">Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</div>
                         {% if task.completed_at %}
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle me-2 text-muted"></i>
-                            <span>Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</span>
-                        </div>
+                        <div class="small text-muted mb-1">Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</div>
                         {% endif %}
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-clock me-2 text-muted"></i>
-                            <span>Dernière activité :
-                                {% if comments %}
-                                    {{ comments[0].created_at.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    {{ task.updated_at.strftime('%d/%m/%Y %H:%M') }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-repeat me-2 text-muted"></i>
-                            <span>
-                                <strong>Récurrence :</strong>
+                        <div class="small text-muted mb-2">Dernière activité : {% if comments %}{{ comments[0].created_at.strftime('%d/%m %H:%M') }}{% else %}{{ task.updated_at.strftime('%d/%m %H:%M') }}{% endif %}</div>
+                        <div class="d-flex align-items-start gap-2 mb-2">
+                            <div class="small flex-grow-1">
                                 <span id="recurrence-summary-text">{{ recurrence_info.summary }}</span>
-                                <span id="recurrence-next-text" class="text-muted small">
-                                    {% if recurrence_info.next_date %}
-                                        (Prochaine : {{ recurrence_info.next_date }})
-                                    {% endif %}
-                                </span>
-                            </span>
-                            <div class="ms-auto btn-group btn-group-sm" role="group" aria-label="Gérer la récurrence">
-                                <button type="button"
-                                        class="btn btn-outline-secondary"
-                                        id="recurrence-edit-btn"
-                                        data-task-slug="{{ task.slug }}"
-                                        data-bs-toggle="tooltip"
-                                        title="{% if task.recurrence_series %}Modifier la récurrence{% else %}Ajouter une récurrence{% endif %}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-outline-danger"
-                                        id="recurrence-delete-btn"
-                                        data-task-slug="{{ task.slug }}"
-                                        {% if not task.recurrence_series %}disabled{% endif %}
-                                        data-bs-toggle="tooltip"
-                                        title="Supprimer la récurrence">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <span id="recurrence-next-text" class="text-muted">{% if recurrence_info.next_date %}({{ recurrence_info.next_date }}){% endif %}</span>
+                            </div>
+                            <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Récurrence">
+                                <button type="button" class="btn btn-outline-secondary py-0 px-1" id="recurrence-edit-btn" data-task-slug="{{ task.slug }}" data-bs-toggle="tooltip" title="{% if task.recurrence_series %}Modifier{% else %}Ajouter{% endif %}"><i class="fas fa-edit"></i></button>
+                                <button type="button" class="btn btn-outline-danger py-0 px-1" id="recurrence-delete-btn" data-task-slug="{{ task.slug }}" {% if not task.recurrence_series %}disabled{% endif %} data-bs-toggle="tooltip" title="Supprimer"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Checklist -->
-                    <div id="checklist-container" class="checklist-container p-2 mt-3" data-task-id="{{ task.id }}">
-                        <div class="checklist-header d-flex justify-content-between align-items-center">
-                            <h6 class="checklist-title mb-0">
-                                <i class="fas fa-tasks me-1"></i>Checklist
-                            </h6>
-                            <div class="checklist-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 me-2 toggle-checklist-size" title="Agrandir/Réduire">
-                                    <i class="fas fa-expand-alt"></i>
-                                </button>
-                                {% if task.recurrence_series %}
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-primary py-0 px-2 me-2"
-                                        id="sync-checklist-future-button"
-                                        data-bs-toggle="tooltip"
-                                        title="Appliquer la checklist aux occurrences futures">
-                                    <i class="fas fa-repeat"></i>
-                                </button>
-                                {% endif %}
-                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-checklist-shortcode-button">
-                                    <i class="fas fa-code me-1"></i>Shortcode
-                                </button>
-                            </div>
+                        <div class="pt-2 border-top">
+                            <button type="button" class="time-total-trigger" data-bs-toggle="modal" data-bs-target="#timeHistoryModal" title="Voir l'historique du temps">
+                                <span class="small text-muted">Temps total :</span>
+                                <span id="total-time-badge" class="time-total-badge">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
+                            </button>
                         </div>
-
-                        <div id="checklist-items" class="checklist-items">
-                            {% for item in task.checklist_items|sort(attribute='position') %}
-                            <div class="checklist-item" data-id="{{ item.id }}">
-                                <div class="form-check d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center flex-grow-1">
-                                        <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
-                                        <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
-                                            <i class="fas fa-grip-vertical text-muted"></i>
-                                        </div>
-                                        <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}">
-                                            <span class="checklist-content">{{ item.content }}</span>
-                                        </label>
-                                    </div>
-                                    <div class="btn-group btn-group-sm ms-2">
-                                        <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le formulaire de temps" {% if not item.is_checked %}disabled{% endif %}>
-                                            <i class="fas fa-clock"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 delete-checklist-item" title="Supprimer">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        <form id="add-checklist-item-form" class="checklist-add-form mt-1">
-                            <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist...">
-                            <span class="checklist-add-form-hint text-muted">
-                                <i class="fas fa-keyboard"></i>Entrée
-                            </span>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -364,8 +191,126 @@
     </div>
 </div>
 
+<!-- Outils : une carte, même largeur que la carte au-dessus -->
+<div class="card no-collapse task-detail-card task-tools-card mb-3">
+            <div class="card-header task-detail-card-header py-2">
+                <h5 class="mb-0 small"><i class="fas fa-wrench me-2"></i>Outils</h5>
+            </div>
+            <div class="card-body task-tools-body">
+                <div class="row g-3">
+                    <!-- Pièces jointes -->
+                    <div class="col-md-5 col-lg-4">
+                        <div class="task-tool-block h-100">
+                            <h6 class="task-tool-title">
+                                <i class="fas fa-paperclip me-1"></i>Pièces jointes
+                                <span class="badge bg-secondary ms-1" id="attachments-count">{{ task_attachments|length }}</span>
+                            </h6>
+                            <div id="task-attachments-container" data-task-slug="{{ task.slug }}">
+                                <ul id="task-attachments-list" class="list-group list-group-flush list-group-sm task-tool-list">
+                                    {% for att in task_attachments %}
+                                    <li class="list-group-item d-flex align-items-center py-1 px-2 task-attachment-item" data-attachment-id="{{ att.id }}">
+                                        <a href="{{ url_for('tasks.download_task_attachment', slug_or_id=task.slug, file_id=att.id) }}" class="text-decoration-none flex-grow-1 text-truncate me-2 small" title="Télécharger {{ att.name }}">
+                                            <i class="fas fa-file-alt me-1 text-muted"></i><span class="task-attachment-name">{{ att.name }}</span> <small class="text-muted">({{ (att.size / 1024)|round(1) }} Ko)</small>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-link text-danger py-0 px-1 delete-attachment-btn" title="Supprimer" data-attachment-id="{{ att.id }}"><i class="fas fa-times"></i></button>
+                                    </li>
+                                    {% else %}
+                                    <li id="task-attachments-empty" class="list-group-item text-muted small py-1 px-2">Aucune pièce jointe</li>
+                                    {% endfor %}
+                                </ul>
+                                <form id="task-attachments-upload-form" class="mt-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="file" name="files" id="task-attachments-input" class="form-control form-control-sm" multiple accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz" aria-label="Fichiers">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm" id="task-attachments-submit"><i class="fas fa-upload"></i></button>
+                                    </div>
+                                    <div class="form-text small">csv, pdf, zip, doc, xls…</div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Checklist : plus large, éventuellement plusieurs colonnes -->
+                    <div class="col-md-7 col-lg-8">
+                        <div class="task-tool-block task-tool-checklist task-tool-checklist-wide h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="task-tool-title mb-0"><i class="fas fa-tasks me-1"></i>Checklist</h6>
+                                <div class="checklist-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 me-1 toggle-checklist-size" title="Agrandir/Réduire"><i class="fas fa-expand-alt"></i></button>
+                                    {% if task.recurrence_series %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 me-1" id="sync-checklist-future-button" data-bs-toggle="tooltip" title="Appliquer aux occurrences futures"><i class="fas fa-repeat"></i></button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1" id="add-checklist-shortcode-button" title="Shortcode"><i class="fas fa-code"></i></button>
+                                </div>
+                            </div>
+                            <div id="checklist-container" class="checklist-container" data-task-id="{{ task.id }}">
+                                <div id="checklist-items" class="checklist-items">
+                                    {% for item in task.checklist_items|sort(attribute='position') %}
+                                    <div class="checklist-item" data-id="{{ item.id }}">
+                                        <div class="form-check d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
+                                                <div class="checklist-drag-handle me-2" title="Déplacer"><i class="fas fa-grip-vertical text-muted"></i></div>
+                                                <label class="form-check-label mb-0 small" for="checklist-item-{{ item.id }}"><span class="checklist-content">{{ item.content }}</span></label>
+                                            </div>
+                                            <div class="btn-group btn-group-sm ms-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-1 copy-to-time-btn {% if not item.is_checked %}disabled{% endif %}" title="Copier dans le temps" {% if not item.is_checked %}disabled{% endif %}><i class="fas fa-clock"></i></button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 delete-checklist-item" title="Supprimer"><i class="fas fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <form id="add-checklist-item-form" class="checklist-add-form mt-1">
+                                    <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément...">
+                                    <span class="checklist-add-form-hint text-muted small"><i class="fas fa-keyboard"></i> Entrée</span>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+</div><!-- /.task-detail-layout -->
+
 <!-- Conteneur de toasts -->
 <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<!-- Modal Historique du temps (ouverte au clic sur "Temps total" dans Informations) -->
+<div class="modal fade" id="timeHistoryModal" tabindex="-1" aria-labelledby="timeHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="timeHistoryModalLabel">
+                    <i class="fas fa-history me-2"></i>Historique du temps
+                    <span id="total-time-badge-modal" class="badge bg-light text-dark ms-2">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="time-history">
+                    {% if time_entries %}
+                    <div class="list-group list-group-flush">
+                        {% for entry in time_entries %}
+                        <div class="list-group-item py-2 px-0 time-entry-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-medium">{{ entry.hours|format_time }}</span>
+                                <small class="text-muted">{{ entry.created_at.strftime('%d/%m %H:%M') }}</small>
+                            </div>
+                            <small class="text-muted d-block">{{ entry.user.name }}</small>
+                            {% if entry.description %}<small class="text-muted d-block mt-1">{{ entry.description }}</small>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted small mb-0">Aucun temps enregistré</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal récurrence -->
 <div class="modal fade" id="recurrenceModal" tabindex="-1" aria-labelledby="recurrenceModalLabel" aria-hidden="true">
@@ -549,8 +494,9 @@
 </div>
 {% endif %}
 
-<!-- Deuxième rangée avec les commentaires -->
-<div class="card mb-4 no-collapse">
+<!-- Commentaires : même largeur que le contenu au-dessus -->
+<div class="task-detail-layout">
+<div class="card mb-4 no-collapse task-detail-card">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Commentaires</h5>
         <span class="badge bg-light text-secondary">{{ comments|length }}</span>
@@ -705,6 +651,7 @@
         {% endif %}
     </div>
 </div>
+</div><!-- /.task-detail-layout (commentaires) -->
 
 <!-- Modal de suppression -->
 <div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">

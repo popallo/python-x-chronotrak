@@ -284,13 +284,13 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 /* Checklist plus large dans Outils : 2 colonnes sur grand écran si beaucoup d’items */
 /* Checklist : une seule colonne, hauteur maîtrisée, style pro */
 .task-tool-checklist-wide .checklist-header-strip {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
 }
 .task-tool-checklist-wide .checklist-progress-wrap {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.35rem;
+    margin-top: 0.25rem;
 }
 .task-tool-checklist-wide .checklist-progress-bar {
     flex: 1;
@@ -311,6 +311,7 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     font-variant-numeric: tabular-nums;
 }
 .task-tool-checklist-wide .checklist-container {
+    margin-top: 0;
     max-height: 220px;
 }
 .task-tool-checklist-wide .checklist-container.expanded {
@@ -322,6 +323,8 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 .task-tool-checklist-wide .checklist-items {
     min-height: 80px;
     max-height: 165px;
+    padding-top: 0;
+    margin-top: 0;
 }
 /* Élément coché = barré, discret, lecture rapide */
 .task-tool-checklist-wide .checklist-item.is-checked .checklist-content {
@@ -514,10 +517,6 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     transition: padding var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .checklist-item {
-    padding: 0.75rem 0;
-}
-
 .checklist-item .form-check {
     flex: 1;
     display: flex;
@@ -536,19 +535,11 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     transition: font-size var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .checklist-item .form-check-label {
-    font-size: 1rem;
-}
-
 .checklist-item .checklist-content {
     flex: 1;
     word-break: break-word;
     font-size: 0.9rem;
     transition: font-size var(--transition-duration) ease;
-}
-
-.checklist-container.expanded .checklist-item .checklist-content {
-    font-size: 1rem;
 }
 
 .checklist-item .btn-group {
@@ -577,11 +568,6 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 .checklist-add-form .form-control {
     font-size: 0.9rem;
     padding-right: 100px;
-    transition: font-size var(--transition-duration) ease;
-}
-
-.checklist-container.expanded .checklist-add-form .form-control {
-    font-size: 1rem;
 }
 
 .checklist-add-form-hint {

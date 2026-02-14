@@ -639,6 +639,11 @@ textarea.comment-input::placeholder {
     gap: 2rem;
 }
 
+/* Liste en modal (sans marge haute) */
+.comments-modal-list.comment-list {
+    margin-top: 0;
+}
+
 /* Commentaires principaux */
 .comment-item {
     position: relative;

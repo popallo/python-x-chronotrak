@@ -178,10 +178,14 @@
                                 <button type="button" class="btn btn-outline-danger py-0 px-1" id="recurrence-delete-btn" data-task-slug="{{ task.slug }}" {% if not task.recurrence_series %}disabled{% endif %} data-bs-toggle="tooltip" title="Supprimer"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                        <div class="pt-2 border-top">
+                        <div class="pt-2 border-top d-flex flex-wrap align-items-center gap-3">
                             <button type="button" class="time-total-trigger" data-bs-toggle="modal" data-bs-target="#timeHistoryModal" title="Voir l'historique du temps">
                                 <span class="small text-muted">Temps total :</span>
                                 <span id="total-time-badge" class="time-total-badge">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
+                            </button>
+                            <button type="button" class="comments-count-trigger time-total-trigger" data-bs-toggle="modal" data-bs-target="#commentsModal" title="Voir les commentaires">
+                                <span class="small text-muted">Commentaires :</span>
+                                <span id="comments-count-badge" class="time-total-badge">{{ comments|length }}</span>
                             </button>
                         </div>
                     </div>
@@ -319,6 +323,51 @@
                     <p class="text-muted small mb-0">Aucun temps enregistré</p>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Commentaires (ouverte au clic sur "Commentaires" dans Informations) -->
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="commentsModalLabel">
+                    <i class="fas fa-comments me-2"></i>Commentaires
+                    <span class="badge bg-light text-dark ms-2" id="comments-modal-badge">{{ comments|length }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                {% if comments %}
+                <div class="comment-list comments-modal-list">
+                    {% for comment in comments %}
+                    <div class="comment-item {% if comment.user_id == current_user.id %}own-comment{% endif %}">
+                        <div class="comment-header">
+                            <span class="comment-author">{{ comment.user.name }}</span>
+                            <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        <div class="comment-content">{{ comment.content }}</div>
+                        {% if comment.replies %}
+                        <div class="comment-replies">
+                            {% for reply in comment.replies %}
+                            <div class="comment-reply {% if reply.user_id == current_user.id %}own-comment{% endif %}">
+                                <div class="comment-header">
+                                    <span class="comment-author">{{ reply.user.name }}</span>
+                                    <span class="comment-time">{{ reply.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                </div>
+                                <div class="comment-content">{{ reply.content }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Aucun commentaire.</p>
+                {% endif %}
             </div>
         </div>
     </div>

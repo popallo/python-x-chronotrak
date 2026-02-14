@@ -131,7 +131,7 @@ def validate_file_upload(stream, filename: str) -> tuple[bool, str]:
     size = stream.tell()
     stream.seek(0)
     if size > max_size:
-        return False, f"Fichier trop volumineux (max {max_size // (1024*1024)} Mo)."
+        return False, f"Fichier trop volumineux (max {max_size // (1024 * 1024)} Mo)."
     if size == 0:
         return False, "Fichier vide."
 

@@ -309,11 +309,24 @@ class Task(db.Model):
         # Déduit du crédit du projet
         self.project.deduct_credit(hours, self.id)
 
-    def add_checklist_item(self, content, position=None):
-        """Ajoute un élément à la checklist"""
+    def add_checklist_item(self, content, position=None, insert_above_first_checked=True):
+        """Ajoute un élément à la checklist.
+        Si position est None et insert_above_first_checked=True : insère au-dessus du premier
+        élément coché (le plus haut dans la liste), ou à la fin s'il n'y a aucun élément coché.
+        Si insert_above_first_checked=False (ex. shortcode) : ajoute à la fin."""
+        items = ChecklistItem.query.filter_by(task_id=self.id).order_by(ChecklistItem.position.asc()).all()
         if position is None:
-            # Si aucune position n'est spécifiée, ajouter à la fin
-            position = len(self.checklist_items)
+            if insert_above_first_checked:
+                first_checked = next((it for it in items if it.is_checked), None)
+                if first_checked is not None:
+                    position = first_checked.position
+                    for it in items:
+                        if it.position >= position:
+                            it.position += 1
+                else:
+                    position = len(items)
+            else:
+                position = len(items)
 
         item = ChecklistItem(content=content, position=position, task_id=self.id)
         db.session.add(item)
@@ -335,10 +348,10 @@ class Task(db.Model):
             # Diviser par les virgules et nettoyer les guillemets
             items = [item.strip().strip("\"'") for item in content.split(",")]
 
-            # Ajouter chaque élément à la checklist
+            # Ajouter chaque élément à la checklist (à la fin, pour garder l'ordre du shortcode)
             for item in items:
                 if item:  # Ignorer les éléments vides
-                    self.add_checklist_item(item)
+                    self.add_checklist_item(item, insert_above_first_checked=False)
 
             return True
         return False

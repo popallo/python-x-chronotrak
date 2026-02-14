@@ -7,6 +7,29 @@
     z-index: 1020;
 }
 
+/* Wrapper vue tâche : padding unique pour titre + cartes + Outils (alignement cohérent) */
+.task-detail-layout {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+@media (min-width: 992px) {
+    .task-detail-layout {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+/* Titre de la page tâche : à gauche (me-auto), taille discrète */
+.task-page-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left !important;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 100%;
+}
+
 /* S'assurer que les dropdowns de la navigation sont au-dessus de la barre d'outils */
 .navbar .dropdown-menu {
     z-index: 1035;
@@ -17,14 +40,335 @@
 }
 
 /* ==========================================================================
-   Bloc informations
+   Vue tâche : colonne principale (défile) + encart Informations fixe
+   ========================================================================== */
+.task-main-col {
+    min-width: 0;
+}
+
+.task-main-content {
+    padding-right: 0;
+}
+
+/* Encart Informations : plus de sticky (grille = même hauteur que Description) */
+
+.task-info-sticky .card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Encart Informations : compact, même hauteur que Description (card en flex) */
+.task-info-sticky .card.task-detail-card .card-body {
+    flex-grow: 1;
+}
+
+/* Encart Informations : compact, pas de scroll */
+.task-info-compact {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+}
+
+.task-info-compact .border-top {
+    border-color: var(--bs-border-color) !important;
+}
+
+.task-info-desc-short .task-info-description-text {
+    -webkit-line-clamp: 3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: pre-line;
+}
+
+/* Modal Historique du temps */
+#timeHistoryModal .time-history {
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+#timeHistoryModal .time-entry-item {
+    border-color: var(--bs-border-color) !important;
+}
+
+/* Petits écrans : Outils et contenu lisibles */
+@media (max-width: 991px) {
+    .task-outils-row {
+        margin-top: 0;
+    }
+
+    .task-tools-body .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .task-tool-block {
+        min-height: 0;
+    }
+}
+
+/* Encart Outils : défile avec la page */
+.task-tools-body {
+    padding: 1rem;
+}
+
+/* Outils pleine largeur : Temps | PJ | Checklist côte à côte (ou empilés sur petit écran) */
+.task-tools-card .task-tools-body {
+    padding: 1rem;
+}
+
+.task-tools-body .row.g-3 {
+    align-items: stretch;
+}
+
+.task-tools-body .row .task-tool-block.h-100 {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-tools-body .row .task-tool-block.h-100 #task-attachments-container,
+.task-tools-body .row .task-tool-block.h-100 #checklist-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-tools-body .row .task-tool-block.h-100 .task-tool-list,
+.task-tools-body .row .task-tool-block.h-100 .checklist-items {
+    flex: 1;
+    min-height: 100px;
+}
+
+/* ==========================================================================
+   Vue tâche : meilleure largeur, cohérence, dark mode
+   ========================================================================== */
+/* Vue tâche : main sans double padding (le wrapper .task-detail-layout a le padding) */
+main.container:has(.task-detail-layout) {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.task-detail-row {
+    max-width: 100%;
+}
+
+/* Description | Informations : même hauteur (row stretch + colonnes flex) */
+.task-detail-row .task-main-col.d-flex,
+.task-detail-row .col-lg-4.d-flex {
+    min-height: 0;
+}
+
+
+.task-detail-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color);
+}
+
+.task-main-col .card.task-detail-card {
+    min-height: 0;
+}
+
+/* En-têtes de cartes : style unifié (clair = gris léger, dark = surbrillance) */
+.task-detail-card-header {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.task-detail-card-header-info {
+    background-color: var(--bs-secondary) !important;
+    color: #fff !important;
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.task-detail-card .card-body {
+    padding: 1.25rem;
+}
+
+/* Description : le contenu utilise toute la largeur */
+.task-main-col .task-info-description-text {
+    max-width: 100%;
+    line-height: 1.6;
+}
+
+.task-main-col .task-contexte {
+    max-width: 100%;
+}
+
+/* ---- Dark mode : vue tâche ---- */
+html.dark-mode body .task-detail-card {
+    background-color: var(--dm-bg-card);
+    border-color: var(--dm-border);
+}
+
+html.dark-mode body .task-detail-card-header {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: var(--dm-border);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-detail-card-header-info {
+    background-color: var(--bs-secondary) !important;
+    color: #fff !important;
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.dark-mode body .task-detail-card .card-body {
+    background-color: var(--dm-bg-card);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-info-compact {
+    background-color: var(--dm-bg-card);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-info-compact .text-muted {
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode body .task-info-compact .border-top {
+    border-color: var(--dm-border) !important;
+}
+
+html.dark-mode body .task-tool-block {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: var(--dm-border);
+}
+
+html.dark-mode body .task-detail-card .badge.bg-light,
+html.dark-mode body .task-detail-card .badge.bg-secondary {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: var(--dm-text) !important;
+}
+
+html.dark-mode body .task-detail-card .hr,
+html.dark-mode body .task-detail-card hr {
+    border-color: var(--dm-border);
+}
+
+html.dark-mode body .task-detail-card .list-group-item {
+    background-color: transparent;
+    border-color: var(--dm-border);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-detail-card .form-control {
+    background-color: var(--dm-bg-elevated);
+    border-color: var(--dm-border);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-detail-card .form-control:focus {
+    background-color: var(--dm-bg-elevated);
+    border-color: var(--bs-primary);
+    color: var(--dm-text);
+}
+
+html.dark-mode body .task-detail-card .card-body a:not(.btn),
+html.dark-mode body .task-info-compact a:not(.btn) {
+    color: var(--bs-primary-light, #7dd3fc);
+}
+
+html.dark-mode body .task-detail-card .card-body a:not(.btn):hover,
+html.dark-mode body .task-info-compact a:not(.btn):hover {
+    color: var(--bs-info);
+}
+
+/* Outils : blocs séparés (PJ, Temps, Checklist) */
+.task-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.task-tool-block {
+    background: var(--panel-bg);
+    border: var(--panel-border);
+    border-radius: var(--panel-radius);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--panel-shadow);
+}
+
+.task-tool-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--bs-body-color);
+}
+
+.task-tool-list {
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.task-tool-checklist .checklist-container {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+    min-height: 120px;
+    max-height: var(--checklist-max-height);
+}
+
+.task-tool-checklist .checklist-header {
+    display: none;
+}
+
+.task-tool-checklist .checklist-items {
+    margin-top: 0;
+}
+
+.task-tool-checklist .checklist-add-form {
+    margin-top: 0.5rem;
+}
+
+/* Checklist plus large dans Outils : 2 colonnes sur grand écran si beaucoup d’items */
+.task-tool-checklist-wide .checklist-items {
+    min-height: 120px;
+}
+
+@media (min-width: 992px) {
+    .task-tool-checklist-wide .checklist-items {
+        column-count: 2;
+        column-gap: 1.5rem;
+    }
+
+    .task-tool-checklist-wide .checklist-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* Temps dans l'outil */
+.task-tool-block .time-history {
+    max-height: var(--time-history-max-height);
+    overflow-y: auto;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.task-tool-block .time-history.expanded {
+    max-height: var(--time-history-expanded-max-height);
+}
+
+.task-tool-block .time-entry-item {
+    font-size: 0.8rem;
+    border-color: var(--bs-border-color) !important;
+}
+
+/* ==========================================================================
+   Bloc informations (legacy / card global)
    ========================================================================== */
 .card-header h5 {
     font-size: 1rem;
     margin: 0;
 }
 
-/* Assurer que les colonnes ont la même hauteur */
 .card-body .row {
     display: flex;
     align-items: stretch;
@@ -45,15 +389,53 @@
     font-weight: 600;
 }
 
-/* Status toggle */
-.card-body .status-toggle .btn-group {
-    margin-top: 0.25rem;
+/* Status toggle — compact pour gagner en hauteur (dans l’en-tête Description) */
+.task-detail-card .card-header .status-toggle .btn-group {
+    margin: 0;
 }
 
-.card-body .status-toggle .btn {
-    font-size: 0.8rem;
-    padding: 0.25rem 0.5rem;
+.task-detail-card .card-header .status-toggle .btn {
+    font-size: 0.75rem !important;
+    padding: 0.15rem 0.4rem !important;
+    line-height: 1.25 !important;
+    min-height: 0 !important;
     white-space: nowrap;
+}
+
+/* Clic « Temps total » → ouvre modale historique (style moderne, pas lien souligné) */
+.time-total-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    margin: 0 -0.25rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.time-total-trigger:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+.time-total-trigger:focus-visible {
+    outline: 2px solid var(--bs-primary, #0d6efd);
+    outline-offset: 2px;
+}
+.time-total-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: inherit;
+}
+.time-total-trigger:hover .time-total-badge {
+    background-color: rgba(0, 0, 0, 0.12);
 }
 
 /* Description dans l'encart Informations (tronquée + lien voir plus) */
@@ -683,6 +1065,16 @@ textarea.comment-input::placeholder {
     --panel-border: 1px solid rgba(255, 255, 255, 0.1);
     --panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     --panel-bg: rgba(255, 255, 255, 0.04);
+}
+
+[data-bs-theme="dark"] .time-total-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+[data-bs-theme="dark"] .time-total-badge {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+[data-bs-theme="dark"] .time-total-trigger:hover .time-total-badge {
+    background-color: rgba(255, 255, 255, 0.18);
 }
 
 /* ==========================================================================

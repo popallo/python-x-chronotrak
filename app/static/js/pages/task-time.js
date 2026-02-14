@@ -41,11 +41,12 @@ function formatTime(hours) {
 
 // Fonction pour mettre à jour l'interface après l'ajout de temps
 async function updateTimeInterface(data) {
-    // Mettre à jour le temps total
+    // Mettre à jour le temps total (Informations + badge dans la modale Historique)
+    const formatted = data.task.actual_time !== undefined && data.task.actual_time !== null ? formatTime(data.task.actual_time) : '0 min';
     const timeBadge = document.getElementById('total-time-badge');
-    if (timeBadge && data.task.actual_time !== undefined && data.task.actual_time !== null) {
-        timeBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(data.task.actual_time)}`;
-    }
+    if (timeBadge) timeBadge.textContent = formatted;
+    const timeBadgeModal = document.getElementById('total-time-badge-modal');
+    if (timeBadgeModal) timeBadgeModal.textContent = formatted;
 
     // Mettre à jour le crédit restant directement depuis les données reçues
     if (data.task.remaining_credit !== null && data.task.remaining_credit !== undefined) {

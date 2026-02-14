@@ -32,7 +32,7 @@
 <!-- Barre d'actions fixe : même retrait que les cartes -->
 <div class="action-toolbar sticky-top shadow-sm py-2 bg-secondary text-white rounded">
     <div class="action-toolbar-inner d-flex align-items-center gap-3">
-        <h1 class="task-page-title mb-0 me-auto">{{ task.title }}</h1>
+        <h1 class="task-page-title mb-0 me-auto"><i class="fas fa-tasks me-2" aria-hidden="true"></i>{{ task.title }}</h1>
         <div class="d-flex gap-2 flex-shrink-0">
                 {% if task.project.time_tracking_enabled %}
                 <span id="remaining-credit-badge" class="badge {% if task.project.remaining_credit < 120 %}bg-danger{% elif task.project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center" data-bs-toggle="tooltip" title="Crédit restant du projet">
@@ -88,111 +88,102 @@
 <!-- Espace pour compenser la barre fixe -->
 <div class="toolbar-spacer"></div>
 
-<!-- Description | Informations : même hauteur (flex stretch), même grille que Outils -->
-<div class="row g-4 mb-4 task-detail-row align-items-stretch">
-    <div class="col-lg-8 col-xl-8 task-main-col d-flex flex-column">
-        <div class="card no-collapse task-detail-card flex-grow-1 d-flex flex-column min-h-0">
-            <div class="card-header task-detail-card-header py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <h5 class="mb-0 small"><i class="fas fa-file-alt me-2"></i>Description</h5>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div class="status-toggle">
-                        <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
-                            <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn"
-                                    data-status="à faire" data-task-id="{{ task.id }}">
-                                <i class="fas fa-list me-1"></i>À faire
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn"
-                                    data-status="en cours" data-task-id="{{ task.id }}">
-                                <i class="fas fa-spinner me-1"></i>En cours
-                            </button>
-                            <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn"
-                                    data-status="terminé" data-task-id="{{ task.id }}">
-                                <i class="fas fa-check me-1"></i>Terminé
-                            </button>
+<!-- Une carte = Description + Informations (même largeur que Outils) -->
+<div class="card no-collapse task-detail-card task-detail-main-card mb-4">
+    <div class="card-body task-detail-main-body">
+        <div class="row g-3 align-items-stretch">
+            <div class="col-lg-8">
+                <div class="task-detail-block task-detail-desc-block h-100 d-flex flex-column min-h-0">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <h6 class="task-tool-title mb-0"><i class="fas fa-file-alt me-1"></i>Description</h6>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="status-toggle">
+                                <div class="btn-group border border-secondary rounded" role="group" aria-label="Changer le statut">
+                                    <button type="button" class="btn btn-sm {% if task.status == 'à faire' %}btn-info{% else %}btn-outline-info{% endif %} status-btn"
+                                            data-status="à faire" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-list me-1"></i>À faire
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'en cours' %}btn-warning{% else %}btn-outline-warning{% endif %} status-btn"
+                                            data-status="en cours" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-spinner me-1"></i>En cours
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if task.status == 'terminé' %}btn-success{% else %}btn-outline-success{% endif %} status-btn"
+                                            data-status="terminé" data-task-id="{{ task.id }}">
+                                        <i class="fas fa-check me-1"></i>Terminé
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <span class="badge bg-secondary" data-bs-toggle="tooltip" title="Temps estimé">
-                        <i class="fas fa-hourglass-half me-1"></i>{{ task.estimated_time|format_time if task.estimated_time else 'Non défini' }}
-                    </span>
-                    <span class="badge bg-secondary" data-bs-toggle="tooltip" title="Temps total">
-                        <i class="fas fa-clock me-1"></i>{{ task.actual_time|format_time if task.actual_time else '0 min' }}
-                    </span>
+                    <div class="task-detail-desc-content flex-grow-1 min-h-0 overflow-auto">
+                        {% if task.description %}
+                        <div class="task-info-description mb-3">
+                            <p class="mb-0 task-info-description-text">{{ task.description }}</p>
+                            {% if task.description|length > 250 %}
+                            <a href="#"
+                               class="task-info-description-more text-primary text-decoration-none mt-1 d-inline-block"
+                               data-full-description="{{ task.description|e }}"
+                               data-bs-toggle="modal"
+                               data-bs-target="#taskDescriptionModal">
+                                Voir la description complète
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted small mb-0">Aucune description.</p>
+                        {% endif %}
+                        <hr class="my-3">
+                        <div class="task-contexte small">
+                            <strong class="d-block mb-2 text-muted">Contexte</strong>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-1">
+                                    <i class="fas fa-project-diagram me-2 text-muted"></i>
+                                    <span class="text-muted">Projet :</span>
+                                    <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none project-name">{{ task.project.name }}</a>
+                                </li>
+                                <li class="mb-1">
+                                    <i class="fas fa-building me-2 text-muted"></i>
+                                    <span class="text-muted">Client :</span>
+                                    <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
+                                </li>
+                                <li>
+                                    <i class="fas fa-user me-2 text-muted"></i>
+                                    <span class="text-muted">Assigné à :</span> {{ task.assigned_to.name if task.user_id else 'Non assigné' }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-body flex-grow-1 min-h-0 overflow-auto">
-                {% if task.description %}
-                <div class="task-info-description mb-3">
-                    <p class="mb-0 task-info-description-text">{{ task.description }}</p>
-                    {% if task.description|length > 250 %}
-                    <a href="#"
-                       class="task-info-description-more text-primary text-decoration-none mt-1 d-inline-block"
-                       data-full-description="{{ task.description|e }}"
-                       data-bs-toggle="modal"
-                       data-bs-target="#taskDescriptionModal">
-                        Voir la description complète
-                    </a>
-                    {% endif %}
-                </div>
-                {% else %}
-                <p class="text-muted small mb-0">Aucune description.</p>
-                {% endif %}
-                <hr class="my-3">
-                <div class="task-contexte small">
-                    <strong class="d-block mb-2 text-muted">Contexte</strong>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-1">
-                            <i class="fas fa-project-diagram me-2 text-muted"></i>
-                            <span class="text-muted">Projet :</span>
-                            <a href="{{ url_for('projects.project_details', slug_or_id=task.project.slug) }}" class="text-decoration-none project-name">{{ task.project.name }}</a>
-                        </li>
-                        <li class="mb-1">
-                            <i class="fas fa-building me-2 text-muted"></i>
-                            <span class="text-muted">Client :</span>
-                            <a href="{{ url_for('clients.client_details', slug_or_id=task.project.client.slug) }}" class="text-decoration-none">{{ task.project.client.name }}</a>
-                        </li>
-                        <li>
-                            <i class="fas fa-user me-2 text-muted"></i>
-                            <span class="text-muted">Assigné à :</span> {{ task.assigned_to.name if task.user_id else 'Non assigné' }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Colonne droite : Informations -->
-    <div class="col-lg-4 col-xl-4 d-flex flex-column">
-        <div class="task-info-sticky flex-grow-1 d-flex flex-column min-h-0">
-            <div class="card no-collapse task-detail-card flex-grow-1 d-flex flex-column min-h-0">
-                <div class="card-header task-detail-card-header task-detail-card-header-info py-2">
-                    <h5 class="mb-0 small"><i class="fas fa-info-circle me-2"></i>Informations</h5>
-                </div>
-                <div class="card-body task-info-compact flex-grow-1">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-flag me-2 text-muted"></i>
-                        <span class="badge bg-{{ task.priority|priority_color }}">{{ task.priority }}</span>
-                    </div>
-                    <div class="small text-muted mb-1">Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</div>
-                    {% if task.completed_at %}
-                    <div class="small text-muted mb-1">Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</div>
-                    {% endif %}
-                    <div class="small text-muted mb-2">Dernière activité : {% if comments %}{{ comments[0].created_at.strftime('%d/%m %H:%M') }}{% else %}{{ task.updated_at.strftime('%d/%m %H:%M') }}{% endif %}</div>
-                    <div class="d-flex align-items-start gap-2 mb-2">
-                        <div class="small flex-grow-1">
-                            <span id="recurrence-summary-text">{{ recurrence_info.summary }}</span>
-                            <span id="recurrence-next-text" class="text-muted">{% if recurrence_info.next_date %}({{ recurrence_info.next_date }}){% endif %}</span>
+            <div class="col-lg-4">
+                <div class="task-detail-block task-detail-info-block h-100">
+                    <h6 class="task-tool-title mb-2"><i class="fas fa-info-circle me-1"></i>Informations</h6>
+                    <div class="task-info-compact">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-flag me-2 text-muted"></i>
+                            <span class="badge bg-{{ task.priority|priority_color }}">{{ task.priority }}</span>
                         </div>
-                        <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Récurrence">
-                            <button type="button" class="btn btn-outline-secondary py-0 px-1" id="recurrence-edit-btn" data-task-slug="{{ task.slug }}" data-bs-toggle="tooltip" title="{% if task.recurrence_series %}Modifier{% else %}Ajouter{% endif %}"><i class="fas fa-edit"></i></button>
-                            <button type="button" class="btn btn-outline-danger py-0 px-1" id="recurrence-delete-btn" data-task-slug="{{ task.slug }}" {% if not task.recurrence_series %}disabled{% endif %} data-bs-toggle="tooltip" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        <div class="small text-muted mb-1">Créée le {{ task.created_at.strftime('%d/%m/%Y') }}</div>
+                        {% if task.completed_at %}
+                        <div class="small text-muted mb-1">Terminée le {{ task.completed_at.strftime('%d/%m/%Y') }}</div>
+                        {% endif %}
+                        <div class="small text-muted mb-2">Dernière activité : {% if comments %}{{ comments[0].created_at.strftime('%d/%m %H:%M') }}{% else %}{{ task.updated_at.strftime('%d/%m %H:%M') }}{% endif %}</div>
+                        <div class="d-flex align-items-start gap-2 mb-2">
+                            <div class="small flex-grow-1">
+                                <span id="recurrence-summary-text">{{ recurrence_info.summary }}</span>
+                                <span id="recurrence-next-text" class="text-muted">{% if recurrence_info.next_date %}({{ recurrence_info.next_date }}){% endif %}</span>
+                            </div>
+                            <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Récurrence">
+                                <button type="button" class="btn btn-outline-secondary py-0 px-1" id="recurrence-edit-btn" data-task-slug="{{ task.slug }}" data-bs-toggle="tooltip" title="{% if task.recurrence_series %}Modifier{% else %}Ajouter{% endif %}"><i class="fas fa-edit"></i></button>
+                                <button type="button" class="btn btn-outline-danger py-0 px-1" id="recurrence-delete-btn" data-task-slug="{{ task.slug }}" {% if not task.recurrence_series %}disabled{% endif %} data-bs-toggle="tooltip" title="Supprimer"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                    </div>
-                    <!-- Temps total : clic ouvre la modale Historique du temps -->
-                    <div class="pt-2 border-top">
-                        <button type="button" class="time-total-trigger" data-bs-toggle="modal" data-bs-target="#timeHistoryModal" title="Voir l'historique du temps">
-                            <span class="small text-muted">Temps total :</span>
-                            <span id="total-time-badge" class="time-total-badge">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
-                        </button>
+                        <div class="pt-2 border-top">
+                            <button type="button" class="time-total-trigger" data-bs-toggle="modal" data-bs-target="#timeHistoryModal" title="Voir l'historique du temps">
+                                <span class="small text-muted">Temps total :</span>
+                                <span id="total-time-badge" class="time-total-badge">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -200,10 +191,8 @@
     </div>
 </div>
 
-<!-- Outils : même grille que Description | Informations -->
-<div class="row g-4 mb-3 task-outils-row">
-    <div class="col-12">
-        <div class="card no-collapse task-detail-card task-tools-card">
+<!-- Outils : une carte, même largeur que la carte au-dessus -->
+<div class="card no-collapse task-detail-card task-tools-card mb-3">
             <div class="card-header task-detail-card-header py-2">
                 <h5 class="mb-0 small"><i class="fas fa-wrench me-2"></i>Outils</h5>
             </div>
@@ -281,7 +270,6 @@
                 </div>
             </div>
         </div>
-    </div>
 </div>
 
 </div><!-- /.task-detail-layout -->
@@ -506,8 +494,9 @@
 </div>
 {% endif %}
 
-<!-- Deuxième rangée avec les commentaires -->
-<div class="card mb-4 no-collapse">
+<!-- Commentaires : même largeur que le contenu au-dessus -->
+<div class="task-detail-layout">
+<div class="card mb-4 no-collapse task-detail-card">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Commentaires</h5>
         <span class="badge bg-light text-secondary">{{ comments|length }}</span>
@@ -662,6 +651,7 @@
         {% endif %}
     </div>
 </div>
+</div><!-- /.task-detail-layout (commentaires) -->
 
 <!-- Modal de suppression -->
 <div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">

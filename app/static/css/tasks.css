@@ -7,7 +7,7 @@
     z-index: 1020;
 }
 
-/* Wrapper vue tâche : padding unique pour titre + cartes + Outils (alignement cohérent) */
+/* Wrapper vue tâche : padding unique pour titre + cartes (alignement cohérent) */
 .task-detail-layout {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
@@ -17,6 +17,12 @@
         padding-left: 2rem;
         padding-right: 2rem;
     }
+}
+
+/* Titre page : même retrait que les titres de section (Description, Outils) */
+.task-detail-layout .action-toolbar-inner {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
 }
 
 /* Titre de la page tâche : à gauche (me-auto), taille discrète */
@@ -107,6 +113,21 @@
     }
 }
 
+/* Carte Description + Informations : même structure que Outils (une carte, deux blocs) */
+.task-detail-main-card .task-detail-main-body {
+    padding: 1rem;
+}
+.task-detail-main-card .task-tool-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+.task-detail-desc-block .task-detail-desc-content {
+    padding-right: 0.25rem;
+}
+.task-detail-info-block .task-info-compact {
+    padding: 0;
+}
+
 /* Encart Outils : défile avec la page */
 .task-tools-body {
     padding: 1rem;
@@ -150,15 +171,6 @@ main.container:has(.task-detail-layout) {
     padding-right: 0;
 }
 
-.task-detail-row {
-    max-width: 100%;
-}
-
-/* Description | Informations : même hauteur (row stretch + colonnes flex) */
-.task-detail-row .task-main-col.d-flex,
-.task-detail-row .col-lg-4.d-flex {
-    min-height: 0;
-}
 
 
 .task-detail-card {
@@ -390,11 +402,13 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 }
 
 /* Status toggle — compact pour gagner en hauteur (dans l’en-tête Description) */
-.task-detail-card .card-header .status-toggle .btn-group {
+.task-detail-card .card-header .status-toggle .btn-group,
+.task-detail-main-card .status-toggle .btn-group {
     margin: 0;
 }
 
-.task-detail-card .card-header .status-toggle .btn {
+.task-detail-card .card-header .status-toggle .btn,
+.task-detail-main-card .status-toggle .btn {
     font-size: 0.75rem !important;
     padding: 0.15rem 0.4rem !important;
     line-height: 1.25 !important;

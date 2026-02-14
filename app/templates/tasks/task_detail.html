@@ -178,10 +178,14 @@
                                 <button type="button" class="btn btn-outline-danger py-0 px-1" id="recurrence-delete-btn" data-task-slug="{{ task.slug }}" {% if not task.recurrence_series %}disabled{% endif %} data-bs-toggle="tooltip" title="Supprimer"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                        <div class="pt-2 border-top">
+                        <div class="pt-2 border-top d-flex flex-wrap align-items-center gap-3">
                             <button type="button" class="time-total-trigger" data-bs-toggle="modal" data-bs-target="#timeHistoryModal" title="Voir l'historique du temps">
                                 <span class="small text-muted">Temps total :</span>
                                 <span id="total-time-badge" class="time-total-badge">{{ task.actual_time|format_time if task.actual_time else '0 min' }}</span>
+                            </button>
+                            <button type="button" class="comments-count-trigger time-total-trigger" data-bs-toggle="modal" data-bs-target="#commentsModal" title="Voir les commentaires">
+                                <span class="small text-muted">Commentaires :</span>
+                                <span id="comments-count-badge" class="time-total-badge">{{ comments|length }}</span>
                             </button>
                         </div>
                     </div>
@@ -206,7 +210,17 @@
                                 <span class="badge bg-secondary ms-1" id="attachments-count">{{ task_attachments|length }}</span>
                             </h6>
                             <div id="task-attachments-container" data-task-slug="{{ task.slug }}">
-                                <ul id="task-attachments-list" class="list-group list-group-flush list-group-sm task-tool-list">
+                                <form id="task-attachments-upload-form" class="mb-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="file" name="files" id="task-attachments-input" class="d-none" multiple accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz" aria-label="Fichiers">
+                                    <div id="pj-upload-zone" class="pj-upload-zone" role="button" tabindex="0" aria-label="Ajouter des pièces jointes">
+                                        <i class="fas fa-cloud-upload-alt pj-upload-zone-icon"></i>
+                                        <span class="pj-upload-zone-text">Glissez des fichiers ici ou <strong>cliquez</strong></span>
+                                        <span class="pj-upload-zone-hint small text-muted">csv, pdf, zip, doc, xls…</span>
+                                    </div>
+                                    <button type="submit" class="d-none" id="task-attachments-submit">Envoyer</button>
+                                </form>
+                                <ul id="task-attachments-list" class="list-group list-group-flush list-group-sm task-tool-list mb-0">
                                     {% for att in task_attachments %}
                                     <li class="list-group-item d-flex align-items-center py-1 px-2 task-attachment-item" data-attachment-id="{{ att.id }}">
                                         <a href="{{ url_for('tasks.download_task_attachment', slug_or_id=task.slug, file_id=att.id) }}" class="text-decoration-none flex-grow-1 text-truncate me-2 small" title="Télécharger {{ att.name }}">
@@ -218,34 +232,36 @@
                                     <li id="task-attachments-empty" class="list-group-item text-muted small py-1 px-2">Aucune pièce jointe</li>
                                     {% endfor %}
                                 </ul>
-                                <form id="task-attachments-upload-form" class="mt-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="input-group input-group-sm">
-                                        <input type="file" name="files" id="task-attachments-input" class="form-control form-control-sm" multiple accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz" aria-label="Fichiers">
-                                        <button type="submit" class="btn btn-outline-primary btn-sm" id="task-attachments-submit"><i class="fas fa-upload"></i></button>
-                                    </div>
-                                    <div class="form-text small">csv, pdf, zip, doc, xls…</div>
-                                </form>
                             </div>
                         </div>
                     </div>
-                    <!-- Checklist : plus large, éventuellement plusieurs colonnes -->
+                    <!-- Checklist -->
                     <div class="col-md-7 col-lg-8">
                         <div class="task-tool-block task-tool-checklist task-tool-checklist-wide h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="task-tool-title mb-0"><i class="fas fa-tasks me-1"></i>Checklist</h6>
-                                <div class="checklist-actions">
+                            <div class="checklist-header-strip">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="task-tool-title mb-0"><i class="fas fa-tasks me-1"></i>Checklist</h6>
+                                    <div class="checklist-actions">
                                     <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 me-1 toggle-checklist-size" title="Agrandir/Réduire"><i class="fas fa-expand-alt"></i></button>
                                     {% if task.recurrence_series %}
                                     <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 me-1" id="sync-checklist-future-button" data-bs-toggle="tooltip" title="Appliquer aux occurrences futures"><i class="fas fa-repeat"></i></button>
                                     {% endif %}
                                     <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1" id="add-checklist-shortcode-button" title="Shortcode"><i class="fas fa-code"></i></button>
+                                    </div>
+                                </div>
+                                <div id="checklist-progress-wrap" class="checklist-progress-wrap" aria-hidden="true">
+                                    {% set cl_total = task.checklist_items|length %}
+                                    {% set cl_done = task.checklist_items|selectattr('is_checked')|list|length %}
+                                    <div class="checklist-progress-bar" role="progressbar" aria-valuenow="{{ cl_done }}" aria-valuemin="0" aria-valuemax="{{ cl_total or 1 }}" title="{{ cl_done }} / {{ cl_total }} terminés">
+                                        <span class="checklist-progress-fill" style="width: {{ (100 * cl_done / (cl_total or 1))|int }}%;"></span>
+                                    </div>
+                                    <span class="checklist-progress-text small text-muted">{{ cl_done }} / {{ cl_total }}</span>
                                 </div>
                             </div>
                             <div id="checklist-container" class="checklist-container" data-task-id="{{ task.id }}">
                                 <div id="checklist-items" class="checklist-items">
                                     {% for item in task.checklist_items|sort(attribute='position') %}
-                                    <div class="checklist-item" data-id="{{ item.id }}">
+                                    <div class="checklist-item {% if item.is_checked %}is-checked{% endif %}" data-id="{{ item.id }}">
                                         <div class="form-check d-flex align-items-center justify-content-between">
                                             <div class="d-flex align-items-center flex-grow-1">
                                                 <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
@@ -307,6 +323,51 @@
                     <p class="text-muted small mb-0">Aucun temps enregistré</p>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Commentaires (ouverte au clic sur "Commentaires" dans Informations) -->
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="commentsModalLabel">
+                    <i class="fas fa-comments me-2"></i>Commentaires
+                    <span class="badge bg-light text-dark ms-2" id="comments-modal-badge">{{ comments|length }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                {% if comments %}
+                <div class="comment-list comments-modal-list">
+                    {% for comment in comments %}
+                    <div class="comment-item {% if comment.user_id == current_user.id %}own-comment{% endif %}">
+                        <div class="comment-header">
+                            <span class="comment-author">{{ comment.user.name }}</span>
+                            <span class="comment-time">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        <div class="comment-content">{{ comment.content }}</div>
+                        {% if comment.replies %}
+                        <div class="comment-replies">
+                            {% for reply in comment.replies %}
+                            <div class="comment-reply {% if reply.user_id == current_user.id %}own-comment{% endif %}">
+                                <div class="comment-header">
+                                    <span class="comment-author">{{ reply.user.name }}</span>
+                                    <span class="comment-time">{{ reply.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                                </div>
+                                <div class="comment-content">{{ reply.content }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Aucun commentaire.</p>
+                {% endif %}
             </div>
         </div>
     </div>

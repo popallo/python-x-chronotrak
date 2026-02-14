@@ -33,6 +33,21 @@ function createCommentElement(comment) {
     div.className = `comment-item ${comment.is_own_comment ? 'own-comment' : ''}`;
     div.id = `comment-${comment.id}`;
 
+    const replyFormHtml = `
+        <div class="comment-reply-form" id="reply-form-${comment.id}" style="display: none;">
+            <form method="POST" action="/comments/${comment.id}/reply" class="reply-form">
+                <input type="hidden" name="csrf_token" value="${window.csrfToken || ''}">
+                <div class="mb-2">
+                    <textarea class="form-control" name="content" rows="2" placeholder="Écrivez votre réponse..."></textarea>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary cancel-reply-btn" data-comment-id="${comment.id}">Annuler</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Publier</button>
+                </div>
+            </form>
+        </div>
+    `;
+
     div.innerHTML = `
         <div class="comment-header">
             <span class="comment-author">${comment.user_name}</span>
@@ -57,6 +72,7 @@ function createCommentElement(comment) {
         <button type="button" class="reply-button" data-comment-id="${comment.id}">
             <i class="fas fa-reply me-1"></i>Répondre
         </button>
+        ${replyFormHtml}
         <form id="edit-form-${comment.id}" method="POST" action="/tasks/comment/${comment.id}/edit" class="edit-comment-form" style="display: none;">
             <input type="hidden" name="csrf_token" value="${window.csrfToken}">
             <div class="mb-2">
@@ -141,12 +157,14 @@ async function handleCommentSubmit(e) {
                 commentInput.value = '';
             }
 
-            // Mettre à jour le compteur
+            // Mettre à jour les compteurs (en-tête carte + encart Infos + modale)
             const badge = document.querySelector('.card-header .badge');
             if (badge) {
-                const currentCount = parseInt(badge.textContent);
+                const currentCount = parseInt(badge.textContent, 10);
                 badge.textContent = currentCount + 1;
             }
+            updateCommentsCountBadges();
+            syncCommentsModalContent();
 
             showToast('Commentaire ajouté avec succès', 'success');
         } else {
@@ -194,12 +212,12 @@ async function handleDeleteSubmit(e) {
                 if (commentElement.classList.contains('comment-item')) {
                     const badge = document.querySelector('.card-header .badge');
                     if (badge) {
-                        const currentCount = parseInt(badge.textContent);
+                        const currentCount = parseInt(badge.textContent, 10);
                         badge.textContent = Math.max(0, currentCount - 1);
                     }
 
                     // Si c'était le dernier commentaire, afficher le message "Aucun commentaire"
-                    const commentList = document.querySelector('.comment-list');
+                    const commentList = getMainCommentList();
                     if (commentList && !commentList.children.length) {
                         commentList.remove();
                         const cardBody = document.querySelector('.card-body');
@@ -210,6 +228,8 @@ async function handleDeleteSubmit(e) {
                     }
                 }
 
+                updateCommentsCountBadges();
+                syncCommentsModalContent();
                 showToast('Commentaire supprimé avec succès', 'success');
             }
         } else {
@@ -257,6 +277,7 @@ async function handleEditSubmit(e) {
             form.style.display = 'none';
             contentElement.style.display = 'block';
 
+            syncCommentsModalContent();
             showToast('Commentaire modifié avec succès', 'success');
         } else {
             throw new Error(data.error || 'Erreur lors de la modification du commentaire');
@@ -265,6 +286,98 @@ async function handleEditSubmit(e) {
         console.error('Erreur:', error);
         showToast(error.message, 'error');
     }
+}
+
+// Retourne la liste des commentaires principale (page), pas celle de la modale
+function getMainCommentList() {
+    const form = document.querySelector('form[action*="add_comment"]');
+    if (!form) return null;
+    const cardBody = form.closest('.card-body');
+    return cardBody ? cardBody.querySelector('.comment-list') : null;
+}
+
+// Construit le HTML read-only pour la modale à partir de la liste principale
+function buildCommentsModalHtml(mainList) {
+    if (!mainList || !mainList.children.length) {
+        return '<p class="text-muted mb-0">Aucun commentaire.</p>';
+    }
+    const items = [];
+    mainList.querySelectorAll(':scope > .comment-item').forEach((item) => {
+        const author = item.querySelector('.comment-author');
+        const time = item.querySelector('.comment-time');
+        const content = item.querySelector('.comment-content');
+        const authorText = author ? author.textContent.trim() : '';
+        const timeText = time ? time.textContent.trim() : '';
+        const contentText = content ? content.textContent.trim() : '';
+        const isOwn = item.classList.contains('own-comment');
+        let repliesHtml = '';
+        const repliesContainer = item.querySelector(':scope > .comment-replies');
+        if (repliesContainer && repliesContainer.children.length) {
+            const replyDivs = [];
+            repliesContainer.querySelectorAll(':scope > .comment-reply').forEach((reply) => {
+                const ra = reply.querySelector('.comment-author');
+                const rt = reply.querySelector('.comment-time');
+                const rc = reply.querySelector('.comment-content');
+                const replyOwn = reply.classList.contains('own-comment');
+                replyDivs.push(`
+                    <div class="comment-reply ${replyOwn ? 'own-comment' : ''}">
+                        <div class="comment-header">
+                            <span class="comment-author">${ra ? escapeHtml(ra.textContent.trim()) : ''}</span>
+                            <span class="comment-time">${rt ? escapeHtml(rt.textContent.trim()) : ''}</span>
+                        </div>
+                        <div class="comment-content">${rc ? escapeHtml(rc.textContent.trim()) : ''}</div>
+                    </div>
+                `);
+            });
+            repliesHtml = `<div class="comment-replies">${replyDivs.join('')}</div>`;
+        }
+        items.push(`
+            <div class="comment-item ${isOwn ? 'own-comment' : ''}">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(authorText)}</span>
+                    <span class="comment-time">${escapeHtml(timeText)}</span>
+                </div>
+                <div class="comment-content">${escapeHtml(contentText)}</div>
+                ${repliesHtml}
+            </div>
+        `);
+    });
+    return `<div class="comment-list comments-modal-list">${items.join('')}</div>`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Met à jour le contenu de la modale commentaires et les badges de comptage
+function syncCommentsModalContent() {
+    const mainList = getMainCommentList();
+    const modal = document.getElementById('commentsModal');
+    if (!modal) return;
+
+    const body = modal.querySelector('.modal-body');
+    const badgeModal = document.getElementById('comments-modal-badge');
+    const badgeInfo = document.getElementById('comments-count-badge');
+
+    if (body) {
+        body.innerHTML = buildCommentsModalHtml(mainList);
+    }
+
+    const total = mainList ? mainList.querySelectorAll(':scope > .comment-item').length : 0;
+    if (badgeModal) badgeModal.textContent = total;
+    if (badgeInfo) badgeInfo.textContent = total;
+}
+
+// Met à jour uniquement les badges de comptage (après ajout/suppression/réponse)
+function updateCommentsCountBadges() {
+    const mainList = getMainCommentList();
+    const total = mainList ? mainList.querySelectorAll(':scope > .comment-item').length : 0;
+    const badgeModal = document.getElementById('comments-modal-badge');
+    const badgeInfo = document.getElementById('comments-count-badge');
+    if (badgeModal) badgeModal.textContent = total;
+    if (badgeInfo) badgeInfo.textContent = total;
 }
 
 // Gestionnaire de clic sur le bouton de réponse
@@ -338,6 +451,8 @@ async function handleReplySubmit(e) {
             form.style.display = 'none';
             form.reset();
 
+            updateCommentsCountBadges();
+            syncCommentsModalContent();
             showToast('Réponse ajoutée avec succès', 'success');
         } else {
             throw new Error(data.error || 'Erreur lors de l\'ajout de la réponse');
@@ -394,6 +509,12 @@ function createReplyElement(reply) {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
+    // À l'ouverture de la modale commentaires, synchroniser le contenu avec la liste principale
+    const commentsModal = document.getElementById('commentsModal');
+    if (commentsModal) {
+        commentsModal.addEventListener('shown.bs.modal', syncCommentsModalContent);
+    }
+
     // Initialiser le formulaire de commentaire principal
     const commentForm = document.querySelector('form[action*="add_comment"]');
     if (commentForm) {

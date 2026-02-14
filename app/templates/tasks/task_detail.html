@@ -51,7 +51,7 @@
                         <i class="fas fa-thumbtack {% if is_pinned %}text-warning{% endif %}"></i>
                     </button>
                 </form>
-                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" data-bs-tooltip="tooltip" title="Enregistrer du temps">
+                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#timeEntryModal" title="Enregistrer du temps">
                     <i class="fas fa-clock"></i>
                 </button>
                 <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#cloneTaskModal" title="Cloner la tâche">
@@ -160,8 +160,8 @@
                     </div>
                 </div>
 
-                <!-- Historique de temps (première colonne - inversé avec checklist) -->
-                <div class="time-history border border-secondary rounded p-2 mt-3 flex-grow-1">
+                <!-- Historique de temps -->
+                <div class="time-history p-2 mt-3 flex-grow-1">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-history me-2 text-muted"></i>
@@ -263,8 +263,8 @@
                         </div>
                     </div>
 
-                    <!-- Checklist Section (deuxième colonne - inversé avec temps) -->
-                    <div id="checklist-container" class="checklist-container border border-secondary rounded p-2 mt-3" data-task-id="{{ task.id }}">
+                    <!-- Checklist -->
+                    <div id="checklist-container" class="checklist-container p-2 mt-3" data-task-id="{{ task.id }}">
                         <div class="checklist-header d-flex justify-content-between align-items-center">
                             <h6 class="checklist-title mb-0">
                                 <i class="fas fa-tasks me-1"></i>Checklist
@@ -288,16 +288,16 @@
                             </div>
                         </div>
 
-                        <div id="checklist-items" class="checklist-items" style="margin: -0.25rem 0;">
+                        <div id="checklist-items" class="checklist-items">
                             {% for item in task.checklist_items|sort(attribute='position') %}
-                            <div class="checklist-item" data-id="{{ item.id }}" style="padding: 0.25rem 0;">
+                            <div class="checklist-item" data-id="{{ item.id }}">
                                 <div class="form-check d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center flex-grow-1">
                                         <input class="form-check-input checklist-checkbox me-2" type="checkbox" id="checklist-item-{{ item.id }}" {% if item.is_checked %}checked{% endif %}>
                                         <div class="checklist-drag-handle me-2" title="Déplacer cet élément">
                                             <i class="fas fa-grip-vertical text-muted"></i>
                                         </div>
-                                        <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}" style="font-size: 0.9rem;">
+                                        <label class="form-check-label mb-0" for="checklist-item-{{ item.id }}">
                                             <span class="checklist-content">{{ item.content }}</span>
                                         </label>
                                     </div>
@@ -314,13 +314,11 @@
                             {% endfor %}
                         </div>
 
-                        <form id="add-checklist-item-form" class="checklist-add-form position-relative mt-1">
-                            <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist..." style="padding-right: 100px;">
-                            <div class="position-absolute" style="right: 10px; bottom: 10px;">
-                                <span class="text-muted" style="font-size: 0.7rem;">
-                                    <i class="fas fa-keyboard me-1"></i>Entrée
-                                </span>
-                            </div>
+                        <form id="add-checklist-item-form" class="checklist-add-form mt-1">
+                            <input type="text" id="add-checklist-item-input" class="form-control form-control-sm" placeholder="Ajouter un élément à la checklist...">
+                            <span class="checklist-add-form-hint text-muted">
+                                <i class="fas fa-keyboard"></i>Entrée
+                            </span>
                         </form>
                     </div>
                 </div>
@@ -340,7 +338,7 @@
                 <h5 class="modal-title" id="recurrenceModalLabel">
                     <i class="fas fa-repeat me-2"></i>Récurrence
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 <form id="recurrence-form">
@@ -461,7 +459,7 @@
                 <h5 class="modal-title" id="timeEntryModalLabel">
                     <i class="fas fa-clock me-2"></i>Enregistrer du temps
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 {% if task.project.time_tracking_enabled %}
@@ -677,7 +675,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteTaskModalLabel">Confirmer la suppression</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 Êtes-vous sûr de vouloir supprimer la tâche "{{ task.title }}" ? Cette action est irréversible.
@@ -700,7 +698,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="cloneTaskModalLabel">Cloner la tâche</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-2">Voulez-vous cloner la tâche <strong>"{{ task.title }}"</strong> ?</p>
@@ -773,7 +771,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="archiveTaskModalLabel">Confirmer l'archivage</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 <p>Êtes-vous sûr de vouloir archiver la tâche <strong id="archiveTaskTitle"></strong> ?</p>
@@ -795,7 +793,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="unarchiveTaskModalLabel">Confirmer le désarchivage</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 <p>Êtes-vous sûr de vouloir désarchiver la tâche <strong id="unarchiveTaskTitle"></strong> ?</p>
@@ -819,7 +817,7 @@
                 <h5 class="modal-title" id="shortcodeModalLabel">
                     <i class="fas fa-code me-2"></i>Ajouter un shortcode
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">

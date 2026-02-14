@@ -56,21 +56,6 @@
     white-space: nowrap;
 }
 
-/* Description */
-.card-body .description {
-    font-size: 0.9rem;
-    margin-top: 1rem;
-}
-
-.card-body .description strong {
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.card-body .description p {
-    margin-bottom: 0;
-}
-
 /* Description dans l'encart Informations (tronquée + lien voir plus) */
 .task-info-description {
     font-size: 0.9rem;
@@ -106,54 +91,60 @@
    Variables pour les hauteurs
    ========================================================================== */
 :root {
-    --checklist-max-height: 350px;
-    --checklist-expanded-max-height: 500px;
+    --checklist-min-height: 180px;
+    --checklist-max-height: min(55vh, 460px);
+    --checklist-expanded-max-height: min(75vh, 620px);
     --time-history-max-height: 300px;
     --time-history-expanded-max-height: 500px;
     --transition-duration: 0.3s;
+    /* Encarts checklist / temps : contour discret et relief */
+    --panel-radius: 12px;
+    --panel-border: 1px solid rgba(0, 0, 0, 0.08);
+    --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --panel-bg: rgba(0, 0, 0, 0.02);
 }
 
 /* ==========================================================================
    Checklist
    ========================================================================== */
+/* L’encart grandit avec le contenu (min-height quand vide), plafonné à max-height ; au-delà la liste scrolle et l’input reste en bas. */
 .checklist-container {
     max-width: 100%;
-    border: 1px solid var(--bs-secondary) !important;
-    transition: all var(--transition-duration) ease;
+    min-height: var(--checklist-min-height);
+    max-height: var(--checklist-max-height);
+    border: var(--panel-border);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--panel-shadow);
+    background-color: var(--panel-bg);
+    transition: max-height var(--transition-duration) ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+}
+
+.checklist-container.expanded {
+    max-height: var(--checklist-expanded-max-height);
 }
 
 .checklist-header {
     flex-shrink: 0;
 }
 
-.checklist-container.expanded {
-    max-width: 100%;
-}
-
+/* Liste : grandit avec le contenu ; quand le container atteint sa max-height, la liste scrolle. L’input reste en bas. */
 .checklist-items {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 0.5rem;
-    transition: all var(--transition-duration) ease;
-    padding: 0.25rem 0;
+    flex: 1 1 auto;
     min-height: 0;
-    max-height: var(--checklist-max-height);
-}
-
-.checklist-container.expanded .checklist-items {
-    max-height: var(--checklist-expanded-max-height);
+    overflow-y: auto;
+    margin: -0.25rem 0 0.5rem;
+    padding: 0.25rem 0;
+    transition: all var(--transition-duration) ease;
 }
 
 .checklist-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
     transition: padding var(--transition-duration) ease;
 }
 
@@ -212,22 +203,31 @@
 .checklist-add-form {
     max-width: 100%;
     margin-top: auto;
-    transition: max-width var(--transition-duration) ease;
     flex-shrink: 0;
     margin-bottom: 0;
-}
-
-.checklist-container.expanded .checklist-add-form {
-    max-width: 100%;
+    position: relative;
 }
 
 .checklist-add-form .form-control {
     font-size: 0.9rem;
+    padding-right: 100px;
     transition: font-size var(--transition-duration) ease;
 }
 
 .checklist-container.expanded .checklist-add-form .form-control {
     font-size: 1rem;
+}
+
+.checklist-add-form-hint {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    font-size: 0.7rem;
+    color: var(--bs-secondary);
+}
+
+.checklist-add-form-hint i {
+    margin-right: 0.25rem;
 }
 
 /* Style pour le bouton de basculement */
@@ -510,7 +510,10 @@ textarea.comment-input::placeholder {
    ========================================================================== */
 .time-history {
     overflow-y: auto;
-    border: 1px solid var(--bs-secondary) !important;
+    border: var(--panel-border);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--panel-shadow);
+    background-color: var(--panel-bg);
     max-height: var(--time-history-max-height);
     transition: max-height var(--transition-duration) ease;
     flex: 1;
@@ -672,4 +675,12 @@ textarea.comment-input::placeholder {
 [data-bs-theme="dark"] .sortable-ghost {
     background: var(--bs-dark);
     border-color: var(--bs-primary);
+}
+
+/* Encarts checklist / temps en mode sombre */
+[data-bs-theme="dark"] .checklist-container,
+[data-bs-theme="dark"] .time-history {
+    --panel-border: 1px solid rgba(255, 255, 255, 0.1);
+    --panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    --panel-bg: rgba(255, 255, 255, 0.04);
 }

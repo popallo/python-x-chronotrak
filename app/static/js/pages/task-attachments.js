@@ -91,9 +91,34 @@ function bindDeleteButtons() {
 
 function initTaskAttachments() {
     const uploadForm = document.getElementById("task-attachments-upload-form");
-    if (!uploadForm) return;
+    const input = document.getElementById("task-attachments-input");
+    const zone = document.getElementById("pj-upload-zone");
+    if (!uploadForm || !input) return;
 
     bindDeleteButtons();
+
+    if (zone) {
+        zone.addEventListener("click", (e) => { e.preventDefault(); input.click(); });
+        zone.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+    }
+
+    input.addEventListener("change", () => {
+        if (input.files && input.files.length > 0) uploadForm.requestSubmit();
+    });
+
+    if (zone) {
+        zone.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.add("is-dragover"); });
+        zone.addEventListener("dragleave", (e) => { e.preventDefault(); zone.classList.remove("is-dragover"); });
+        zone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove("is-dragover");
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                uploadForm.requestSubmit();
+            }
+        });
+    }
 
     uploadForm.addEventListener("submit", async (e) => {
         const input = document.getElementById("task-attachments-input");
@@ -115,10 +140,9 @@ function initTaskAttachments() {
         }
 
         const submitBtn = document.getElementById("task-attachments-submit");
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Envoi...';
-        }
+        const zoneEl = document.getElementById("pj-upload-zone");
+        if (submitBtn) submitBtn.disabled = true;
+        if (zoneEl) zoneEl.classList.add("is-uploading");
 
         try {
             const response = await fetch(uploadForm.action, {
@@ -148,10 +172,8 @@ function initTaskAttachments() {
         } catch (err) {
             utils.showToast("danger", "Erreur lors de l’envoi.");
         } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Ajouter';
-            }
+            if (submitBtn) submitBtn.disabled = false;
+            if (zoneEl) zoneEl.classList.remove("is-uploading");
         }
     });
 }

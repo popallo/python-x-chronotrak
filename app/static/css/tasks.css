@@ -282,20 +282,57 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 }
 
 /* Checklist plus large dans Outils : 2 colonnes sur grand écran si beaucoup d’items */
-.task-tool-checklist-wide .checklist-items {
-    min-height: 120px;
+/* Checklist : une seule colonne, hauteur maîtrisée, style pro */
+.task-tool-checklist-wide .checklist-header-strip {
+    margin-bottom: 0;
 }
-
-@media (min-width: 992px) {
-    .task-tool-checklist-wide .checklist-items {
-        column-count: 2;
-        column-gap: 1.5rem;
-    }
-
-    .task-tool-checklist-wide .checklist-item {
-        break-inside: avoid;
-        page-break-inside: avoid;
-    }
+.task-tool-checklist-wide .checklist-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+.task-tool-checklist-wide .checklist-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.task-tool-checklist-wide .checklist-progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--bs-success);
+    border-radius: 2px;
+    transition: width 0.25s ease;
+}
+.task-tool-checklist-wide .checklist-progress-text {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+.task-tool-checklist-wide .checklist-container {
+    margin-top: 0;
+    max-height: 220px;
+}
+.task-tool-checklist-wide .checklist-container.expanded {
+    max-height: var(--checklist-expanded-max-height);
+}
+.task-tool-checklist-wide .checklist-container.expanded .checklist-items {
+    max-height: none;
+}
+.task-tool-checklist-wide .checklist-items {
+    min-height: 80px;
+    max-height: 165px;
+    padding-top: 0;
+    margin-top: 0;
+}
+/* Élément coché = barré, discret, lecture rapide */
+.task-tool-checklist-wide .checklist-item.is-checked .checklist-content {
+    text-decoration: line-through;
+    opacity: 0.65;
+}
+.task-tool-checklist-wide .checklist-item.is-checked .form-check-label {
+    color: var(--bs-secondary);
 }
 
 /* Temps dans l'outil */
@@ -327,11 +364,6 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 .card-body .row {
     display: flex;
     align-items: stretch;
-}
-
-.card-body .col-md-6 {
-    display: flex;
-    flex-direction: column;
 }
 
 .card-body p {
@@ -485,10 +517,6 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     transition: padding var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .checklist-item {
-    padding: 0.75rem 0;
-}
-
 .checklist-item .form-check {
     flex: 1;
     display: flex;
@@ -507,19 +535,11 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     transition: font-size var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .checklist-item .form-check-label {
-    font-size: 1rem;
-}
-
 .checklist-item .checklist-content {
     flex: 1;
     word-break: break-word;
     font-size: 0.9rem;
     transition: font-size var(--transition-duration) ease;
-}
-
-.checklist-container.expanded .checklist-item .checklist-content {
-    font-size: 1rem;
 }
 
 .checklist-item .btn-group {
@@ -548,11 +568,6 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 .checklist-add-form .form-control {
     font-size: 0.9rem;
     padding-right: 100px;
-    transition: font-size var(--transition-duration) ease;
-}
-
-.checklist-container.expanded .checklist-add-form .form-control {
-    font-size: 1rem;
 }
 
 .checklist-add-form-hint {
@@ -567,14 +582,12 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
     margin-right: 0.25rem;
 }
 
-/* Style pour le bouton de basculement */
-.toggle-checklist-size,
-.toggle-time-size {
+/* Style pour le bouton de basculement (agrandir / réduire checklist) */
+.toggle-checklist-size {
     transition: transform var(--transition-duration) ease;
 }
 
-.checklist-container.expanded .toggle-checklist-size,
-.time-history.expanded .toggle-time-size {
+.checklist-container.expanded .toggle-checklist-size {
     transform: rotate(180deg);
 }
 
@@ -618,18 +631,17 @@ textarea.comment-input::placeholder {
     color: var(--bs-light) !important;
 }
 
-.comment-submit {
-    border-radius: 20px;
-    padding: 5px 15px;
-    font-weight: 500;
-}
-
 /* Liste des commentaires */
 .comment-list {
     margin-top: 2rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
+}
+
+/* Liste en modal (sans marge haute) */
+.comments-modal-list.comment-list {
+    margin-top: 0;
 }
 
 /* Commentaires principaux */
@@ -870,47 +882,6 @@ textarea.comment-input::placeholder {
     border-bottom: none !important;
 }
 
-.comment-timeline {
-    position: relative;
-    padding-left: 32px;
-}
-
-.timeline-line {
-    position: absolute;
-    top: 0;
-    left: 16px;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--bs-primary), var(--bs-secondary));
-    border-radius: 2px;
-    opacity: 0.15;
-    z-index: 0;
-}
-
-.timeline-entry {
-    position: relative;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: flex-start;
-}
-
-.timeline-dot {
-    position: absolute;
-    left: -24px;
-    top: 18px;
-    width: 16px;
-    height: 16px;
-    background: var(--bs-primary);
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 0 0 2px var(--bs-primary);
-    z-index: 2;
-}
-
-.reply-entry {
-    margin-left: 40px;
-}
-
 /* Styles pour les toasts */
 .toast-container {
     z-index: 1050;
@@ -1021,6 +992,12 @@ textarea.comment-input::placeholder {
     --panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     --panel-bg: rgba(255, 255, 255, 0.04);
 }
+[data-bs-theme="dark"] .task-tool-checklist-wide .checklist-progress-bar {
+    background: rgba(255, 255, 255, 0.15);
+}
+[data-bs-theme="dark"] .task-tool-checklist-wide .checklist-progress-text {
+    color: var(--bs-secondary) !important;
+}
 
 [data-bs-theme="dark"] .time-total-trigger:hover {
     background-color: rgba(255, 255, 255, 0.08);
@@ -1035,15 +1012,6 @@ textarea.comment-input::placeholder {
 /* ==========================================================================
    Pièces jointes (tâche)
    ========================================================================== */
-.task-attachments-container {
-    border-top: 1px solid var(--bs-border-color);
-}
-
-.task-attachments-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
 #task-attachments-list.list-group-sm .list-group-item {
     font-size: 0.875rem;
     padding-top: 0.25rem;
@@ -1057,4 +1025,57 @@ textarea.comment-input::placeholder {
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: bottom;
+}
+
+/* Zone d’upload moderne (glisser-déposer + clic) */
+.pj-upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 88px;
+    padding: 0.75rem 1rem;
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 10px;
+    background: var(--bs-body-bg);
+    color: var(--bs-secondary);
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.pj-upload-zone:hover {
+    border-color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+    color: var(--bs-primary);
+}
+
+.pj-upload-zone:focus {
+    outline: none;
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 25%, transparent);
+}
+
+.pj-upload-zone.is-dragover {
+    border-color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    color: var(--bs-primary);
+}
+
+.pj-upload-zone.is-uploading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.pj-upload-zone-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.pj-upload-zone-text {
+    font-size: 0.875rem;
+}
+
+.pj-upload-zone-hint {
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
 }

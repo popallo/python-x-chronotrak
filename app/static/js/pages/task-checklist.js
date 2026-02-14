@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
     const toggleSizeButton = document.querySelector('.toggle-checklist-size');
-    const toggleTimeSizeButton = document.querySelector('.toggle-time-size');
 
     // Variable pour stocker l'instance Sortable
     let sortableInstance = null;
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSortable();
     initChecklistSync();
     initChecklistSizeToggle();
-    initTimeSizeToggle();
+    updateChecklistProgress();
 
     // ==========================================================================
     // Gestion de la taille de la checklist
@@ -141,24 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==========================================================================
-    // Gestion de la taille de l'historique de temps
-    // ==========================================================================
-    function initTimeSizeToggle() {
-        if (toggleTimeSizeButton) {
-            const timeHistory = document.querySelector('.time-history');
-            toggleTimeSizeButton.addEventListener('click', function() {
-                timeHistory.classList.toggle('expanded');
-                const icon = this.querySelector('i');
-                if (timeHistory.classList.contains('expanded')) {
-                    icon.classList.replace('fa-expand-alt', 'fa-compress-alt');
-                } else {
-                    icon.classList.replace('fa-compress-alt', 'fa-expand-alt');
-                }
-            });
-        }
-    }
-
-    // ==========================================================================
     // Gestion de la synchronisation de la checklist avec l'historique de temps
     // ==========================================================================
     function initChecklistSync() {
@@ -201,13 +182,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gestionnaires d'événements
     // ==========================================================================
     function handleCheckboxChange() {
-        const itemId = this.closest('.checklist-item').dataset.id;
-        const copyButton = this.closest('.checklist-item').querySelector('.copy-to-time-btn');
+        const row = this.closest('.checklist-item');
+        const itemId = row.dataset.id;
+        const copyButton = row.querySelector('.copy-to-time-btn');
 
         copyButton.classList.toggle('disabled', !this.checked);
         copyButton.disabled = !this.checked;
+        row.classList.toggle('is-checked', this.checked);
 
         toggleChecklistItem(taskId, itemId, this.checked);
+        updateChecklistProgress();
+    }
+
+    function updateChecklistProgress() {
+        const wrap = document.getElementById('checklist-progress-wrap');
+        if (!wrap) return;
+        const items = document.querySelectorAll('#checklist-items .checklist-item');
+        const total = items.length;
+        const done = document.querySelectorAll('#checklist-items .checklist-item.is-checked').length;
+        const fill = wrap.querySelector('.checklist-progress-fill');
+        const text = wrap.querySelector('.checklist-progress-text');
+        const bar = wrap.querySelector('.checklist-progress-bar');
+        if (fill) fill.style.width = total ? (100 * done / total) + '%' : '0%';
+        if (text) text.textContent = done + ' / ' + total;
+        if (bar) {
+            bar.setAttribute('aria-valuenow', done);
+            bar.setAttribute('aria-valuemax', total || 1);
+            bar.setAttribute('title', done + ' / ' + total + ' terminés');
+        }
     }
 
     function handleDeleteClick() {
@@ -393,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             preventOnFilter: true,
             filter: '.checklist-checkbox, .btn-group'
         });
+        updateChecklistProgress();
     }
 
     // ==========================================================================
@@ -403,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!checklistItems) return;
 
         const itemElement = document.createElement('div');
-        itemElement.className = 'checklist-item';
+        itemElement.className = 'checklist-item' + (item.is_checked ? ' is-checked' : '');
         itemElement.dataset.id = item.id;
         itemElement.style.padding = '0.25rem 0';
 
@@ -500,18 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showError(message) {
-        const alertContainer = document.getElementById('alert-container');
-        if (alertContainer) {
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-danger alert-dismissible fade show';
-            alert.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            alertContainer.appendChild(alert);
-
-            setTimeout(() => alert.remove(), 5000);
-        }
+        utils.showToast('danger', message);
     }
 
 });

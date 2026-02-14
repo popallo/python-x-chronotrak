@@ -71,6 +71,37 @@
     margin-bottom: 0;
 }
 
+/* Description dans l'encart Informations (tronquée + lien voir plus) */
+.task-info-description {
+    font-size: 0.9rem;
+}
+
+.task-info-description-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.task-info-description-more {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: inline-block;
+}
+
+.task-info-description-more:hover {
+    text-decoration: underline !important;
+}
+
+/* Contenu de la modale description tâche */
+.task-info-description-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
 /* ==========================================================================
    Variables pour les hauteurs
    ========================================================================== */

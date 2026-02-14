@@ -23,6 +23,7 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-recurrence.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/task-description.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -124,12 +125,21 @@
                 </div>
 
                 {% if task.description %}
-                    <div class="mb-3">
+                    <div class="mb-3 task-info-description">
                         <div class="d-flex align-items-start">
                             <i class="fas fa-align-left me-2 text-muted mt-1"></i>
-                            <div>
+                            <div class="min-w-0 flex-grow-1">
                                 <strong>Description :</strong>
-                                <p class="mb-0">{{ task.description }}</p>
+                                <p class="mb-0 task-info-description-text">{{ task.description }}</p>
+                                {% if task.description|length > 250 %}
+                                <a href="#"
+                                   class="task-info-description-more text-primary text-decoration-none"
+                                   data-full-description="{{ task.description|e }}"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#taskDescriptionModal">
+                                    Voir la description complète
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -826,6 +836,28 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <button type="button" class="btn btn-primary" id="shortcode-submit">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal description complète de la tâche -->
+<div class="modal fade" id="taskDescriptionModal" tabindex="-1" aria-labelledby="taskDescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskDescriptionModalLabel">
+                    <i class="fas fa-align-left me-2"></i>Description de la tâche
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="task-info-description-content">
+                    <p id="taskFullDescriptionText" class="mb-0"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>

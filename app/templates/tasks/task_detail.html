@@ -555,6 +555,29 @@
 </div>
 {% endif %}
 
+<!-- Modal de confirmation suppression d'un élément de checklist -->
+<div class="modal fade" id="deleteChecklistItemModal" tabindex="-1" aria-labelledby="deleteChecklistItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteChecklistItemModalLabel">
+                    <i class="fas fa-trash-alt me-2 text-danger"></i>Supprimer l'élément
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Supprimer cet élément de la checklist ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="deleteChecklistItemConfirmBtn">
+                    <i class="fas fa-trash-alt me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Commentaires : même largeur que le contenu au-dessus -->
 <div class="task-detail-layout">
 <div class="card mb-4 no-collapse task-detail-card">

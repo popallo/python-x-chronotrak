@@ -196,38 +196,27 @@ function createToastContainer() {
     return container;
 }
 
-// Initialisation
-document.addEventListener('DOMContentLoaded', function() {
-    // Créer le conteneur de toasts
+// Initialisation (les modules s'exécutent après le DOM ; si DOMContentLoaded est déjà passé, on lance tout de suite)
+function initTimePage() {
     createToastContainer();
 
-    // Gérer la soumission du formulaire d'ajout de temps
     const timeForm = document.querySelector('#timeEntryModal form');
     if (timeForm) {
-        timeForm.addEventListener('submit', handleTimeSubmit);
-    } else {
-        console.error('Formulaire d\'ajout de temps non trouvé');
+        timeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleTimeSubmit(e);
+        });
     }
 
-    // Gérer le bouton de copie depuis la checklist
-    document.querySelectorAll('.copy-to-time-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const checklistItem = this.closest('.checklist-item');
-            const content = checklistItem.querySelector('.checklist-content').textContent;
-            const timeForm = document.querySelector('#timeEntryModal form');
-            if (timeForm) {
-                const descriptionField = timeForm.querySelector('textarea[name="description"]');
-                if (descriptionField) {
-                    descriptionField.value = content;
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
-                    if (modal) {
-                        modal.show();
-                    }
-                }
-            }
-        });
-    });
-});
+    // La checklist gère elle-même l'ouverture de la modale + dataset.checklistItemId via handleCopyToTime
+    // On n'attache pas de second handler ici pour éviter de ne pas définir l'id.
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTimePage);
+} else {
+    initTimePage();
+}
 
 async function handleTimeSubmit(e) {
     e.preventDefault();
@@ -267,8 +256,13 @@ async function handleTimeSubmit(e) {
             // Utiliser la fonction updateTimeInterface pour mettre à jour l'interface de manière cohérente
             await updateTimeInterface(data);
 
-            // Fermer le modal et réinitialiser le formulaire
-            const modal = bootstrap.Modal.getInstance(document.getElementById('timeEntryModal'));
+            const modalEl = document.getElementById('timeEntryModal');
+            if (modalEl && modalEl.dataset.checklistItemId) {
+                document.dispatchEvent(new CustomEvent('time-logged-from-checklist', { detail: { checklistItemId: modalEl.dataset.checklistItemId } }));
+                delete modalEl.dataset.checklistItemId;
+            }
+
+            const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) {
                 modal.hide();
             }

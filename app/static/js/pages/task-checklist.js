@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortcodeInput = document.getElementById('shortcode-input');
     const shortcodeSubmit = document.getElementById('shortcode-submit');
     const toggleSizeButton = document.querySelector('.toggle-checklist-size');
-    const toggleTimeSizeButton = document.querySelector('.toggle-time-size');
 
     // Variable pour stocker l'instance Sortable
     let sortableInstance = null;
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initSortable();
     initChecklistSync();
     initChecklistSizeToggle();
-    initTimeSizeToggle();
     updateChecklistProgress();
 
     // ==========================================================================
@@ -136,24 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } finally {
                     syncChecklistFutureButton.disabled = false;
                     syncChecklistFutureButton.innerHTML = original;
-                }
-            });
-        }
-    }
-
-    // ==========================================================================
-    // Gestion de la taille de l'historique de temps
-    // ==========================================================================
-    function initTimeSizeToggle() {
-        if (toggleTimeSizeButton) {
-            const timeHistory = document.querySelector('.time-history');
-            toggleTimeSizeButton.addEventListener('click', function() {
-                timeHistory.classList.toggle('expanded');
-                const icon = this.querySelector('i');
-                if (timeHistory.classList.contains('expanded')) {
-                    icon.classList.replace('fa-expand-alt', 'fa-compress-alt');
-                } else {
-                    icon.classList.replace('fa-compress-alt', 'fa-expand-alt');
                 }
             });
         }
@@ -523,18 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showError(message) {
-        const alertContainer = document.getElementById('alert-container');
-        if (alertContainer) {
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-danger alert-dismissible fade show';
-            alert.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            alertContainer.appendChild(alert);
-
-            setTimeout(() => alert.remove(), 5000);
-        }
+        utils.showToast('danger', message);
     }
 
 });

@@ -121,8 +121,7 @@ function initTaskAttachments() {
     }
 
     uploadForm.addEventListener("submit", async (e) => {
-        const input = document.getElementById("task-attachments-input");
-        if (!input || !input.files || input.files.length === 0) {
+        if (!input.files || input.files.length === 0) {
             e.preventDefault();
             utils.showToast("warning", "Sélectionnez au moins un fichier.");
             return;

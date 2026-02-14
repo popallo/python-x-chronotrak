@@ -23,6 +23,7 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task-pin.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-recurrence.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/task-attachments.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pages/task-description.js') }}"></script>
 {% endblock %}
 
@@ -158,6 +159,42 @@
                         <i class="fas fa-user me-2 text-muted"></i>
                         <span>{{ task.assigned_to.name if task.user_id else 'Non assigné' }}</span>
                     </div>
+                </div>
+
+                <!-- Pièces jointes (colonne gauche, au-dessus du temps pour rester visible) -->
+                <div id="task-attachments-container" class="task-attachments-container p-2 mt-3" data-task-slug="{{ task.slug }}">
+                    <h6 class="task-attachments-title mb-2">
+                        <i class="fas fa-paperclip me-1"></i>Pièces jointes
+                        <span class="badge bg-secondary ms-1" id="attachments-count">{{ task_attachments|length }}</span>
+                    </h6>
+                    <ul id="task-attachments-list" class="list-group list-group-flush list-group-sm">
+                        {% for att in task_attachments %}
+                        <li class="list-group-item d-flex align-items-center py-1 px-2 task-attachment-item" data-attachment-id="{{ att.id }}">
+                            <a href="{{ url_for('tasks.download_task_attachment', slug_or_id=task.slug, file_id=att.id) }}" class="text-decoration-none flex-grow-1 text-truncate me-2" title="Télécharger {{ att.name }}">
+                                <i class="fas fa-file-alt me-1 text-muted"></i>
+                                <span class="task-attachment-name">{{ att.name }}</span>
+                                <small class="text-muted">({{ (att.size / 1024)|round(1) }} Ko)</small>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-attachment-btn" title="Supprimer" data-attachment-id="{{ att.id }}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </li>
+                        {% else %}
+                        <li id="task-attachments-empty" class="list-group-item text-muted small py-1 px-2">Aucune pièce jointe</li>
+                        {% endfor %}
+                    </ul>
+                    <form id="task-attachments-upload-form" class="mt-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="files" id="task-attachments-input" class="form-control form-control-sm" multiple
+                                   accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz"
+                                   aria-label="Ajouter des fichiers">
+                            <button type="submit" class="btn btn-outline-primary btn-sm" id="task-attachments-submit">
+                                <i class="fas fa-upload me-1"></i>Ajouter
+                            </button>
+                        </div>
+                        <div class="form-text small">Types autorisés : csv, pdf, zip, doc, docx, xls, xlsx, 7z, tar, gz. Plusieurs fichiers possibles.</div>
+                    </form>
                 </div>
 
                 <!-- Historique de temps -->

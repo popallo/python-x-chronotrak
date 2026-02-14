@@ -58,6 +58,15 @@ class Config:
     CACHE_THRESHOLD = 1000  # Nombre maximum d'éléments dans le cache
     CACHE_KEY_PREFIX = "chronotrak_"  # Préfixe pour les clés de cache
 
+    # Pièces jointes des tâches (stockage fichier, hors web root)
+    TASK_ATTACHMENTS_UPLOAD_FOLDER = os.environ.get("TASK_ATTACHMENTS_UPLOAD_FOLDER") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "instance", "task_attachments"
+    )
+    TASK_ATTACHMENTS_MAX_FILE_SIZE = int(os.environ.get("TASK_ATTACHMENTS_MAX_FILE_SIZE", 25)) * 1024 * 1024  # 25 Mo
+    TASK_ATTACHMENTS_MAX_FILES_PER_TASK = int(os.environ.get("TASK_ATTACHMENTS_MAX_FILES_PER_TASK", 50))
+    # Salt pour dériver le chemin (ne pas exposer) ; défaut dérivé de SECRET_KEY si non défini
+    TASK_ATTACHMENTS_PATH_SALT = os.environ.get("TASK_ATTACHMENTS_PATH_SALT") or "chronotrak_task_attachments_v1"
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -7,6 +7,7 @@ from app.models.project import Project
 from app.models.task import ChecklistItem, Comment, Task, TaskRecurrenceSeries, TimeEntry, UserPinnedTask
 from app.models.user import User
 from app.utils import get_utc_now
+from app.utils import task_attachments as attachments_util
 from app.utils.decorators import login_and_client_required
 from app.utils.route_utils import (
     delete_from_db,
@@ -14,7 +15,7 @@ from app.utils.route_utils import (
     get_task_by_slug_or_id,
     save_to_db,
 )
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -323,6 +324,12 @@ def task_details(slug_or_id):
 
     recurrence_info = _recurrence_summary_with_next(task)
 
+    try:
+        task_attachments = attachments_util.list_attachments(task.id)
+    except Exception as e:
+        current_app.logger.warning("Could not list task attachments: %s", e)
+        task_attachments = []
+
     return render_template(
         "tasks/task_detail.html",
         task=task,
@@ -333,8 +340,135 @@ def task_details(slug_or_id):
         edit_comment_form=edit_comment_form,
         form=delete_form,
         recurrence_info=recurrence_info,
+        task_attachments=task_attachments,
         title=task.title,
     )
+
+
+def _check_task_access_for_attachments(task):
+    """Vérifie que l'utilisateur courant peut accéder aux PJ de la tâche (client ou technicien)."""
+    if current_user.is_client():
+        if not current_user.has_access_to_client(task.project.client_id):
+            return False
+    return True
+
+
+@tasks.route("/tasks/<slug_or_id>/attachments", methods=["GET"])
+@login_required
+def list_task_attachments(slug_or_id):
+    """Liste les pièces jointes (JSON) pour rafraîchissement AJAX."""
+    task = get_task_by_slug_or_id(slug_or_id)
+    if not _check_task_access_for_attachments(task):
+        return jsonify({"success": False, "error": "Accès non autorisé"}), 403
+    try:
+        items = attachments_util.list_attachments(task.id)
+    except Exception as e:
+        current_app.logger.warning("list_task_attachments: %s", e)
+        return jsonify({"success": False, "error": "Impossible de charger les pièces jointes"}), 500
+    return jsonify({"success": True, "attachments": items})
+
+
+@tasks.route("/tasks/<slug_or_id>/attachments", methods=["POST"])
+@login_required
+def upload_task_attachments(slug_or_id):
+    """Upload une ou plusieurs pièces jointes (multipart/form-data, champ 'files')."""
+    task = get_task_by_slug_or_id(slug_or_id)
+    if not _check_task_access_for_attachments(task):
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Accès non autorisé"}), 403
+        flash("Vous n'avez pas accès à cette tâche.", "danger")
+        return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
+
+    # Plusieurs fichiers : request.files.getlist("files") ou un seul "file"
+    uploaded = request.files.getlist("files") if request.files.getlist("files") else []
+    if not uploaded and request.files.get("file"):
+        uploaded = [request.files["file"]]
+
+    if not uploaded:
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Aucun fichier sélectionné"}), 400
+        flash("Aucun fichier sélectionné.", "warning")
+        return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
+
+    saved = []
+    errors = []
+    for f in uploaded:
+        if not f or not f.filename:
+            continue
+        try:
+            meta = attachments_util.save_attachment(task.id, f.stream, f.filename)
+            saved.append(meta)
+        except ValueError as e:
+            errors.append(f"{f.filename}: {e}")
+
+    if errors and not saved:
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify(
+                {
+                    "success": False,
+                    "error": errors[0] if len(errors) == 1 else "Erreurs de validation",
+                    "details": errors,
+                }
+            ), 400
+        for err in errors[:3]:
+            flash(err, "danger")
+        return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
+
+    if errors:
+        for err in errors[:3]:
+            flash(err, "warning")
+
+    if saved:
+        flash(f"{len(saved)} fichier(s) ajouté(s).", "success")
+
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": True, "uploaded": saved, "errors": errors})
+
+    return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
+
+
+@tasks.route("/tasks/<slug_or_id>/attachments/<file_id>", methods=["GET"])
+@login_required
+def download_task_attachment(slug_or_id, file_id):
+    """Télécharge une pièce jointe (contrôle d'accès, pas d'URL directe)."""
+    task = get_task_by_slug_or_id(slug_or_id)
+    if not _check_task_access_for_attachments(task):
+        return jsonify({"error": "Accès non autorisé"}), 403
+
+    result = attachments_util.get_attachment_path_and_name(task.id, file_id)
+    if not result:
+        return jsonify({"error": "Fichier introuvable"}), 404
+
+    path, display_name = result
+    return send_file(
+        path,
+        as_attachment=True,
+        download_name=display_name,
+        mimetype="application/octet-stream",
+    )
+
+
+@tasks.route("/tasks/<slug_or_id>/attachments/<file_id>", methods=["DELETE", "POST"])
+@login_required
+def delete_task_attachment(slug_or_id, file_id):
+    """Supprime une pièce jointe. Les clients peuvent supprimer (comme pour les commentaires)."""
+    task = get_task_by_slug_or_id(slug_or_id)
+    if not _check_task_access_for_attachments(task):
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Accès non autorisé"}), 403
+        flash("Vous n'avez pas accès à cette tâche.", "danger")
+        return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
+
+    if attachments_util.delete_attachment(task.id, file_id):
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": True, "message": "Pièce jointe supprimée"})
+        flash("Pièce jointe supprimée.", "success")
+    else:
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Fichier introuvable"}), 404
+        flash("Fichier introuvable.", "warning")
+
+    return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
 
 
 @tasks.route("/tasks/<slug_or_id>/recurrence", methods=["GET"])
@@ -720,8 +854,14 @@ def delete_task(slug_or_id):
         Communication.query.filter_by(task_id=task.id).update({"task_id": None})
 
         # Maintenant on peut supprimer la tâche (toutes les opérations dans la même transaction)
+        task_id_for_attachments = task.id
         db.session.delete(task)
         db.session.commit()
+        # Nettoyer le dossier des pièces jointes (hors transaction)
+        try:
+            attachments_util.delete_task_attachments_folder(task_id_for_attachments)
+        except Exception as cleanup_err:
+            current_app.logger.warning("Cleanup task attachments folder: %s", cleanup_err)
         flash(f'Tâche "{task.title}" supprimée!', "success")
         return redirect(url_for("projects.project_details", slug_or_id=project.slug))
     except Exception as e:

@@ -46,29 +46,8 @@
 }
 
 /* ==========================================================================
-   Vue tâche : colonne principale (défile) + encart Informations fixe
+   Vue tâche : carte principale (Description + Informations) + Outils
    ========================================================================== */
-.task-main-col {
-    min-width: 0;
-}
-
-.task-main-content {
-    padding-right: 0;
-}
-
-/* Encart Informations : plus de sticky (grille = même hauteur que Description) */
-
-.task-info-sticky .card {
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* Encart Informations : compact, même hauteur que Description (card en flex) */
-.task-info-sticky .card.task-detail-card .card-body {
-    flex-grow: 1;
-}
-
-/* Encart Informations : compact, pas de scroll */
 .task-info-compact {
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
@@ -76,14 +55,6 @@
 
 .task-info-compact .border-top {
     border-color: var(--bs-border-color) !important;
-}
-
-.task-info-desc-short .task-info-description-text {
-    -webkit-line-clamp: 3;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    white-space: pre-line;
 }
 
 /* Modal Historique du temps */
@@ -97,12 +68,8 @@
     border-color: var(--bs-border-color) !important;
 }
 
-/* Petits écrans : Outils et contenu lisibles */
+/* Petits écrans : Outils lisibles */
 @media (max-width: 991px) {
-    .task-outils-row {
-        margin-top: 0;
-    }
-
     .task-tools-body .row {
         margin-left: 0;
         margin-right: 0;
@@ -179,10 +146,6 @@ main.container:has(.task-detail-layout) {
     border: 1px solid var(--bs-border-color);
 }
 
-.task-main-col .card.task-detail-card {
-    min-height: 0;
-}
-
 /* En-têtes de cartes : style unifié (clair = gris léger, dark = surbrillance) */
 .task-detail-card-header {
     background-color: rgba(0, 0, 0, 0.06);
@@ -190,23 +153,16 @@ main.container:has(.task-detail-layout) {
     color: var(--bs-body-color);
 }
 
-.task-detail-card-header-info {
-    background-color: var(--bs-secondary) !important;
-    color: #fff !important;
-    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
-}
-
 .task-detail-card .card-body {
     padding: 1.25rem;
 }
 
-/* Description : le contenu utilise toute la largeur */
-.task-main-col .task-info-description-text {
+/* Description : contenu pleine largeur */
+.task-detail-desc-block .task-info-description-text {
     max-width: 100%;
     line-height: 1.6;
 }
-
-.task-main-col .task-contexte {
+.task-detail-desc-block .task-contexte {
     max-width: 100%;
 }
 
@@ -220,12 +176,6 @@ html.dark-mode body .task-detail-card-header {
     background-color: rgba(255, 255, 255, 0.06);
     border-bottom-color: var(--dm-border);
     color: var(--dm-text);
-}
-
-html.dark-mode body .task-detail-card-header-info {
-    background-color: var(--bs-secondary) !important;
-    color: #fff !important;
-    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 html.dark-mode body .task-detail-card .card-body {
@@ -288,13 +238,6 @@ html.dark-mode body .task-info-compact a:not(.btn) {
 html.dark-mode body .task-detail-card .card-body a:not(.btn):hover,
 html.dark-mode body .task-info-compact a:not(.btn):hover {
     color: var(--bs-info);
-}
-
-/* Outils : blocs séparés (PJ, Temps, Checklist) */
-.task-tools {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
 }
 
 .task-tool-block {
@@ -402,12 +345,10 @@ html.dark-mode body .task-info-compact a:not(.btn):hover {
 }
 
 /* Status toggle — compact pour gagner en hauteur (dans l’en-tête Description) */
-.task-detail-card .card-header .status-toggle .btn-group,
+/* Boutons de statut (Description) */
 .task-detail-main-card .status-toggle .btn-group {
     margin: 0;
 }
-
-.task-detail-card .card-header .status-toggle .btn,
 .task-detail-main-card .status-toggle .btn {
     font-size: 0.75rem !important;
     padding: 0.15rem 0.4rem !important;

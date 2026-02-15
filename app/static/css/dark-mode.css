@@ -40,6 +40,13 @@ html.dark-mode body {
     color: var(--dm-text-muted) !important;
   }
 
+  html.dark-mode body .footer-version-link {
+    color: var(--dm-text-muted) !important;
+  }
+  html.dark-mode body .footer-version-link:hover {
+    color: var(--dm-text) !important;
+  }
+
   /* ===== Cartes et conteneurs ===== */
   html.dark-mode body .card,
   html.dark-mode body .modal-content,

@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-info-circle me-2"></i>Versions et mises à jour
+        </h1>
+        <span class="text-muted">Version actuelle : <strong>{{ version }}</strong>{% if build_info.env == 'development' %} <span class="badge bg-warning text-dark">Dev</span>{% endif %}</span>
+    </div>
+
+    <p class="text-muted mb-4">
+        Résumé des principales évolutions et correctifs par version. La version affichée en bas de page est cliquable pour accéder à cette page.
+    </p>
+
+    <div class="release-notes-list">
+        {% for release in release_notes %}
+        <article class="card mb-3 release-note-card">
+            <div class="card-body">
+                <header class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <h2 class="h5 mb-0">
+                        <span class="badge bg-primary">v{{ release.version }}</span>
+                    </h2>
+                    {% if release.date %}
+                    <span class="text-muted small">{{ release.date }}</span>
+                    {% endif %}
+                </header>
+                <ul class="list-unstyled mb-0">
+                    {% for item in release['items'] %}
+                    <li class="d-flex align-items-start gap-2 py-1">
+                        {% if item.type == 'feature' %}
+                        <span class="badge bg-success flex-shrink-0 mt-1" title="Nouveauté">Nouv.</span>
+                        {% elif item.type == 'fix' %}
+                        <span class="badge bg-danger flex-shrink-0 mt-1" title="Correctif">Fix</span>
+                        {% elif item.type == 'improvement' %}
+                        <span class="badge bg-secondary flex-shrink-0 mt-1" title="Amélioration">Amél.</span>
+                        {% else %}
+                        <span class="badge bg-light text-dark flex-shrink-0 mt-1">{{ item.type }}</span>
+                        {% endif %}
+                        <span class="text-body">{{ item.text }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </article>
+        {% else %}
+        <p class="text-muted">Aucune note de version enregistrée pour le moment.</p>
+        {% endfor %}
+    </div>
+
+    <p class="mt-4 small text-muted">
+        <i class="fas fa-arrow-left me-1"></i> Retournez sur l’application via le menu ou le tableau de bord.
+    </p>
+</div>
+{% endblock %}

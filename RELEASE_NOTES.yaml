@@ -1,6 +1,11 @@
-# ChronoTrak release notes - source for /version page
-# Edit items (types: feature, fix, improvement) then commit + tag.
+# Notes de version ChronoTrak - source pour la page /version
+# Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.1"
+  date: "2026-02"
+  items:
+  - type: improvement
+    text: Add PyYAML dependency to pyproject.toml
 - version: "2.10.0"
   date: "2026-02"
   items:

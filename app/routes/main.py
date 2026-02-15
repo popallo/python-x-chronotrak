@@ -4,6 +4,7 @@ from app.models.project import Project
 from app.models.task import Task, TimeEntry
 from app.models.user import User
 from app.utils import get_utc_now
+from app.utils.release_notes import get_release_notes
 from app.utils.route_utils import get_accessible_clients
 from flask import Blueprint, current_app, redirect, render_template, url_for
 from flask_login import current_user, login_required
@@ -283,4 +284,15 @@ def reports():
         user_times=user_times,
         monthly_times=monthly_times,
         title="Rapports",
+    )
+
+
+@main.route("/version")
+def version_info():
+    """Page d'information sur la version et les notes de mise à jour (accessible à tous)."""
+    release_notes = get_release_notes()
+    return render_template(
+        "info/version.html",
+        release_notes=release_notes,
+        title="Versions et mises à jour",
     )

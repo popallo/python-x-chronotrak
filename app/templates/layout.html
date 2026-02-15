@@ -247,9 +247,9 @@
                     <span class="text-muted">Chronotrak &copy; {{ now.year }}</span>
                 </div>
                 <div class="col-md-4 text-center">
-                    <span class="text-muted">{{ version }}</span>
+                    <a href="{{ url_for('main.version_info') }}" class="footer-version-link text-muted text-decoration-none" title="Voir les notes de version">{{ version }}</a>
                     {% if build_info.env == 'development' %}
-                        <span class="badge bg-warning">Dev</span>
+                        <span class="badge bg-warning text-dark ms-1">Dev</span>
                     {% endif %}
                 </div>
                 <div class="col-md-4 text-end">

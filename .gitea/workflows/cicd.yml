@@ -138,6 +138,16 @@ jobs:
             echo "⚠️ Trivy non disponible, scan filesystem ignoré"
           fi
 
+      # pip-audit utilise la base PyPI/OSV : détecte les CVE Python (cryptography, pip, etc.)
+      # que Trivy peut manquer (support uv.lock, délai de mise à jour des bases).
+      - name: Audit de sécurité - pip-audit (CVE dépendances Python)
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          source .venv/bin/activate
+          echo "🔒 Audit des vulnérabilités des dépendances Python (pip-audit)..."
+          pip-audit --desc || { echo "❌ pip-audit a détecté des vulnérabilités"; exit 1; }
+          echo "✅ pip-audit terminé"
+
       - name: Audit de sécurité - Bandit (analyse statique du code Python)
         run: |
           export PATH="$HOME/.local/bin:$PATH"

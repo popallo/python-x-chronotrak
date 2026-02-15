@@ -1,8 +1,11 @@
-# Notes de version ChronoTrak (source de vérité pour la page /version)
-# Modifier ce fichier à chaque release. Pour ajouter une version depuis les commits :
-#   uv run python scripts/release_note_add.py 2.9.4
-# Puis éditer les "items" si besoin (types: feature, fix, improvement).
+# Notes de version ChronoTrak - source pour la page /version
+# Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.0"
+  date: "2026-02"
+  items:
+  - type: improvement
+    text: Add release notes feature and update footer version link
 - version: "2.9.3"
   date: "2025-02"
   items:

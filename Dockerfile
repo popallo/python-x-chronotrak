@@ -35,6 +35,7 @@ COPY app/ ./app/
 COPY migrations/ ./migrations/
 COPY management/ ./management/
 COPY config.py run.py wsgi.py start.sh ./
+COPY RELEASE_NOTES.yaml ./
 
 # Créer le fichier VERSION avec la valeur fournie
 RUN echo -n "$VERSION" > ./app/VERSION

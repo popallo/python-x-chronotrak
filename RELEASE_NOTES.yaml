@@ -1,0 +1,48 @@
+# ChronoTrak release notes - source for /version page
+# Edit items (types: feature, fix, improvement) then commit + tag.
+
+- version: "2.10.0"
+  date: "2026-02"
+  items:
+  - type: improvement
+    text: Add release notes feature and update footer version link
+- version: "2.9.3"
+  date: "2025-02"
+  items:
+  - type: improvement
+    text: Improved checklist item management and UI interactions
+- version: "2.9.2"
+  date: "2025-02"
+  items:
+  - type: feature
+    text: Comments modal and reply functionality
+  - type: improvement
+    text: Refined checklist styles for more consistent layout
+  - type: improvement
+    text: Refined task styles and improved JavaScript
+  - type: improvement
+    text: Improved task attachments and checklist
+- version: "2.9.1"
+  date: "2025-02"
+  items:
+  - type: improvement
+    text: Refined task styling for better readability and layout
+- version: "2.9.0"
+  date: "2025-02"
+  items:
+  - type: feature
+    text: New task detail view (UI overhaul)
+  - type: improvement
+    text: Refined task detail page layout
+  - type: improvement
+    text: Improved layout and styling of task card
+- version: "2.8.1"
+  date: "2025-01"
+  items:
+  - type: fix
+    text: File format/size validation message (attachments)
+- version: "2.8.0"
+  date: "2025-01"
+  items:
+  - type: feature
+    text: Various features and fixes (see release history)

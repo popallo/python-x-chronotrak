@@ -136,3 +136,14 @@ html.dark-mode ::placeholder {
 .footer {
     background-color: #f8f9fa;
 }
+
+/* Lien version dans le footer : discret, pas "à l'ancienne" */
+.footer-version-link {
+    color: inherit;
+    transition: opacity 0.15s ease;
+}
+.footer-version-link:hover {
+    text-decoration: underline !important;
+    opacity: 0.9;
+    color: inherit;
+}

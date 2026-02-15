@@ -1,5 +1,5 @@
-# Notes de version ChronoTrak - source pour la page /version
-# Éditer les items (types: feature, fix, improvement) puis commit + tag.
+# ChronoTrak release notes - source for /version page
+# Edit items (types: feature, fix, improvement) then commit + tag.
 
 - version: "2.10.0"
   date: "2026-02"
@@ -10,39 +10,39 @@
   date: "2025-02"
   items:
   - type: improvement
-    text: Amélioration de la gestion des éléments de checklist et des interactions UI
+    text: Improved checklist item management and UI interactions
 - version: "2.9.2"
   date: "2025-02"
   items:
   - type: feature
-    text: Modal de commentaires et fonctionnalité de réponse aux commentaires
+    text: Comments modal and reply functionality
   - type: improvement
-    text: Refonte des styles de checklist pour une mise en page plus cohérente
+    text: Refined checklist styles for more consistent layout
   - type: improvement
-    text: Refonte des styles des tâches et amélioration du JavaScript
+    text: Refined task styles and improved JavaScript
   - type: improvement
-    text: Amélioration des pièces jointes et de la checklist des tâches
+    text: Improved task attachments and checklist
 - version: "2.9.1"
   date: "2025-02"
   items:
   - type: improvement
-    text: Refonte du style des tâches pour une meilleure lisibilité et mise en page
+    text: Refined task styling for better readability and layout
 - version: "2.9.0"
   date: "2025-02"
   items:
   - type: feature
-    text: Nouvelle vue détaillée des tâches (refonte UI)
+    text: New task detail view (UI overhaul)
   - type: improvement
-    text: Refonte de la mise en page de la fiche tâche
+    text: Refined task detail page layout
   - type: improvement
-    text: Amélioration du layout et du style de la fiche tâche
+    text: Improved layout and styling of task card
 - version: "2.8.1"
   date: "2025-01"
   items:
   - type: fix
-    text: Message de validation du format / taille des fichiers (pièces jointes)
+    text: File format/size validation message (attachments)
 - version: "2.8.0"
   date: "2025-01"
   items:
   - type: feature
-    text: Fonctionnalités et correctifs divers (voir historique de release)
+    text: Various features and fixes (see release history)

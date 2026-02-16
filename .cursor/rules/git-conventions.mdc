@@ -1,0 +1,96 @@
+---
+description: Conventions Git - messages de commit
+alwaysApply: true
+---
+
+# Conventions Git pour ChronoTrak
+
+## Format des messages de commit
+
+Utiliser le format conventionnel avec préfixe de type :
+
+```
+<type>: <description>
+
+[corps optionnel]
+
+[footer optionnel]
+```
+
+## Types de commits
+
+- `fix:` - Correction de bug
+- `feature:` - Nouvelle fonctionnalité
+- `chore:` - Tâches de maintenance (dépendances, config, etc.)
+- `docs:` - Documentation uniquement
+- `style:` - Formatage, style (pas de changement de code fonctionnel)
+- `refactor:` - Refactorisation de code
+- `perf:` - Amélioration de performance
+- `test:` - Ajout ou modification de tests
+- `ci:` - Changements dans CI/CD
+- `build:` - Changements dans le système de build
+
+## Exemples
+
+```bash
+# Correction de bug
+git commit -m "fix: correction de l'affichage des dates dans le kanban"
+
+# Nouvelle fonctionnalité
+git commit -m "feature: ajout de la récurrence des tâches"
+
+# Maintenance
+git commit -m "chore: mise à jour des dépendances Flask"
+
+# Documentation
+git commit -m "docs: ajout de la documentation API"
+
+# Style/formatage
+git commit -m "style: application du formatage Ruff"
+
+# Refactorisation
+git commit -m "refactor: extraction de la logique email dans un module dédié"
+
+# Performance
+git commit -m "perf: optimisation des requêtes N+1 dans la liste des projets"
+
+# Tests
+git commit -m "test: ajout de tests unitaires pour les modèles Task"
+
+# CI/CD
+git commit -m "ci: ajout de la vérification Bandit dans le pipeline"
+```
+
+## Messages multi-lignes
+
+Pour les commits complexes, utiliser un corps détaillé :
+
+```bash
+git commit -m "feature: système de notifications par email
+
+- Ajout de la configuration SMTP
+- Implémentation des templates d'email
+- Gestion des préférences de notification utilisateur
+- Tests d'envoi en développement et production"
+```
+
+## Branches
+
+- `feature/` - Nouvelles fonctionnalités
+- `fix/` - Corrections de bugs
+- `hotfix/` - Corrections urgentes en production
+- `chore/` - Maintenance
+- `refactor/` - Refactorisation
+
+Exemples :
+- `feature/task-recurrence`
+- `fix/kanban-drag-drop`
+- `hotfix/email-sending`
+
+## Bonnes pratiques
+
+- Messages en français (cohérent avec le projet)
+- Description courte et claire (moins de 72 caractères idéalement)
+- Utiliser l'impératif ("ajouter" pas "ajoute" ou "ajouté")
+- Un commit = une modification logique
+- Éviter les commits trop volumineux

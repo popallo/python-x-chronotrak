@@ -292,7 +292,7 @@ class Task(db.Model):
     def recurrence_summary(self) -> str:
         if self.recurrence_series:
             return self.recurrence_series.human_summary()
-        return "Aucune"
+        return "Aucune récurrence"
 
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""

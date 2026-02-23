@@ -100,7 +100,7 @@ def _recurrence_payload(series: TaskRecurrenceSeries | None):
 def _recurrence_summary_with_next(task: Task):
     series = task.recurrence_series
     if not series:
-        return {"summary": "Aucune", "next_date": None}
+        return {"summary": "Aucune récurrence", "next_date": None}
 
     today = _today_utc_date()
     next_task = (
@@ -628,7 +628,7 @@ def delete_task_recurrence(slug_or_id):
             "message": "Récurrence supprimée (occurrences futures supprimées).",
             "has_recurrence": False,
             "recurrence": None,
-            "summary": "Aucune",
+            "summary": "Aucune récurrence",
             "next_date": None,
         }
     )

@@ -213,7 +213,11 @@ class Task(db.Model):
     time_entries = db.relationship("TimeEntry", backref="task", lazy=True, cascade="all, delete-orphan")
     comments = db.relationship("Comment", backref="task", lazy=True, cascade="all, delete-orphan")
     checklist_items = db.relationship(
-        "ChecklistItem", backref="task", lazy=True, cascade="all, delete-orphan", order_by="ChecklistItem.position"
+        "ChecklistItem",
+        backref="task",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="ChecklistItem.position, ChecklistItem.id",
     )
     recurrence_series = db.relationship("TaskRecurrenceSeries", foreign_keys=[recurrence_series_id], lazy=True)
     recurrence_template = db.relationship(
@@ -315,6 +319,7 @@ class Task(db.Model):
         élément coché (le plus haut dans la liste), ou à la fin s'il n'y a aucun élément coché.
         Si insert_above_first_checked=False (ex. shortcode) : ajoute à la fin."""
         items = ChecklistItem.query.filter_by(task_id=self.id).order_by(ChecklistItem.position.asc()).all()
+        max_pos = max((it.position for it in items), default=-1)
         if position is None:
             if insert_above_first_checked:
                 first_checked = next((it for it in items if it.is_checked), None)
@@ -324,9 +329,9 @@ class Task(db.Model):
                         if it.position >= position:
                             it.position += 1
                 else:
-                    position = len(items)
+                    position = max_pos + 1
             else:
-                position = len(items)
+                position = max_pos + 1
 
         item = ChecklistItem(content=content, position=position, task_id=self.id)
         db.session.add(item)

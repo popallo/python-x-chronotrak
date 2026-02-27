@@ -1191,7 +1191,7 @@ def my_tasks():
     )
     tasks_completed = sorted(
         [task for task in all_tasks if task.status == "terminé"],
-        key=lambda t: (t.completed_at or t.created_at or datetime.min),
+        key=lambda t: t.completed_at or t.created_at or datetime.min,
         reverse=True,
     )
 

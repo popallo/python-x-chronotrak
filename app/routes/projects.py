@@ -234,7 +234,7 @@ def project_details(slug_or_id):
     # Trier les tâches terminées par date de clôture décroissante (exclure les tâches archivées)
     tasks_done = sorted(
         [task for task in tasks if task.status == "terminé" and not task.is_archived],
-        key=lambda t: (t.completed_at or datetime.min),
+        key=lambda t: t.completed_at or datetime.min,
         reverse=True,
     )
 

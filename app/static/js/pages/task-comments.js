@@ -135,10 +135,10 @@ async function handleCommentSubmit(e) {
 
         const data = await response.json();
         if (data.success) {
-            // Ajouter le nouveau commentaire à la liste
-            let commentList = document.querySelector('.comment-list');
+            // Ajouter le nouveau commentaire à la liste principale (carte), pas à la modale
+            let commentList = getMainCommentList();
             if (!commentList) {
-                // Si c'est le premier commentaire, créer la liste
+                // Si c'est le premier commentaire, créer la liste dans la carte
                 const cardBody = form.closest('.card-body');
                 cardBody.querySelector('p.text-muted')?.remove();
                 commentList = document.createElement('div');

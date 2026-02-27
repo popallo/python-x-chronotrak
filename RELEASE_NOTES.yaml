@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.5"
+  date: "2026-02"
+  items:
+  - type: fix
+    text: simplify lambda expressions for task sorting in project and task routes
 - version: "2.10.4"
   date: "2026-02"
   items:

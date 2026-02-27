@@ -1,0 +1,76 @@
+---
+description: Séparation JS/CSS - fichiers externes uniquement
+globs: "**/*.html"
+alwaysApply: false
+---
+
+# Séparation Frontend - JS et CSS externes
+
+## Règle fondamentale
+
+**NE JAMAIS** inclure de JavaScript ou CSS inline/embedded dans les templates HTML.
+
+## Structure des fichiers
+
+### JavaScript
+- Tous les fichiers JS dans `app/static/js/`
+- Organiser par fonctionnalité :
+  - `app/static/js/pages/` - scripts spécifiques à une page
+  - `app/static/js/components/` - composants réutilisables
+  - `app/static/js/utils/` - fonctions utilitaires
+  - `app/static/js/lib/` - bibliothèques tierces
+
+### CSS
+- Tous les fichiers CSS dans `app/static/css/`
+- Organiser par fonctionnalité :
+  - `app/static/css/pages/` - styles spécifiques à une page
+  - `app/static/css/components/` - styles de composants
+  - `app/static/css/base.css` - styles de base
+
+## Inclusion dans les templates
+
+```jinja2
+{# ❌ BAD - JavaScript inline #}
+<script>
+    function doSomething() {
+        // code
+    }
+</script>
+
+{# ✅ GOOD - Fichier externe #}
+<script src="{{ url_for('static', filename='js/pages/tasks.js') }}"></script>
+```
+
+```jinja2
+{# ❌ BAD - CSS inline #}
+<style>
+    .my-class { color: red; }
+</style>
+
+{# ✅ GOOD - Fichier externe #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks.css') }}">
+```
+
+## Exceptions
+
+Les seules exceptions autorisées sont :
+- Variables JavaScript passées depuis Flask (via `json_script` filter ou data attributes)
+- Configuration minimale nécessaire au chargement initial
+
+```jinja2
+{# ✅ ACCEPTABLE - Configuration minimale #}
+<script>
+    window.appConfig = {
+        csrfToken: "{{ csrf_token() }}",
+        userId: {{ current_user.id if current_user.is_authenticated else 'null' }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+```
+
+## Organisation recommandée
+
+Pour une nouvelle page `tasks.html` :
+- `app/static/js/pages/tasks.js` - logique JavaScript
+- `app/static/css/pages/tasks.css` - styles CSS
+- Inclure dans le template avec `url_for('static', ...)`

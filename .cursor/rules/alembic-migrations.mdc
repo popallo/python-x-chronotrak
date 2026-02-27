@@ -1,0 +1,127 @@
+---
+description: Conventions Alembic - migrations de base de données
+globs: "migrations/**/*.py"
+alwaysApply: false
+---
+
+# Conventions Alembic pour ChronoTrak
+
+## Structure des migrations
+
+### Nommage
+- Utiliser des noms descriptifs en snake_case
+- Préfixer avec un timestamp automatique (géré par Alembic)
+- Décrire clairement la modification
+
+```python
+# ✅ GOOD
+"""add_communication_tracking_table
+
+Revision ID: 2f662311be73
+Revises: abc123def456
+Create Date: 2025-02-16 10:30:00.000000
+"""
+```
+
+### Révisions
+- Toujours référencer la révision précédente avec `down_revision`
+- Définir `branch_labels` si nécessaire pour les branches parallèles
+
+## Écriture des migrations
+
+### Modifications de schéma
+
+```python
+# ✅ GOOD - Ajout de colonne
+def upgrade():
+    op.add_column('projects', sa.Column('description', sa.Text(), nullable=True))
+
+def downgrade():
+    op.drop_column('projects', 'description')
+```
+
+### Données de référence
+- Utiliser `op.execute()` pour les données de référence
+- Toujours prévoir un `downgrade()` pour annuler
+
+```python
+# ✅ GOOD - Données de référence
+def upgrade():
+    op.execute("""
+        INSERT INTO roles (name) VALUES
+        ('admin'),
+        ('technicien'),
+        ('client')
+    """)
+
+def downgrade():
+    op.execute("DELETE FROM roles WHERE name IN ('admin', 'technicien', 'client')")
+```
+
+### Migrations de données
+- Utiliser `op.get_bind()` pour accéder à la connexion
+- Gérer les erreurs et les cas limites
+
+```python
+# ✅ GOOD - Migration de données
+def upgrade():
+    connection = op.get_bind()
+    connection.execute("""
+        UPDATE tasks
+        SET status = 'completed'
+        WHERE status = 'done'
+    """)
+
+def downgrade():
+    connection = op.get_bind()
+    connection.execute("""
+        UPDATE tasks
+        SET status = 'done'
+        WHERE status = 'completed'
+    """)
+```
+
+## Bonnes pratiques
+
+### Toujours réversible
+- Chaque `upgrade()` doit avoir un `downgrade()` correspondant
+- Tester les deux sens de migration
+
+### Compatibilité
+- Éviter les migrations destructives sans sauvegarde
+- Ajouter des colonnes comme `nullable=True` d'abord, puis remplir, puis rendre `nullable=False`
+
+### Performance
+- Pour les grandes tables, utiliser des migrations par batch
+- Créer les index après l'insertion des données
+
+```python
+# ✅ GOOD - Index après insertion
+def upgrade():
+    op.add_column('tasks', sa.Column('slug', sa.String(255), nullable=True))
+    # Remplir les slugs...
+    op.create_index('ix_tasks_slug', 'tasks', ['slug'])
+```
+
+### Tests
+- Tester les migrations sur une copie de la base de production
+- Vérifier que `downgrade()` fonctionne correctement
+
+## Commandes utiles
+
+```bash
+# Créer une nouvelle migration
+flask db migrate -m "description de la migration"
+
+# Appliquer les migrations
+flask db upgrade
+
+# Revenir en arrière d'une migration
+flask db downgrade
+
+# Voir l'état actuel
+flask db current
+
+# Voir l'historique
+flask db history
+```

@@ -1,0 +1,94 @@
+---
+description: Standards Python - conventions, sécurité et performances
+alwaysApply: true
+---
+
+# Standards Python pour ChronoTrak
+
+## Conventions de code
+
+### Formatage et style
+- **Longueur de ligne** : Maximum 120 caractères (configuré dans Ruff)
+- **Guillemets** : Utiliser des guillemets doubles (`"`) pour les chaînes
+- **Imports** : Organisés avec isort (via Ruff), imports standards en premier, puis tiers, puis locaux
+- **Docstrings** : Documenter toutes les fonctions publiques avec des docstrings
+
+### Python 3.13
+- Utiliser les fonctionnalités modernes de Python 3.13
+- Préférer les f-strings aux `.format()` ou `%`
+- Utiliser `typing` pour les annotations de type
+- Utiliser `from datetime import UTC` pour les dates UTC
+
+### Gestion des erreurs
+
+```python
+# ❌ BAD - Exception silencieuse
+try:
+    result = risky_operation()
+except Exception:
+    pass
+
+# ✅ GOOD - Gestion explicite avec logging
+try:
+    result = risky_operation()
+except SpecificException as e:
+    logger.error("Échec de l'opération", exc_info=True, extra={"context": "value"})
+    raise DataOperationError("Message utilisateur") from e
+```
+
+### Sécurité
+
+- **Ne jamais** hardcoder des secrets ou mots de passe
+- Utiliser `os.environ.get()` pour les variables d'environnement
+- Valider et sanitizer toutes les entrées utilisateur
+- Utiliser SQLAlchemy avec paramètres préparés (jamais de f-strings dans les requêtes SQL)
+- Chiffrer les données sensibles avec `cryptography.fernet.Fernet`
+- Utiliser `bcrypt` pour les mots de passe (via Flask-Bcrypt)
+
+```python
+# ❌ BAD - Injection SQL potentielle
+query = f"SELECT * FROM users WHERE id = {user_id}"
+
+# ✅ GOOD - Paramètres préparés SQLAlchemy
+user = User.query.filter_by(id=user_id).first()
+```
+
+### Performances
+
+- Utiliser le cache Flask-Caching pour les requêtes fréquentes
+- Éviter les requêtes N+1 avec `joinedload()` ou `selectinload()`
+- Utiliser les transactions SQLAlchemy pour les opérations multiples
+- Optimiser les requêtes avec `.options()` pour charger les relations nécessaires
+
+```python
+# ❌ BAD - Requête N+1
+for project in projects:
+    print(project.client.name)  # Requête pour chaque projet
+
+# ✅ GOOD - Chargement anticipé
+projects = Project.query.options(joinedload(Project.client)).all()
+for project in projects:
+    print(project.client.name)  # Pas de requête supplémentaire
+```
+
+### Imports
+
+- Imports standards en premier
+- Imports tiers ensuite
+- Imports locaux en dernier
+- Une ligne par import (sauf pour les imports du même module)
+
+```python
+# ✅ GOOD
+import os
+from datetime import UTC, datetime
+from functools import wraps
+
+from flask import Blueprint, flash, redirect, render_template
+from flask_login import current_user, login_required
+from sqlalchemy import func
+
+from app import db
+from app.models.user import User
+from app.utils.decorators import login_required
+```

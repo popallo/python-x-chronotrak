@@ -1,0 +1,111 @@
+---
+description: Patterns Docker - Dockerfile et docker-compose
+globs: "**/Dockerfile,**/docker-compose*.yml,**/docker-compose*.yaml"
+alwaysApply: false
+---
+
+# Patterns Docker pour ChronoTrak
+
+## Structure Dockerfile
+
+### Image de base
+- Utiliser `python:3.13-alpine` pour une image légère
+- Configurer les variables d'environnement Python pour la production
+
+```dockerfile
+FROM python:3.13-alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    FLASK_APP=run.py \
+    FLASK_ENV=production
+```
+
+### Optimisations
+- Copier d'abord `pyproject.toml` pour bénéficier du cache Docker
+- Installer les dépendances avant de copier le code
+- Utiliser un utilisateur non-root
+
+```dockerfile
+# ✅ GOOD - Optimisation du cache
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e .
+
+COPY app/ ./app/
+COPY migrations/ ./migrations/
+```
+
+### Sécurité
+- Créer un utilisateur non-root
+- Définir les permissions appropriées
+- Ne pas exposer de secrets dans le Dockerfile
+
+```dockerfile
+RUN addgroup -S chronouser && \
+    adduser -S -G chronouser chronouser
+
+USER chronouser
+```
+
+## Docker Compose
+
+### Services
+- Service `web` pour l'application Flask
+- Service `cron` séparé pour les tâches planifiées (si nécessaire)
+- Volume partagé pour les données persistantes
+
+### Configuration
+- Utiliser `env_file` pour les variables d'environnement
+- Définir des limites de ressources
+- Configurer les healthchecks
+
+```yaml
+services:
+  web:
+    build: .
+    env_file:
+      - ./.env.${ENVIRONMENT:-development}
+    volumes:
+      - chronotrak_data:/app/instance
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+```
+
+### Volumes
+- Utiliser des volumes nommés pour la persistance
+- Monter uniquement ce qui est nécessaire
+
+```yaml
+volumes:
+  chronotrak_data:
+    driver: local
+```
+
+## Commandes de démarrage
+
+### Production
+- Exécuter les migrations avec `flask db upgrade`
+- Utiliser `waitress-serve` comme serveur WSGI
+- Gérer les erreurs de migration gracieusement
+
+```yaml
+command: >
+  sh -c "flask db upgrade || echo 'Migration échouée, continuons...' &&
+    waitress-serve --host=0.0.0.0 --port=5000 --threads=4 wsgi:app"
+```
+
+## Bonnes pratiques
+
+- Multi-stage builds si nécessaire pour réduire la taille
+- `.dockerignore` pour exclure les fichiers inutiles
+- Labels pour les métadonnées de l'image
+- Healthchecks pour la surveillance
+- Restart policies appropriées (`restart: always` en production)

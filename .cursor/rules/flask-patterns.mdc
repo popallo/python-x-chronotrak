@@ -1,0 +1,132 @@
+---
+description: Patterns Flask - routes, blueprints, modèles
+globs: **/*.py
+alwaysApply: false
+---
+
+# Patterns Flask pour ChronoTrak
+
+## Structure des routes
+
+### Blueprints
+- Organiser les routes par domaine fonctionnel dans des blueprints séparés
+- Utiliser des préfixes d'URL cohérents (`url_prefix="/admin"`)
+- Enregistrer les blueprints dans `app/__init__.py`
+
+```python
+# ✅ GOOD
+from flask import Blueprint
+
+admin = Blueprint("admin", __name__, url_prefix="/admin")
+
+@admin.route("/users")
+@login_required
+def list_users():
+    pass
+```
+
+### Décorateurs de sécurité
+- Toujours utiliser `@login_required` pour les routes protégées
+- Utiliser `@login_and_admin_required` pour les routes admin
+- Utiliser `@client_required` ou `@login_and_client_required` pour l'accès client
+
+```python
+# ✅ GOOD
+from app.utils.decorators import login_and_admin_required
+
+@admin.route("/settings")
+@login_and_admin_required
+def settings():
+    pass
+```
+
+### Gestion des formulaires
+- Utiliser Flask-WTF pour tous les formulaires
+- Valider avec `form.validate_on_submit()`
+- Gérer les erreurs avec `flash()` messages
+
+```python
+# ✅ GOOD
+from flask import flash, redirect, render_template, url_for
+from app.forms.project import ProjectForm
+
+@projects.route("/projects/new", methods=["GET", "POST"])
+@login_required
+def new_project():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        project = Project(name=form.name.data, client_id=form.client_id.data)
+        db.session.add(project)
+        db.session.commit()
+        flash("Projet créé avec succès.", "success")
+        return redirect(url_for("projects.list_projects"))
+    return render_template("projects/new.html", form=form)
+```
+
+## Modèles SQLAlchemy
+
+### Structure des modèles
+- Hériter de `db.Model`
+- Définir `__tablename__` explicitement
+- Utiliser des types SQLAlchemy appropriés
+- Ajouter des relations avec `relationship()` et `ForeignKey`
+
+```python
+# ✅ GOOD
+from app import db
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+class Project(db.Model):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+
+    client = relationship("Client", back_populates="projects")
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+```
+
+### Requêtes
+- Utiliser `query.filter_by()` pour les filtres simples
+- Utiliser `query.filter()` pour les conditions complexes
+- Utiliser `query.options()` pour optimiser les chargements
+- Toujours utiliser `get_or_404()` pour les ressources uniques
+
+```python
+# ✅ GOOD
+from flask import abort
+from app.models.project import Project
+
+project = Project.query.get_or_404(project_id)
+# ou avec slug
+project = Project.query.filter_by(slug=slug).first_or_404()
+```
+
+## Utilitaires et helpers
+
+### Fonctions utilitaires
+- Placer les fonctions réutilisables dans `app/utils/`
+- Créer des modules spécialisés (`route_utils.py`, `email.py`, etc.)
+- Utiliser des décorateurs pour la réutilisation de logique
+
+### Gestion du temps
+- Utiliser `app.utils.get_utc_now()` pour les dates UTC
+- Stocker toutes les dates en UTC dans la base de données
+- Convertir à l'heure locale uniquement pour l'affichage
+
+## Configuration
+
+### Variables d'environnement
+- Toujours lire depuis `os.environ.get()` avec des valeurs par défaut appropriées
+- Valider les variables critiques au démarrage (ex: `ENCRYPTION_KEY`)
+- Utiliser `python-dotenv` pour charger `.env` en développement
+
+```python
+# ✅ GOOD
+import os
+ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
+if not ENCRYPTION_KEY:
+    raise ValueError("ENCRYPTION_KEY doit être définie")
+```

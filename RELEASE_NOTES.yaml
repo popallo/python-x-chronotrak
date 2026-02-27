@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.4"
+  date: "2026-02"
+  items:
+  - type: improvement
+    text: 'chore: update package versions in pyproject.toml and uv.lock for alembic, bandit, certifi, and fix flask casing'
 - version: "2.10.3"
   date: "2026-02"
   items:

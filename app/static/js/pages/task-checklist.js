@@ -81,6 +81,20 @@ function initChecklistPage() {
     // Gestion des événements de la checklist
     // ==========================================================================
     function initChecklistEventListeners() {
+        // Certains navigateurs peuvent restaurer l'état des inputs (F5 / historique)
+        // de façon inattendue. On force l'état initial depuis le HTML serveur.
+        document.querySelectorAll('#checklist-items .checklist-item').forEach(row => {
+            const checkbox = row.querySelector('.checklist-checkbox');
+            if (!checkbox) return;
+            checkbox.checked = checkbox.hasAttribute('checked');
+            row.classList.toggle('is-checked', checkbox.checked);
+            const copyButton = row.querySelector('.copy-to-time-btn');
+            if (copyButton) {
+                copyButton.classList.toggle('disabled', !checkbox.checked);
+                copyButton.disabled = !checkbox.checked;
+            }
+        });
+
         // Écouteurs pour les cases à cocher existantes
         document.querySelectorAll('.checklist-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', handleCheckboxChange);

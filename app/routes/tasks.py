@@ -18,6 +18,7 @@ from app.utils.route_utils import (
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
+from werkzeug.exceptions import BadRequest
 
 
 def _today_utc_date():
@@ -100,7 +101,7 @@ def _recurrence_payload(series: TaskRecurrenceSeries | None):
 def _recurrence_summary_with_next(task: Task):
     series = task.recurrence_series
     if not series:
-        return {"summary": "Aucune", "next_date": None}
+        return {"summary": "Aucune récurrence", "next_date": None}
 
     today = _today_utc_date()
     next_task = (
@@ -628,7 +629,7 @@ def delete_task_recurrence(slug_or_id):
             "message": "Récurrence supprimée (occurrences futures supprimées).",
             "has_recurrence": False,
             "recurrence": None,
-            "summary": "Aucune",
+            "summary": "Aucune récurrence",
             "next_date": None,
         }
     )
@@ -662,7 +663,7 @@ def sync_recurrence_checklist_to_future(slug_or_id):
 
     source_items = (
         ChecklistItem.query.filter(ChecklistItem.task_id == template_task.id)
-        .order_by(ChecklistItem.position.asc())
+        .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
         .all()
     )
 
@@ -688,7 +689,9 @@ def sync_recurrence_checklist_to_future(slug_or_id):
             continue
 
         existing_items = (
-            ChecklistItem.query.filter(ChecklistItem.task_id == t.id).order_by(ChecklistItem.position.asc()).all()
+            ChecklistItem.query.filter(ChecklistItem.task_id == t.id)
+            .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+            .all()
         )
 
         existing_contents = {(i.content or "").strip() for i in existing_items}
@@ -1462,7 +1465,9 @@ def get_checklist(slug_or_id):
 
     # Retourner la checklist complète
     all_checklist_items = (
-        ChecklistItem.query.filter(ChecklistItem.task_id == task.id).order_by(ChecklistItem.position).all()
+        ChecklistItem.query.filter(ChecklistItem.task_id == task.id)
+        .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+        .all()
     )
 
     checklist = [
@@ -1500,7 +1505,9 @@ def add_checklist_item(slug_or_id):
 
     # Retourner la checklist complète mise à jour, triée par position
     all_checklist_items = (
-        ChecklistItem.query.filter(ChecklistItem.task_id == task.id).order_by(ChecklistItem.position).all()
+        ChecklistItem.query.filter(ChecklistItem.task_id == task.id)
+        .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+        .all()
     )
 
     checklist = [
@@ -1533,7 +1540,17 @@ def update_checklist_item(slug_or_id, item_id):
             return jsonify({"success": False, "error": "Données JSON manquantes"}), 400
 
         if "is_checked" in data:
-            item.is_checked = data["is_checked"]
+            raw = data["is_checked"]
+            if isinstance(raw, bool):
+                item.is_checked = raw
+            elif isinstance(raw, int | float):
+                item.is_checked = bool(raw)
+            elif isinstance(raw, str):
+                item.is_checked = raw.strip().lower() in {"1", "true", "yes", "on"}
+            elif raw is None:
+                item.is_checked = False
+            else:
+                raise BadRequest("Valeur is_checked invalide")
 
         if "content" in data:
             item.content = data["content"]
@@ -1552,7 +1569,9 @@ def update_checklist_item(slug_or_id, item_id):
         # Retourner la checklist complète mise à jour, triée par position
         # Récupérer tous les éléments de la tâche triés par position
         all_checklist_items = (
-            ChecklistItem.query.filter(ChecklistItem.task_id == task.id).order_by(ChecklistItem.position).all()
+            ChecklistItem.query.filter(ChecklistItem.task_id == task.id)
+            .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+            .all()
         )
 
         checklist = [
@@ -1562,6 +1581,9 @@ def update_checklist_item(slug_or_id, item_id):
 
         return jsonify({"success": True, "checklist": checklist})
 
+    except BadRequest as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(f"Erreur lors de la mise à jour de l'élément de checklist: {str(e)}")
         current_app.logger.error(f"Type d'erreur: {type(e).__name__}")
@@ -1591,10 +1613,19 @@ def delete_checklist_item(slug_or_id, item_id):
     db.session.delete(item)
     db.session.commit()
 
+    # Normaliser les positions pour éviter les doublons / gaps
+    remaining = (
+        ChecklistItem.query.filter(ChecklistItem.task_id == task.id)
+        .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+        .all()
+    )
+    for pos, it in enumerate(remaining):
+        it.position = pos
+    db.session.commit()
+
     # Retourner la checklist complète mise à jour
     checklist = [
-        {"id": item.id, "content": item.content, "is_checked": item.is_checked, "position": item.position}
-        for item in task.checklist_items
+        {"id": it.id, "content": it.content, "is_checked": it.is_checked, "position": it.position} for it in remaining
     ]
 
     return jsonify({"success": True, "checklist": checklist})
@@ -1629,15 +1660,25 @@ def reorder_checklist(slug_or_id):
         item = ChecklistItem.query.get(item_id)
         if item and item.task_id == task.id:
             item.position = item_data["position"]
-            # Mettre à jour l'état de la checkbox si fourni (pour synchroniser avec le DOM)
+            # Ne jamais déduire is_checked via bool("false") => True
             if "is_checked" in item_data:
-                item.is_checked = bool(item_data["is_checked"])
+                raw = item_data["is_checked"]
+                if isinstance(raw, bool):
+                    item.is_checked = raw
+                elif isinstance(raw, int | float):
+                    item.is_checked = bool(raw)
+                elif isinstance(raw, str):
+                    item.is_checked = raw.strip().lower() in {"1", "true", "yes", "on"}
+                elif raw is None:
+                    item.is_checked = False
 
     db.session.commit()
 
     # Retourner la checklist complète mise à jour
     all_checklist_items = (
-        ChecklistItem.query.filter(ChecklistItem.task_id == task.id).order_by(ChecklistItem.position).all()
+        ChecklistItem.query.filter(ChecklistItem.task_id == task.id)
+        .order_by(ChecklistItem.position.asc(), ChecklistItem.id.asc())
+        .all()
     )
 
     checklist = [

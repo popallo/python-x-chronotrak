@@ -1,0 +1,146 @@
+---
+description: Environnement de développement - uv, fish, flask run
+alwaysApply: true
+---
+
+# Environnement de développement ChronoTrak
+
+## Gestion des dépendances avec uv
+
+### Installation
+- Utiliser `uv` comme gestionnaire de paquets Python
+- Environnement virtuel dans `.venv/`
+- Fichier de lock `uv.lock` pour la reproductibilité
+
+### Commandes principales
+
+```bash
+# Créer l'environnement virtuel
+uv venv --python python3.13
+
+# Activer l'environnement (Fish shell)
+source .venv/bin/activate.fish
+
+# Installer les dépendances
+uv sync --extra dev
+
+# Mettre à jour les dépendances
+uv sync --active -U --extra dev
+
+# Ajouter une dépendance
+uv add package-name
+
+# Ajouter une dépendance de dev
+uv add --dev package-name
+```
+
+### Cache uv
+- Définir `UV_CACHE_DIR` pour éviter les problèmes de permissions
+- Utiliser un cache local au projet si nécessaire
+
+```bash
+export UV_CACHE_DIR="$PWD/uv_cache"
+```
+
+## Shell Fish
+
+### Activation de l'environnement
+```fish
+# Dans Fish shell
+source .venv/bin/activate.fish
+```
+
+### Configuration recommandée
+- Ajouter des alias dans `~/.config/fish/config.fish` si nécessaire
+- Utiliser les fonctions Fish pour les commandes fréquentes
+
+## Lancement en développement
+
+### Flask run
+- Utiliser `flask run` pour le développement local
+- Mode debug activé automatiquement via `FLASK_ENV=development`
+- Rechargement automatique activé
+
+```bash
+# Activer l'environnement
+source .venv/bin/activate.fish
+
+# Lancer l'application
+flask run
+
+# Avec variables d'environnement spécifiques
+FLASK_ENV=development flask run
+```
+
+### Variables d'environnement
+- Fichier `.env` pour le développement (non versionné)
+- Copier depuis `.env.example` si nécessaire
+- Chargement automatique via `python-dotenv`
+
+## Structure du projet
+
+### Répertoires importants
+- `.venv/` - Environnement virtuel (non versionné)
+- `app/` - Code de l'application
+- `migrations/` - Migrations Alembic
+- `tests/` - Tests
+- `instance/` - Données locales (base SQLite, uploads)
+- `uv_cache/` - Cache uv (optionnel, non versionné)
+
+### Fichiers de configuration
+- `pyproject.toml` - Configuration du projet et dépendances
+- `uv.lock` - Lockfile des dépendances (versionné)
+- `.env` - Variables d'environnement locales (non versionné)
+- `.env.example` - Template des variables d'environnement
+
+## Workflow de développement
+
+### Avant de commencer
+```bash
+# 1. Activer l'environnement
+source .venv/bin/activate.fish
+
+# 2. Mettre à jour les dépendances si nécessaire
+uv sync --extra dev
+
+# 3. Appliquer les migrations
+flask db upgrade
+
+# 4. Lancer l'application
+flask run
+```
+
+### Avant de committer
+```bash
+# 1. Lancer les hooks pre-commit
+pre-commit run
+
+# 2. Ou sur tous les fichiers
+pre-commit run --all-files
+
+# 3. Vérifier les tests
+pytest
+```
+
+## Outils de développement
+
+### Pre-commit hooks
+- Ruff pour le linting et formatage
+- Vérifications de sécurité (secrets, clés privées)
+- Installation : `pre-commit install`
+
+### Tests
+- Pytest pour les tests
+- Structure dans `tests/`
+- Marqueurs : `unit`, `integration`, `slow`
+
+```bash
+# Lancer tous les tests
+pytest
+
+# Tests unitaires uniquement
+pytest -m unit
+
+# Avec couverture
+pytest --cov=app
+```

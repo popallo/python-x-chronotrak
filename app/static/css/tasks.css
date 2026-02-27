@@ -61,7 +61,7 @@
 #timeHistoryModal .time-history {
     border: none;
     background: transparent;
-    padding: 0;
+    padding: 0 1rem;
 }
 
 #timeHistoryModal .time-entry-item {

@@ -1,6 +1,19 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.3"
+  date: "2026-02"
+  items:
+  - type: improvement
+    text: 'refactor: enhance checklist item handling by normalizing positions and improving is_checked logic'
+  - type: improvement
+    text: 'refactor: update comment submission logic to append new comments to the main comment list in the card instead of the modal'
+  - type: improvement
+    text: 'style: adjust padding in time history modal for improved layout'
+  - type: fix
+    text: update recurrence summary text for consistency in task model, routes, and templates
+  - type: improvement
+    text: 'chore: added Cursor rules for project conventions'
 - version: "2.10.2"
   date: "2026-02"
   items:

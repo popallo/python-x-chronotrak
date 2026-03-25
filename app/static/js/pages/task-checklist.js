@@ -81,6 +81,9 @@ function initChecklistPage() {
     // Gestion des événements de la checklist
     // ==========================================================================
     function initChecklistEventListeners() {
+        const checklistItemsRoot = document.getElementById('checklist-items');
+        if (!checklistItemsRoot) return;
+
         // Certains navigateurs peuvent restaurer l'état des inputs (F5 / historique)
         // de façon inattendue. On force l'état initial depuis le HTML serveur.
         document.querySelectorAll('#checklist-items .checklist-item').forEach(row => {
@@ -95,24 +98,34 @@ function initChecklistPage() {
             }
         });
 
-        // Écouteurs pour les cases à cocher existantes
-        document.querySelectorAll('.checklist-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', handleCheckboxChange);
+        // Délégation : le conteneur #checklist-items n'est pas remplacé lors des mises à jour
+        // AJAX (seul son innerHTML change). Les lignes ajoutées dynamiquement restent ainsi
+        // couvertes sans réattacher d'écouteurs une par une.
+        checklistItemsRoot.addEventListener('change', function(e) {
+            const checkbox = e.target;
+            if (!checkbox || !checkbox.classList.contains('checklist-checkbox')) return;
+            if (!checklistItemsRoot.contains(checkbox)) return;
+            handleCheckboxChange.call(checkbox, e);
         });
 
-        // Écouteurs pour les boutons de suppression
-        document.querySelectorAll('.delete-checklist-item').forEach(button => {
-            button.addEventListener('click', handleDeleteClick);
+        checklistItemsRoot.addEventListener('click', function(e) {
+            const delBtn = e.target.closest('.delete-checklist-item');
+            if (delBtn && checklistItemsRoot.contains(delBtn)) {
+                handleDeleteClick.call(delBtn, e);
+                return;
+            }
+            const copyBtn = e.target.closest('.copy-to-time-btn');
+            if (copyBtn && checklistItemsRoot.contains(copyBtn)) {
+                if (copyBtn.disabled || copyBtn.classList.contains('disabled')) return;
+                handleCopyToTime.call(copyBtn, e);
+            }
         });
 
-        // Écouteurs pour le contenu éditable
-        document.querySelectorAll('.checklist-content').forEach(content => {
-            content.addEventListener('dblclick', () => makeContentEditable(content));
-        });
-
-        // Écouteurs pour les boutons de copie vers le temps
-        document.querySelectorAll('.copy-to-time-btn').forEach(button => {
-            button.addEventListener('click', handleCopyToTime);
+        checklistItemsRoot.addEventListener('dblclick', function(e) {
+            const content = e.target.closest('.checklist-content');
+            if (!content || !checklistItemsRoot.contains(content)) return;
+            if (e.target.closest('.checklist-checkbox, .btn-group, .checklist-drag-handle')) return;
+            makeContentEditable(content);
         });
 
         // Gestion du formulaire d'ajout
@@ -481,17 +494,6 @@ function initChecklistPage() {
         `;
 
         checklistItems.appendChild(itemElement);
-
-        // Ajouter les écouteurs d'événements
-        const checkbox = itemElement.querySelector('.checklist-checkbox');
-        const deleteButton = itemElement.querySelector('.delete-checklist-item');
-        const copyButton = itemElement.querySelector('.copy-to-time-btn');
-        const contentSpan = itemElement.querySelector('.checklist-content');
-
-        checkbox.addEventListener('change', handleCheckboxChange);
-        deleteButton.addEventListener('click', handleDeleteClick);
-        copyButton.addEventListener('click', handleCopyToTime);
-        contentSpan.addEventListener('dblclick', () => makeContentEditable(contentSpan));
     }
 
     function makeContentEditable(element) {

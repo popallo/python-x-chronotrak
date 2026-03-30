@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.10.6"
+  date: "2026-03"
+  items:
+  - type: improvement
+    text: 'chore: update requests package version to 2.33.1 and refresh associated URLs in uv.lock'
+  - type: improvement
+    text: 'chore: update charset-normalizer version to 3.4.4 and refresh wheel URLs in uv.lock'
+  - type: improvement
+    text: 'refactor: improve event delegation for checklist interactions to enhance performance and maintainability'
 - version: "2.10.5"
   date: "2026-02"
   items:

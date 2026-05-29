@@ -68,6 +68,20 @@
     border-color: var(--bs-border-color) !important;
 }
 
+#timeHistoryModal .time-entry-row-header {
+    gap: 0.5rem;
+}
+
+#timeHistoryModal .delete-time-entry-btn {
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+#timeHistoryModal .delete-time-entry-btn:hover,
+#timeHistoryModal .delete-time-entry-btn:focus {
+    text-decoration: none;
+}
+
 /* Petits écrans : Outils lisibles */
 @media (max-width: 991px) {
     .task-tools-body .row {

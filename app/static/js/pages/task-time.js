@@ -39,24 +39,78 @@ function formatTime(hours) {
     return h > 0 ? `${h}h${m.toString().padStart(2, '0')}min` : `${m}min`;
 }
 
-// Fonction pour mettre à jour l'interface après l'ajout de temps
-async function updateTimeInterface(data) {
-    // Mettre à jour le temps total (Informations + badge dans la modale Historique)
-    const formatted = data.task.actual_time !== undefined && data.task.actual_time !== null ? formatTime(data.task.actual_time) : '0 min';
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getTimeHistoryContainer() {
+    return document.querySelector('#timeHistoryModal .time-history');
+}
+
+function isTimeHistoryAdmin() {
+    const container = getTimeHistoryContainer();
+    return container?.dataset.isAdmin === 'true';
+}
+
+function getTaskSlugFromPage() {
+    const container = getTimeHistoryContainer();
+    if (container?.dataset.taskSlug) {
+        return container.dataset.taskSlug;
+    }
+    const urlParts = window.location.pathname.split('/');
+    const taskIndex = urlParts.indexOf('tasks');
+    if (taskIndex !== -1 && taskIndex + 1 < urlParts.length) {
+        return urlParts[taskIndex + 1];
+    }
+    return null;
+}
+
+function buildTimeEntryRowHtml(timeEntry, showDelete) {
+    const deleteBtn = showDelete && timeEntry.id
+        ? `<button type="button" class="btn btn-sm btn-link text-danger py-0 px-1 delete-time-entry-btn"
+                  title="Supprimer cette saisie" data-entry-id="${timeEntry.id}">
+               <i class="fas fa-trash"></i>
+           </button>`
+        : '';
+    const description = timeEntry.description
+        ? `<small class="text-muted d-block mt-1">${escapeHtml(timeEntry.description)}</small>`
+        : '';
+
+    return `
+        <div class="list-group-item py-2 px-0 time-entry-item" data-entry-id="${timeEntry.id}">
+            <div class="d-flex justify-content-between align-items-center time-entry-row-header">
+                <span class="text-primary fw-medium">${formatTime(timeEntry.hours)}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">${escapeHtml(timeEntry.created_at)}</small>
+                    ${deleteBtn}
+                </div>
+            </div>
+            <small class="text-muted d-block">${escapeHtml(timeEntry.user_name)}</small>
+            ${description}
+        </div>
+    `;
+}
+
+function updateTaskTimeBadges(taskData) {
+    if (!taskData) return;
+
+    const formatted = taskData.actual_time !== undefined && taskData.actual_time !== null
+        ? formatTime(taskData.actual_time)
+        : '0 min';
     const timeBadge = document.getElementById('total-time-badge');
     if (timeBadge) timeBadge.textContent = formatted;
     const timeBadgeModal = document.getElementById('total-time-badge-modal');
     if (timeBadgeModal) timeBadgeModal.textContent = formatted;
 
-    // Mettre à jour le crédit restant directement depuis les données reçues
-    if (data.task.remaining_credit !== null && data.task.remaining_credit !== undefined) {
+    if (taskData.remaining_credit !== null && taskData.remaining_credit !== undefined) {
         const oldBadge = document.getElementById('remaining-credit-badge');
         if (oldBadge) {
-            // Convertir le temps restant en nombre décimal
-            const remainingCredit = parseTimeString(data.task.remaining_credit);
+            const remainingCredit = parseTimeString(taskData.remaining_credit);
 
             if (!isNaN(remainingCredit)) {
-                // Créer un nouveau badge
                 const newBadge = document.createElement('span');
                 newBadge.id = 'remaining-credit-badge';
                 newBadge.className = `badge ${remainingCredit < 2 ? 'bg-danger' :
@@ -66,17 +120,14 @@ async function updateTimeInterface(data) {
                 newBadge.setAttribute('title', 'Crédit restant du projet');
                 newBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(remainingCredit)}`;
 
-                // Remplacer l'ancien badge par le nouveau
                 oldBadge.parentNode.replaceChild(newBadge, oldBadge);
 
-                // Réinitialiser le tooltip Bootstrap
                 const tooltip = bootstrap.Tooltip.getInstance(newBadge);
                 if (tooltip) {
                     tooltip.dispose();
                 }
                 new bootstrap.Tooltip(newBadge);
 
-                // Mettre à jour aussi l'alerte dans le modal si elle existe
                 const creditAlert = document.querySelector('#timeEntryModal .alert');
                 if (creditAlert) {
                     const alertClass = remainingCredit < 2 ? 'alert-danger' :
@@ -94,45 +145,51 @@ async function updateTimeInterface(data) {
             }
         }
     }
+}
 
-    // Ajouter la nouvelle entrée de temps à la liste
-    const timeHistoryContainer = document.querySelector('.time-history');
-    if (timeHistoryContainer) {
-        const timeEntry = data.time_entry;
-        const entryHtml = `
-            <div class="list-group-item py-1 px-2 time-entry-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-minus me-1 text-danger"></i>
-                        <span class="text-danger">
-                            ${formatTime(timeEntry.hours)}
-                        </span>
-                    </div>
-                    <small class="text-muted">${timeEntry.created_at}</small>
-                </div>
-                <small class="text-muted d-block">${timeEntry.user_name}</small>
-                ${timeEntry.description ? `<small class="text-muted d-block mt-1">${timeEntry.description}</small>` : ''}
-            </div>
-        `;
+function prependTimeEntryRow(timeEntry) {
+    const timeHistoryContainer = getTimeHistoryContainer();
+    if (!timeHistoryContainer || !timeEntry) return;
 
-        // Vérifier s'il y a déjà une liste d'entrées de temps
-        let timeList = timeHistoryContainer.querySelector('.list-group');
+    const entryHtml = buildTimeEntryRowHtml(timeEntry, isTimeHistoryAdmin());
+    let timeList = timeHistoryContainer.querySelector('.list-group');
 
-        if (!timeList) {
-            // S'il n'y a pas de liste, créer une nouvelle liste et remplacer le message "Aucun temps enregistré"
-            const noTimeMessage = timeHistoryContainer.querySelector('.text-muted.small');
-            if (noTimeMessage) {
-                // Créer la structure de liste
-                const listGroupHtml = `<div class="list-group list-group-flush">${entryHtml}</div>`;
-                noTimeMessage.outerHTML = listGroupHtml;
-            }
-        } else {
-            // S'il y a déjà une liste, ajouter la nouvelle entrée au début
-            timeList.insertAdjacentHTML('afterbegin', entryHtml);
+    if (!timeList) {
+        const noTimeMessage = timeHistoryContainer.querySelector('.time-history-empty, .text-muted.small');
+        if (noTimeMessage) {
+            noTimeMessage.outerHTML = `<div class="list-group list-group-flush">${entryHtml}</div>`;
         }
+    } else {
+        timeList.insertAdjacentHTML('afterbegin', entryHtml);
+    }
+}
+
+function removeTimeEntryFromUI(entryId, taskData) {
+    const timeHistoryContainer = getTimeHistoryContainer();
+    if (!timeHistoryContainer) return;
+
+    const item = timeHistoryContainer.querySelector(`.time-entry-item[data-entry-id="${entryId}"]`);
+    if (item) {
+        item.remove();
     }
 
-    // Afficher les messages de succès/alerte
+    const timeList = timeHistoryContainer.querySelector('.list-group');
+    if (timeList && !timeList.querySelector('.time-entry-item')) {
+        timeList.remove();
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-muted small mb-0 time-history-empty';
+        emptyMsg.textContent = 'Aucun temps enregistré';
+        timeHistoryContainer.appendChild(emptyMsg);
+    }
+
+    updateTaskTimeBadges(taskData);
+}
+
+// Fonction pour mettre à jour l'interface après l'ajout de temps
+async function updateTimeInterface(data) {
+    updateTaskTimeBadges(data.task);
+    prependTimeEntryRow(data.time_entry);
+
     if (data.message) {
         showToast(data.message, 'success');
     }
@@ -208,8 +265,51 @@ function initTimePage() {
         });
     }
 
+    const timeHistoryModal = document.getElementById('timeHistoryModal');
+    if (timeHistoryModal) {
+        timeHistoryModal.addEventListener('click', handleDeleteTimeEntryClick);
+    }
+
     // La checklist gère elle-même l'ouverture de la modale + dataset.checklistItemId via handleCopyToTime
     // On n'attache pas de second handler ici pour éviter de ne pas définir l'id.
+}
+
+async function handleDeleteTimeEntryClick(e) {
+    const btn = e.target.closest('.delete-time-entry-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    const entryId = btn.dataset.entryId;
+    const taskSlug = getTaskSlugFromPage();
+
+    if (!entryId || !taskSlug) return;
+
+    if (!confirm('Supprimer cette saisie de temps ?')) {
+        return;
+    }
+
+    btn.disabled = true;
+
+    try {
+        const data = await utils.fetchWithCsrf(
+            `/tasks/${encodeURIComponent(taskSlug)}/time_entries/${encodeURIComponent(entryId)}`,
+            { method: 'DELETE' }
+        );
+
+        if (data.success) {
+            removeTimeEntryFromUI(entryId, data.task);
+            if (data.message) {
+                showToast(data.message, 'success');
+            }
+        } else {
+            showToast(data.error || 'Erreur lors de la suppression', 'danger');
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur lors de la suppression du temps', 'danger');
+        btn.disabled = false;
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -288,60 +388,11 @@ async function handleTimeSubmit(e) {
 
 
 function updateTimeDisplay(totalTime) {
-    // Mettre à jour le temps total
-    const timeBadge = document.querySelector('.badge[title="Temps total passé sur la tâche"]');
-    if (timeBadge) {
-        timeBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(totalTime)}`;
-    }
+    updateTaskTimeBadges({ actual_time: totalTime });
 }
 
 function updateRemainingCredit(remainingCredit) {
-    // Mettre à jour le crédit restant directement depuis les données reçues
-    if (remainingCredit !== null && remainingCredit !== undefined) {
-        const oldBadge = document.getElementById('remaining-credit-badge');
-        if (oldBadge) {
-            // Convertir le temps restant en nombre décimal
-            const remainingCreditDecimal = parseTimeString(remainingCredit);
-
-            if (!isNaN(remainingCreditDecimal)) {
-                // Créer un nouveau badge
-                const newBadge = document.createElement('span');
-                newBadge.id = 'remaining-credit-badge';
-                newBadge.className = `badge ${remainingCreditDecimal < 2 ? 'bg-danger' :
-                                     remainingCreditDecimal < 5 ? 'bg-warning' :
-                                     'bg-success'} text-white d-flex align-items-center`;
-                newBadge.setAttribute('data-bs-toggle', 'tooltip');
-                newBadge.setAttribute('title', 'Crédit restant du projet');
-                newBadge.innerHTML = `<i class="fas fa-clock me-1"></i>${formatTime(remainingCreditDecimal)}`;
-
-                // Remplacer l'ancien badge par le nouveau
-                oldBadge.parentNode.replaceChild(newBadge, oldBadge);
-
-                // Réinitialiser le tooltip Bootstrap
-                const tooltip = bootstrap.Tooltip.getInstance(newBadge);
-                if (tooltip) {
-                    tooltip.dispose();
-                }
-                new bootstrap.Tooltip(newBadge);
-
-                // Mettre à jour aussi l'alerte dans le modal si elle existe
-                const creditAlert = document.querySelector('#timeEntryModal .alert');
-                if (creditAlert) {
-                    const alertClass = remainingCreditDecimal < 2 ? 'alert-danger' :
-                                     remainingCreditDecimal < 5 ? 'alert-warning' :
-                                     'alert-success';
-                    creditAlert.className = `alert ${alertClass} mb-4 no-auto-close`;
-                    const creditText = creditAlert.querySelector('strong');
-                    if (creditText) {
-                        creditText.textContent = formatTime(remainingCreditDecimal);
-                        creditText.className = `${remainingCreditDecimal < 2 ? 'text-danger' :
-                                              remainingCreditDecimal < 5 ? 'text-warning' :
-                                              'text-success'} ms-2`;
-                    }
-                }
-            }
-        }
-    }
+    updateTaskTimeBadges({ remaining_credit: remainingCredit });
 }
 
 // Cette fonction a été supprimée car la réorganisation est maintenant gérée côté serveur

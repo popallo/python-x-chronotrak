@@ -15,7 +15,7 @@ from app.utils.route_utils import (
     get_task_by_slug_or_id,
     save_to_db,
 )
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 from werkzeug.exceptions import BadRequest
@@ -1006,6 +1006,72 @@ def get_time_entries(slug_or_id):
             },
         }
     )
+
+
+def _format_minutes_display(minutes: int) -> str:
+    """Formate des minutes en affichage humain (ex. 2h30min ou 45min)."""
+    hours = minutes // 60
+    mins = minutes % 60
+    if hours > 0:
+        return f"{hours}h{mins:02d}min"
+    return f"{mins}min"
+
+
+@tasks.route("/tasks/<slug_or_id>/time_entries/<int:entry_id>", methods=["DELETE"])
+@login_required
+def delete_time_entry(slug_or_id, entry_id):
+    """Supprime une saisie de temps (admin uniquement) et remet à jour les compteurs."""
+    if not current_user.is_admin():
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Accès refusé. Droits administrateur requis."}), 403
+        flash("Accès refusé. Droits administrateur requis.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    task = get_task_by_slug_or_id(slug_or_id)
+    time_entry = TimeEntry.query.get_or_404(entry_id)
+
+    if time_entry.task_id != task.id:
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Entrée de temps introuvable pour cette tâche."}), 404
+        abort(404)
+
+    minutes = time_entry.minutes
+    db.session.delete(time_entry)
+
+    if task.actual_minutes is not None:
+        task.actual_minutes -= minutes
+        if task.actual_minutes <= 0:
+            task.actual_minutes = None
+
+    if task.project.time_tracking_enabled:
+        task.project.remaining_credit += minutes
+        threshold = 120  # 2 heures en minutes
+        if task.project.credit_alert_sent and task.project.remaining_credit >= threshold:
+            task.project.credit_alert_sent = False
+
+    db.session.commit()
+
+    time_display = _format_minutes_display(minutes)
+    success_message = f"{time_display} supprimée(s) de la tâche."
+
+    remaining_display = None
+    if task.project.time_tracking_enabled:
+        remaining_display = _format_minutes_display(task.project.remaining_credit)
+
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(
+            {
+                "success": True,
+                "message": success_message,
+                "task": {
+                    "actual_time": task.actual_minutes / 60 if task.actual_minutes else None,
+                    "remaining_credit": remaining_display,
+                },
+            }
+        )
+
+    flash(success_message, "success")
+    return redirect(url_for("tasks.task_details", slug_or_id=task.slug))
 
 
 @tasks.route("/tasks/update_status", methods=["POST"])

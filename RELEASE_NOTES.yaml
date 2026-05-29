@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.0"
+  date: "2026-05"
+  items:
+  - type: feature
+    text: Allow admins to delete time entries from the task history modal
+  - type: improvement
+    text: 'chore: update package versions in uv.lock for certifi and click'
+  - type: improvement
+    text: 'chore: update package versions in uv.lock for requests and virtualenv'
 - version: "2.10.7"
   date: "2026-05"
   items:

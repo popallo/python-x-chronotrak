@@ -30,35 +30,39 @@ Utiliser le format conventionnel avec préfixe de type :
 - `ci:` - Changements dans CI/CD
 - `build:` - Changements dans le système de build
 
+## Langue
+
+Les messages de commit sont **en anglais** (description, corps et footer).
+
 ## Exemples
 
 ```bash
 # Correction de bug
-git commit -m "fix: correction de l'affichage des dates dans le kanban"
+git commit -m "fix: fix date display in kanban board"
 
 # Nouvelle fonctionnalité
-git commit -m "feature: ajout de la récurrence des tâches"
+git commit -m "feature: add task recurrence support"
 
 # Maintenance
-git commit -m "chore: mise à jour des dépendances Flask"
+git commit -m "chore: update Flask dependencies"
 
 # Documentation
-git commit -m "docs: ajout de la documentation API"
+git commit -m "docs: add API documentation"
 
 # Style/formatage
-git commit -m "style: application du formatage Ruff"
+git commit -m "style: apply Ruff formatting"
 
 # Refactorisation
-git commit -m "refactor: extraction de la logique email dans un module dédié"
+git commit -m "refactor: extract email logic into dedicated module"
 
 # Performance
-git commit -m "perf: optimisation des requêtes N+1 dans la liste des projets"
+git commit -m "perf: optimize N+1 queries in project list"
 
 # Tests
-git commit -m "test: ajout de tests unitaires pour les modèles Task"
+git commit -m "test: add unit tests for Task models"
 
 # CI/CD
-git commit -m "ci: ajout de la vérification Bandit dans le pipeline"
+git commit -m "ci: add Bandit security check to pipeline"
 ```
 
 ## Messages multi-lignes
@@ -66,12 +70,12 @@ git commit -m "ci: ajout de la vérification Bandit dans le pipeline"
 Pour les commits complexes, utiliser un corps détaillé :
 
 ```bash
-git commit -m "feature: système de notifications par email
+git commit -m "feature: add email notification system
 
-- Ajout de la configuration SMTP
-- Implémentation des templates d'email
-- Gestion des préférences de notification utilisateur
-- Tests d'envoi en développement et production"
+- Add SMTP configuration
+- Implement email templates
+- Add user notification preferences
+- Add send tests for development and production"
 ```
 
 ## Branches
@@ -89,8 +93,8 @@ Exemples :
 
 ## Bonnes pratiques
 
-- Messages en français (cohérent avec le projet)
+- Messages en anglais (description, corps et footer)
 - Description courte et claire (moins de 72 caractères idéalement)
-- Utiliser l'impératif ("ajouter" pas "ajoute" ou "ajouté")
+- Utiliser l'impératif anglais ("add" pas "added" ou "adds")
 - Un commit = une modification logique
 - Éviter les commits trop volumineux

@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.1"
+  date: "2026-06"
+  items:
+  - type: improvement
+    text: 'chore: update cryptography to 48.0.1 to fix GHSA-537c-gmf6-5ccf'
 - version: "2.11.0"
   date: "2026-05"
   items:

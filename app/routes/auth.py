@@ -19,6 +19,12 @@ from app.models.token import PasswordResetToken
 from app.models.user import User
 from app.utils import flash_admin_required, flash_already_logged_in, flash_cannot_delete_self, get_utc_now
 from app.utils.email import send_password_reset_email
+from app.utils.login_rate_limit import (
+    clear_login_attempts,
+    get_client_ip,
+    is_login_rate_limited,
+    record_failed_login,
+)
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
@@ -59,15 +65,22 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        client_ip = get_client_ip(request)
+        if is_login_rate_limited(client_ip):
+            flash("Trop de tentatives de connexion. Réessayez dans quelques minutes.", "danger")
+            return render_template("auth/login.html", form=form, title="Connexion")
+
         # Vérifier le token Turnstile si activé
         if current_app.config["TURNSTILE_ENABLED"]:
             token = request.form.get("cf-turnstile-response")
             if not verify_turnstile_token(token):
+                record_failed_login(client_ip)
                 flash("Veuillez compléter la vérification Turnstile.", "danger")
                 return render_template("auth/login.html", form=form, title="Connexion")
 
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            clear_login_attempts(client_ip)
             login_user(user, remember=form.remember.data)
             # Mise à jour de la date de dernière connexion (convertir en naive pour SQLite)
             user.last_login = get_utc_now().replace(tzinfo=None)
@@ -78,6 +91,7 @@ def login():
                 return redirect(next_page)
             return redirect(url_for("main.dashboard"))
         else:
+            record_failed_login(client_ip)
             flash("Échec de la connexion. Vérifiez votre email et mot de passe.", "danger")
 
     return render_template("auth/login.html", form=form, title="Connexion")

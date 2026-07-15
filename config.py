@@ -45,6 +45,11 @@ class Config:
     # Health check : token optionnel pour exposer les détails internes (queue email, worker, etc.)
     HEALTH_CHECK_TOKEN = os.environ.get("HEALTH_CHECK_TOKEN")
 
+    # Limitation des tentatives de connexion (par IP)
+    LOGIN_RATE_LIMIT_ENABLED = os.environ.get("LOGIN_RATE_LIMIT_ENABLED", "true").lower() in ["true", "on", "1"]
+    LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "5"))
+    LOGIN_RATE_LIMIT_WINDOW = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW", "900"))  # 15 minutes
+
     # Clé de chiffrement pour les données sensibles
     # ATTENTION: ENCRYPTION_KEY DOIT être définie dans les variables d'environnement
     # Si la clé change, les données existantes ne pourront plus être déchiffrées
@@ -78,6 +83,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
+    LOGIN_RATE_LIMIT_ENABLED = False
 
 
 class ProductionConfig(Config):

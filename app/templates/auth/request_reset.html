@@ -54,7 +54,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
     import { initAuthPage } from "{{ url_for('static', filename='js/pages/auth.js') }}";
 
     document.addEventListener('DOMContentLoaded', function() {

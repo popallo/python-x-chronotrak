@@ -197,7 +197,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
     import { initCardCollapse } from "{{ url_for('static', filename='js/pages/card_collapse.js') }}";
 
     document.addEventListener('DOMContentLoaded', function() {

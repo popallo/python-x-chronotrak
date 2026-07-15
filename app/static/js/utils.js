@@ -1,10 +1,13 @@
 // Configuration globale
+const csrfToken = window.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || "";
+window.csrfToken = csrfToken;
+
 const CONFIG = {
-    csrfToken: window.csrfToken,
+    csrfToken,
     headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': window.csrfToken
-    }
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+    },
 };
 
 // Fonctions utilitaires

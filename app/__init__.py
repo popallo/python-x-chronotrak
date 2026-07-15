@@ -1,6 +1,7 @@
 import hmac
 import logging
 import os
+import secrets
 from datetime import UTC, datetime
 from logging.handlers import RotatingFileHandler
 
@@ -116,6 +117,7 @@ def create_app(config_name):
     csrf.init_app(app)
 
     # Importer ici pour éviter les imports circulaires
+    from app.utils.csp import build_content_security_policy
     from app.utils.error_handler import send_error_email
     from app.utils.page_timer import get_elapsed_time, log_request_time, start_timer
     from app.utils.version import get_build_info, get_version
@@ -127,18 +129,8 @@ def create_app(config_name):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net https://code.jquery.com https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "style-src 'self' 'unsafe-inline' "
-            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: https:; "
-            "connect-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "frame-src 'self' https://*.cloudflare.com; "
-            "worker-src 'self'"
-        )
+        nonce = getattr(g, "csp_nonce", "")
+        response.headers["Content-Security-Policy"] = build_content_security_policy(app, nonce)
         # Configuration CORS sécurisée - uniquement pour les domaines autorisés
         origin = request.headers.get("Origin")
         allowed_origins = ["https://chronotrak.com", "https://www.chronotrak.com", "https://app.chronotrak.com"]
@@ -159,6 +151,7 @@ def create_app(config_name):
     # Middleware pour mesurer le temps de chargement
     @app.before_request
     def before_request():
+        g.csp_nonce = secrets.token_urlsafe(16)
         start_timer()
 
         # Timeout global pour éviter les requêtes qui traînent (uniquement en production)
@@ -355,6 +348,7 @@ def create_app(config_name):
             "build_info": get_build_info(),
             "page_load": get_elapsed_time(),
             "pinned_tasks": pinned_tasks,
+            "csp_nonce": getattr(g, "csp_nonce", ""),
         }
 
     # Filtre pour formater les nombres à la française (avec virgule)

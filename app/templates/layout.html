@@ -61,25 +61,7 @@
 
     <!-- Chargeur de thème précoce - SANS defer pour éviter le flash -->
     <script src="{{ url_for('static', filename='js/theme-loader.js') }}"></script>
-
-    <!-- Script inline critique pour éviter le flash blanc -->
-    <script>
-        // Appliquer le thème immédiatement, avant même que le DOM soit prêt
-        (function() {
-            const darkMode = localStorage.getItem('darkMode');
-            const html = document.documentElement;
-
-            if (darkMode === 'enabled') {
-                html.classList.add('dark-mode');
-                html.setAttribute('data-bs-theme', 'dark');
-            } else {
-                html.setAttribute('data-bs-theme', 'light');
-            }
-
-            // Marquer le thème comme chargé
-            html.classList.add('theme-loaded');
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/csrf-init.js') }}"></script>
 
     {% block styles %}{% endblock %}
 </head>
@@ -328,10 +310,6 @@
 
     <!-- Script global pour l'archivage -->
     <script type="module" src="{{ url_for('static', filename='js/pages/task-archive.js') }}"></script>
-    <script>
-        // Stocker le token CSRF global
-        window.csrfToken = "{{ csrf_token() }}";
-    </script>
 
     <!-- Scripts pour le menu prismatique -->
     <script src="{{ url_for('static', filename='js/prismatic-nav.js') }}"></script>

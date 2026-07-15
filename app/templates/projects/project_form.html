@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block scripts %}
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
     import { initProjectForm } from "{{ url_for('static', filename='js/pages/project_form.js') }}";
 
     document.addEventListener('DOMContentLoaded', function() {

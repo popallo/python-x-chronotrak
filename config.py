@@ -42,6 +42,14 @@ class Config:
     TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
     TURNSTILE_ENABLED = os.environ.get("TURNSTILE_ENABLED", "false").lower() in ["true", "on", "1"]
 
+    # Health check : token optionnel pour exposer les détails internes (queue email, worker, etc.)
+    HEALTH_CHECK_TOKEN = os.environ.get("HEALTH_CHECK_TOKEN")
+
+    # Limitation des tentatives de connexion (par IP)
+    LOGIN_RATE_LIMIT_ENABLED = os.environ.get("LOGIN_RATE_LIMIT_ENABLED", "true").lower() in ["true", "on", "1"]
+    LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "5"))
+    LOGIN_RATE_LIMIT_WINDOW = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW", "900"))  # 15 minutes
+
     # Clé de chiffrement pour les données sensibles
     # ATTENTION: ENCRYPTION_KEY DOIT être définie dans les variables d'environnement
     # Si la clé change, les données existantes ne pourront plus être déchiffrées
@@ -75,6 +83,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
+    LOGIN_RATE_LIMIT_ENABLED = False
 
 
 class ProductionConfig(Config):
@@ -96,7 +105,8 @@ class ProductionConfig(Config):
     # En production, la clé de chiffrement DOIT être définie dans les variables d'environnement
     @classmethod
     def init_app(cls, app):
-        Config.init_app(app)
+        if not os.environ.get("SECRET_KEY"):
+            raise ValueError("SECRET_KEY doit être définie dans les variables d'environnement en production")
         if not os.environ.get("ENCRYPTION_KEY"):
             raise ValueError("ENCRYPTION_KEY doit être définie dans les variables d'environnement en production")
 

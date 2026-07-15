@@ -1,18 +1,20 @@
+import hmac
 import logging
 import os
+import secrets
 from datetime import UTC, datetime
 from logging.handlers import RotatingFileHandler
 
 import click
 from config import config
-from flask import Flask, g, render_template, request
+from flask import Flask, flash, g, redirect, render_template, request, url_for
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 from werkzeug.exceptions import HTTPException
 
 # Import des optimisations SQLite (side-effect au chargement)
@@ -36,7 +38,10 @@ csrf = CSRFProtect()
 
 def create_app(config_name):
     app = Flask(__name__)
-    app.config.from_object(config[config_name])
+    config_class = config[config_name]
+    app.config.from_object(config_class)
+    if hasattr(config_class, "init_app"):
+        config_class.init_app(app)
 
     # Monkey patch désactivé temporairement
     # if not app.debug:
@@ -83,15 +88,15 @@ def create_app(config_name):
             app.logger.error(f"Erreur lors du démarrage du worker email: {e}")
 
     # Configuration de sécurité
-    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_SECURE"] = not app.debug and not app.testing
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 heure
 
-    # Configuration de CSRF pour les requêtes AJAX
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+    # CSRF : activé par défaut sur les POST (formulaires + AJAX avec en-tête token)
+    app.config["WTF_CSRF_CHECK_DEFAULT"] = True
     app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_HEADERS"] = ["X-CSRF-Token"]
+    app.config["WTF_CSRF_HEADERS"] = ["X-CSRF-Token", "X-CSRFToken"]
 
     # Initialiser les extensions avec l'app
     db.init_app(app)
@@ -112,6 +117,7 @@ def create_app(config_name):
     csrf.init_app(app)
 
     # Importer ici pour éviter les imports circulaires
+    from app.utils.csp import build_content_security_policy
     from app.utils.error_handler import send_error_email
     from app.utils.page_timer import get_elapsed_time, log_request_time, start_timer
     from app.utils.version import get_build_info, get_version
@@ -122,19 +128,10 @@ def create_app(config_name):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net https://code.jquery.com https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "style-src 'self' 'unsafe-inline' "
-            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: https:; "
-            "connect-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
-            "frame-src 'self' https://*.cloudflare.com; "
-            "worker-src 'self'"
-        )
+        if not app.debug and not app.testing:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        nonce = getattr(g, "csp_nonce", "")
+        response.headers["Content-Security-Policy"] = build_content_security_policy(app, nonce)
         # Configuration CORS sécurisée - uniquement pour les domaines autorisés
         origin = request.headers.get("Origin")
         allowed_origins = ["https://chronotrak.com", "https://www.chronotrak.com", "https://app.chronotrak.com"]
@@ -155,6 +152,9 @@ def create_app(config_name):
     # Middleware pour mesurer le temps de chargement
     @app.before_request
     def before_request():
+        g.csp_nonce = secrets.token_urlsafe(16)
+        if app.config.get("WTF_CSRF_ENABLED", True):
+            g.csrf_token = generate_csrf()
         start_timer()
 
         # Timeout global pour éviter les requêtes qui traînent (uniquement en production)
@@ -250,6 +250,16 @@ def create_app(config_name):
             pass
 
         return response
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        flash("Votre session a expiré. Veuillez actualiser la page et réessayer.", "warning")
+        if request.method == "GET":
+            return redirect(url_for("auth.login"))
+        referrer = request.referrer
+        if referrer and request.host in referrer:
+            return redirect(referrer)
+        return redirect(url_for("auth.login"))
 
     # Gestionnaires d'erreur
     @app.errorhandler(404)
@@ -351,6 +361,8 @@ def create_app(config_name):
             "build_info": get_build_info(),
             "page_load": get_elapsed_time(),
             "pinned_tasks": pinned_tasks,
+            "csp_nonce": getattr(g, "csp_nonce", ""),
+            "csrf_token_value": getattr(g, "csrf_token", ""),
         }
 
     # Filtre pour formater les nombres à la française (avec virgule)
@@ -427,11 +439,6 @@ def create_app(config_name):
         """Retourne une valeur par défaut si la valeur est None"""
         return value if value is not None else default
 
-    # Configuration de CSRF pour les requêtes AJAX
-    @csrf.exempt
-    def csrf_exempt():
-        return True
-
     # Enregistrement des blueprints
     from app.routes.admin import admin
     from app.routes.api import api
@@ -462,35 +469,54 @@ def create_app(config_name):
         return send_from_directory(app.static_folder, "favicon/favicon.ico", mimetype="image/vnd.microsoft.icon")
 
     # Route de santé pour monitoring
+    def _health_check_authorized(req):
+        """Autorise la réponse détaillée si HEALTH_CHECK_TOKEN est configuré et valide."""
+        expected_token = app.config.get("HEALTH_CHECK_TOKEN")
+        if not expected_token:
+            return False
+
+        provided_token = req.headers.get("X-Health-Token")
+        if not provided_token:
+            auth_header = req.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                provided_token = auth_header.removeprefix("Bearer ").strip()
+
+        if not provided_token:
+            return False
+
+        return hmac.compare_digest(provided_token, expected_token)
+
     @app.route("/health")
     def health_check():
-        """Endpoint de santé pour monitoring"""
+        """Endpoint de santé pour monitoring (réponse minimale par défaut)."""
+        include_details = _health_check_authorized(request)
         try:
-            # Vérifier la base de données avec la syntaxe correcte
             from sqlalchemy import text
 
             db.session.execute(text("SELECT 1"))
 
-            # Vérifier la queue d'emails
-            from app.utils.email import email_queue
+            response = {"status": "healthy"}
+            if include_details:
+                from app.utils.email import email_queue, email_worker_thread
 
-            queue_size = email_queue.qsize()
-
-            # Vérifier l'état du worker email
-            from app.utils.email import email_worker_thread
-
-            worker_alive = email_worker_thread and email_worker_thread.is_alive()
-
-            return {
-                "status": "healthy",
-                "database": "ok",
-                "email_queue_size": queue_size,
-                "email_worker_alive": worker_alive,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
+                response.update(
+                    {
+                        "database": "ok",
+                        "email_queue_size": email_queue.qsize(),
+                        "email_worker_alive": email_worker_thread and email_worker_thread.is_alive(),
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
+            return response
         except Exception as e:
             app.logger.error(f"Health check failed: {e}")
-            return {"status": "unhealthy", "error": str(e), "timestamp": datetime.now(UTC).isoformat()}, 500
+            if include_details:
+                return {
+                    "status": "unhealthy",
+                    "error": str(e),
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }, 503
+            return {"status": "unhealthy"}, 503
 
     # Commandes CLI
     @app.cli.command()

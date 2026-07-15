@@ -1,3 +1,5 @@
+from urllib.parse import urljoin, urlparse
+
 import requests
 from app import db
 from app.forms.auth import (
@@ -17,10 +19,25 @@ from app.models.token import PasswordResetToken
 from app.models.user import User
 from app.utils import flash_admin_required, flash_already_logged_in, flash_cannot_delete_self, get_utc_now
 from app.utils.email import send_password_reset_email
+from app.utils.login_rate_limit import (
+    clear_login_attempts,
+    get_client_ip,
+    is_login_rate_limited,
+    record_failed_login,
+)
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 auth = Blueprint("auth", __name__)
+
+
+def _is_safe_redirect_url(target: str) -> bool:
+    """Vérifie qu'une URL de redirection reste sur le même hôte (anti open-redirect)."""
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 def verify_turnstile_token(token):
@@ -48,29 +65,39 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        client_ip = get_client_ip(request)
+        if is_login_rate_limited(client_ip):
+            flash("Trop de tentatives de connexion. Réessayez dans quelques minutes.", "danger")
+            return render_template("auth/login.html", form=form, title="Connexion")
+
         # Vérifier le token Turnstile si activé
         if current_app.config["TURNSTILE_ENABLED"]:
             token = request.form.get("cf-turnstile-response")
             if not verify_turnstile_token(token):
+                record_failed_login(client_ip)
                 flash("Veuillez compléter la vérification Turnstile.", "danger")
                 return render_template("auth/login.html", form=form, title="Connexion")
 
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            clear_login_attempts(client_ip)
             login_user(user, remember=form.remember.data)
             # Mise à jour de la date de dernière connexion (convertir en naive pour SQLite)
             user.last_login = get_utc_now().replace(tzinfo=None)
             db.session.commit()
 
             next_page = request.args.get("next")
-            return redirect(next_page if next_page else url_for("main.dashboard"))
+            if next_page and _is_safe_redirect_url(next_page):
+                return redirect(next_page)
+            return redirect(url_for("main.dashboard"))
         else:
+            record_failed_login(client_ip)
             flash("Échec de la connexion. Vérifiez votre email et mot de passe.", "danger")
 
     return render_template("auth/login.html", form=form, title="Connexion")
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
 def logout():
     logout_user()
     return redirect(url_for("auth.login"))
@@ -372,7 +399,7 @@ def reset_request_sent():
     return render_template("auth/reset_request_sent.html", title="Email envoyé")
 
 
-@auth.route("/users/<int:user_id>/impersonate")
+@auth.route("/users/<int:user_id>/impersonate", methods=["POST"])
 @login_required
 def impersonate_user(user_id):
     # Vérifier que l'utilisateur actuel est admin ou technicien
@@ -397,7 +424,7 @@ def impersonate_user(user_id):
     return redirect(url_for("main.dashboard"))
 
 
-@auth.route("/stop-impersonating")
+@auth.route("/stop-impersonating", methods=["POST"])
 @login_required
 def stop_impersonating():
     if "original_user_id" not in session:
@@ -407,8 +434,9 @@ def stop_impersonating():
     # Récupérer l'utilisateur original
     original_user = User.query.get(session["original_user_id"])
     if not original_user:
+        logout_user()
         flash("Erreur lors de la récupération de votre compte.", "danger")
-        return redirect(url_for("auth.logout"))
+        return redirect(url_for("auth.login"))
 
     # Supprimer l'ID de l'utilisateur original de la session
     session.pop("original_user_id", None)

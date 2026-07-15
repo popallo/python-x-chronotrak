@@ -62,9 +62,12 @@
                                             </button>
                                         </form>
                                         {% if (current_user.is_admin() or current_user.is_technician()) and not user.is_admin() %}
-                                            <a href="{{ url_for('auth.impersonate_user', user_id=user.id) }}" class="btn btn-sm btn-warning" title="Se connecter en tant que">
-                                                <i class="fas fa-mask"></i>
-                                            </a>
+                                            <form action="{{ url_for('auth.impersonate_user', user_id=user.id) }}" method="POST" class="d-inline">
+                                                {{ form.hidden_tag() }}
+                                                <button type="submit" class="btn btn-sm btn-warning" title="Se connecter en tant que">
+                                                    <i class="fas fa-mask"></i>
+                                                </button>
+                                            </form>
                                         {% endif %}
                                         {% if current_user.id != user.id %}
                                             <button class="btn btn-sm btn-danger delete-user-btn"

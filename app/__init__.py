@@ -7,14 +7,14 @@ from logging.handlers import RotatingFileHandler
 
 import click
 from config import config
-from flask import Flask, g, render_template, request
+from flask import Flask, flash, g, redirect, render_template, request, url_for
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 from werkzeug.exceptions import HTTPException
 
 # Import des optimisations SQLite (side-effect au chargement)
@@ -128,7 +128,8 @@ def create_app(config_name):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        if not app.debug and not app.testing:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         nonce = getattr(g, "csp_nonce", "")
         response.headers["Content-Security-Policy"] = build_content_security_policy(app, nonce)
         # Configuration CORS sécurisée - uniquement pour les domaines autorisés
@@ -152,6 +153,8 @@ def create_app(config_name):
     @app.before_request
     def before_request():
         g.csp_nonce = secrets.token_urlsafe(16)
+        if app.config.get("WTF_CSRF_ENABLED", True):
+            g.csrf_token = generate_csrf()
         start_timer()
 
         # Timeout global pour éviter les requêtes qui traînent (uniquement en production)
@@ -247,6 +250,16 @@ def create_app(config_name):
             pass
 
         return response
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        flash("Votre session a expiré. Veuillez actualiser la page et réessayer.", "warning")
+        if request.method == "GET":
+            return redirect(url_for("auth.login"))
+        referrer = request.referrer
+        if referrer and request.host in referrer:
+            return redirect(referrer)
+        return redirect(url_for("auth.login"))
 
     # Gestionnaires d'erreur
     @app.errorhandler(404)
@@ -349,6 +362,7 @@ def create_app(config_name):
             "page_load": get_elapsed_time(),
             "pinned_tasks": pinned_tasks,
             "csp_nonce": getattr(g, "csp_nonce", ""),
+            "csrf_token_value": getattr(g, "csrf_token", ""),
         }
 
     # Filtre pour formater les nombres à la française (avec virgule)

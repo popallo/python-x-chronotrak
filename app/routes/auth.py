@@ -83,7 +83,7 @@ def login():
     return render_template("auth/login.html", form=form, title="Connexion")
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
 def logout():
     logout_user()
     return redirect(url_for("auth.login"))
@@ -420,8 +420,9 @@ def stop_impersonating():
     # Récupérer l'utilisateur original
     original_user = User.query.get(session["original_user_id"])
     if not original_user:
+        logout_user()
         flash("Erreur lors de la récupération de votre compte.", "danger")
-        return redirect(url_for("auth.logout"))
+        return redirect(url_for("auth.login"))
 
     # Supprimer l'ID de l'utilisateur original de la session
     session.pop("original_user_id", None)

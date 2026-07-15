@@ -198,7 +198,12 @@
                                 {% endif %}
                                 <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Déconnexion</a></li>
+                                <li>
+                                    <form action="{{ url_for('auth.logout') }}" method="POST" class="m-0">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="dropdown-item">Déconnexion</button>
+                                    </form>
+                                </li>
                             </ul>
                         </li>
                     </ul>

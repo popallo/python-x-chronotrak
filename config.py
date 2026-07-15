@@ -96,7 +96,8 @@ class ProductionConfig(Config):
     # En production, la clé de chiffrement DOIT être définie dans les variables d'environnement
     @classmethod
     def init_app(cls, app):
-        Config.init_app(app)
+        if not os.environ.get("SECRET_KEY"):
+            raise ValueError("SECRET_KEY doit être définie dans les variables d'environnement en production")
         if not os.environ.get("ENCRYPTION_KEY"):
             raise ValueError("ENCRYPTION_KEY doit être définie dans les variables d'environnement en production")
 

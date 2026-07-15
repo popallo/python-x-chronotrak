@@ -20,8 +20,9 @@ def test_development_config():
     assert app.config["TESTING"] is False
 
 
-def test_production_config():
+def test_production_config(monkeypatch):
     """Test que la configuration de production fonctionne."""
+    monkeypatch.setenv("SECRET_KEY", "test-production-secret-key")
     app = create_app("production")
     assert app.config["DEBUG"] is False
     assert app.config["TESTING"] is False

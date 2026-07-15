@@ -1,3 +1,5 @@
+from urllib.parse import urljoin, urlparse
+
 import requests
 from app import db
 from app.forms.auth import (
@@ -21,6 +23,15 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from flask_login import current_user, login_required, login_user, logout_user
 
 auth = Blueprint("auth", __name__)
+
+
+def _is_safe_redirect_url(target: str) -> bool:
+    """Vérifie qu'une URL de redirection reste sur le même hôte (anti open-redirect)."""
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 def verify_turnstile_token(token):
@@ -63,7 +74,9 @@ def login():
             db.session.commit()
 
             next_page = request.args.get("next")
-            return redirect(next_page if next_page else url_for("main.dashboard"))
+            if next_page and _is_safe_redirect_url(next_page):
+                return redirect(next_page)
+            return redirect(url_for("main.dashboard"))
         else:
             flash("Échec de la connexion. Vérifiez votre email et mot de passe.", "danger")
 

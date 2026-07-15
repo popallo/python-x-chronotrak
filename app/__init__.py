@@ -36,7 +36,10 @@ csrf = CSRFProtect()
 
 def create_app(config_name):
     app = Flask(__name__)
-    app.config.from_object(config[config_name])
+    config_class = config[config_name]
+    app.config.from_object(config_class)
+    if hasattr(config_class, "init_app"):
+        config_class.init_app(app)
 
     # Monkey patch désactivé temporairement
     # if not app.debug:
@@ -83,15 +86,15 @@ def create_app(config_name):
             app.logger.error(f"Erreur lors du démarrage du worker email: {e}")
 
     # Configuration de sécurité
-    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_SECURE"] = not app.debug and not app.testing
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 heure
 
-    # Configuration de CSRF pour les requêtes AJAX
-    app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+    # CSRF : activé par défaut sur les POST (formulaires + AJAX avec en-tête token)
+    app.config["WTF_CSRF_CHECK_DEFAULT"] = True
     app.config["WTF_CSRF_ENABLED"] = True
-    app.config["WTF_CSRF_HEADERS"] = ["X-CSRF-Token"]
+    app.config["WTF_CSRF_HEADERS"] = ["X-CSRF-Token", "X-CSRFToken"]
 
     # Initialiser les extensions avec l'app
     db.init_app(app)
@@ -426,11 +429,6 @@ def create_app(config_name):
     def default_if_none_filter(value, default=0):
         """Retourne une valeur par défaut si la valeur est None"""
         return value if value is not None else default
-
-    # Configuration de CSRF pour les requêtes AJAX
-    @csrf.exempt
-    def csrf_exempt():
-        return True
 
     # Enregistrement des blueprints
     from app.routes.admin import admin

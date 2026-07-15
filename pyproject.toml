@@ -74,6 +74,19 @@ markers = [
     "slow: Tests lents",
 ]
 
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/templates/*",
+    "app/static/*",
+]
+
+[tool.coverage.report]
+omit = [
+    "app/templates/*",
+    "app/static/*",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

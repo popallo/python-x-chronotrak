@@ -15,7 +15,7 @@ def status():
     """Affiche le statut des optimisations Python 3.13"""
 
     # Vérifier les permissions admin
-    if not current_user.is_admin:
+    if not current_user.is_admin():
         return "Accès refusé", 403
 
     info = get_python313_info()
@@ -28,7 +28,7 @@ def status():
 def api_stats():
     """API pour récupérer les informations d'optimisation"""
 
-    if not current_user.is_admin:
+    if not current_user.is_admin():
         return jsonify({"error": "Accès refusé"}), 403
 
     return jsonify({"python_info": get_python313_info()})

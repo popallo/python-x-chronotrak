@@ -7,13 +7,9 @@
 
 {% block scripts %}
 {{ super() }}
-<script>
-    // Définir le token CSRF pour les requêtes AJAX
-    window.csrfToken = "{{ csrf_token() }}";
-</script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/pages/task-comments.js') }}"></script>
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
     import { initTasksPage } from "{{ url_for('static', filename='js/pages/tasks.js') }}";
     document.addEventListener('DOMContentLoaded', initTasksPage);
 </script>
@@ -25,6 +21,7 @@
 <script type="module" src="{{ url_for('static', filename='js/pages/task-recurrence.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pages/task-attachments.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pages/task-description.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/task-clone-modal.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -211,7 +208,7 @@
                             </h6>
                             <div id="task-attachments-container" data-task-slug="{{ task.slug }}">
                                 <form id="task-attachments-upload-form" class="mb-2" method="POST" action="{{ url_for('tasks.upload_task_attachments', slug_or_id=task.slug) }}" enctype="multipart/form-data">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                                     <input type="file" name="files" id="task-attachments-input" class="d-none" multiple accept=".csv,.pdf,.zip,.doc,.docx,.xls,.xlsx,.7z,.tar,.gz" aria-label="Fichiers">
                                     <div id="pj-upload-zone" class="pj-upload-zone" role="button" tabindex="0" aria-label="Ajouter des pièces jointes">
                                         <i class="fas fa-cloud-upload-alt pj-upload-zone-icon"></i>
@@ -644,7 +641,7 @@
                             {% endif %}
                             {% if comment.user_id == current_user.id or current_user.is_admin() %}
                                 <form action="{{ url_for('tasks.delete_comment', comment_id=comment.id) }}" method="POST" class="d-inline delete-comment-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -692,7 +689,7 @@
                                             </button>
                                         {% endif %}
                                         <form action="{{ url_for('tasks.delete_comment', comment_id=reply.id) }}" method="POST" class="d-inline delete-comment-form">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                                             <button type="submit" class="btn btn-sm btn-outline-secondary" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -806,39 +803,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const modalEl = document.getElementById('cloneTaskModal');
-            const wrapper = document.getElementById('cloneChecklistWrapper');
-            const emptyNote = document.getElementById('cloneChecklistEmptyNote');
-            const checkbox = document.getElementById('cloneChecklist');
-            const hidden = document.getElementById('cloneChecklistHidden');
-            if (!modalEl || !wrapper || !emptyNote || !checkbox || !hidden) return;
-
-            const syncHiddenWithCheckbox = () => { hidden.value = checkbox.checked ? '1' : '0'; };
-
-            // Mettre à jour l'UI au moment d'ouvrir le modal (checklist peut évoluer en AJAX).
-            modalEl.addEventListener('show.bs.modal', function() {
-                const hasChecklistItems = document.querySelectorAll('#checklist-items .checklist-item').length > 0;
-
-                if (hasChecklistItems) {
-                    wrapper.classList.remove('d-none');
-                    emptyNote.classList.add('d-none');
-                    // Valeur par défaut: on clone la checklist si elle existe
-                    checkbox.checked = true;
-                    syncHiddenWithCheckbox();
-                } else {
-                    wrapper.classList.add('d-none');
-                    emptyNote.classList.remove('d-none');
-                    hidden.value = '0';
-                }
-            });
-
-            // Synchroniser l'état de la checkbox avec le champ envoyé au serveur.
-            checkbox.addEventListener('change', syncHiddenWithCheckbox);
-            syncHiddenWithCheckbox();
-        });
-    </script>
 {% endif %}
 
 <!-- Modal d'archivage -->

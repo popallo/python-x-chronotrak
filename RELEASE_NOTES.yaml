@@ -1,6 +1,13 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.4"
+  date: "2026-07"
+  items:
+  - type: improvement
+    text: 'chore: ignore pytest-cov artifacts in git'
+  - type: fix
+    text: exclude templates and static assets from coverage reports
 - version: "2.11.3"
   date: "2026-07"
   items:

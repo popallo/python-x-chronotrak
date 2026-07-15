@@ -191,9 +191,14 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 {% if session.get('original_user_id') %}
-                                    <li><a class="dropdown-item text-warning" href="{{ url_for('auth.stop_impersonating') }}">
-                                        <i class="fas fa-user-secret me-2"></i>Revenir à mon compte
-                                    </a></li>
+                                    <li>
+                                        <form action="{{ url_for('auth.stop_impersonating') }}" method="POST" class="m-0">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="dropdown-item text-warning">
+                                                <i class="fas fa-user-secret me-2"></i>Revenir à mon compte
+                                            </button>
+                                        </form>
+                                    </li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% endif %}
                                 <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Mon profil</a></li>

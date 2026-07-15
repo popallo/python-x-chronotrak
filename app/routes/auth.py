@@ -385,7 +385,7 @@ def reset_request_sent():
     return render_template("auth/reset_request_sent.html", title="Email envoyé")
 
 
-@auth.route("/users/<int:user_id>/impersonate")
+@auth.route("/users/<int:user_id>/impersonate", methods=["POST"])
 @login_required
 def impersonate_user(user_id):
     # Vérifier que l'utilisateur actuel est admin ou technicien
@@ -410,7 +410,7 @@ def impersonate_user(user_id):
     return redirect(url_for("main.dashboard"))
 
 
-@auth.route("/stop-impersonating")
+@auth.route("/stop-impersonating", methods=["POST"])
 @login_required
 def stop_impersonating():
     if "original_user_id" not in session:

@@ -1,6 +1,27 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.2"
+  date: "2026-07"
+  items:
+  - type: fix
+    text: restore reliable CSRF token handling on login
+  - type: fix
+    text: harden CSP with nonces and external scripts
+  - type: fix
+    text: add server-side login rate limiting by IP
+  - type: fix
+    text: remove debug print statements from project edit route
+  - type: fix
+    text: restrict public health check response details
+  - type: fix
+    text: require POST with CSRF for user impersonation
+  - type: fix
+    text: require POST with CSRF for logout
+  - type: fix
+    text: harden CSRF, admin access, and redirect validation
+  - type: improvement
+    text: 'chore: update alembic to version 1.18.5 and cffi to version 2.1.0 in uv.lock'
 - version: "2.11.1"
   date: "2026-06"
   items:

@@ -42,6 +42,9 @@ class Config:
     TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY")
     TURNSTILE_ENABLED = os.environ.get("TURNSTILE_ENABLED", "false").lower() in ["true", "on", "1"]
 
+    # Health check : token optionnel pour exposer les détails internes (queue email, worker, etc.)
+    HEALTH_CHECK_TOKEN = os.environ.get("HEALTH_CHECK_TOKEN")
+
     # Clé de chiffrement pour les données sensibles
     # ATTENTION: ENCRYPTION_KEY DOIT être définie dans les variables d'environnement
     # Si la clé change, les données existantes ne pourront plus être déchiffrées

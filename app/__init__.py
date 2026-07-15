@@ -1,3 +1,4 @@
+import hmac
 import logging
 import os
 from datetime import UTC, datetime
@@ -460,35 +461,54 @@ def create_app(config_name):
         return send_from_directory(app.static_folder, "favicon/favicon.ico", mimetype="image/vnd.microsoft.icon")
 
     # Route de santé pour monitoring
+    def _health_check_authorized(req):
+        """Autorise la réponse détaillée si HEALTH_CHECK_TOKEN est configuré et valide."""
+        expected_token = app.config.get("HEALTH_CHECK_TOKEN")
+        if not expected_token:
+            return False
+
+        provided_token = req.headers.get("X-Health-Token")
+        if not provided_token:
+            auth_header = req.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                provided_token = auth_header.removeprefix("Bearer ").strip()
+
+        if not provided_token:
+            return False
+
+        return hmac.compare_digest(provided_token, expected_token)
+
     @app.route("/health")
     def health_check():
-        """Endpoint de santé pour monitoring"""
+        """Endpoint de santé pour monitoring (réponse minimale par défaut)."""
+        include_details = _health_check_authorized(request)
         try:
-            # Vérifier la base de données avec la syntaxe correcte
             from sqlalchemy import text
 
             db.session.execute(text("SELECT 1"))
 
-            # Vérifier la queue d'emails
-            from app.utils.email import email_queue
+            response = {"status": "healthy"}
+            if include_details:
+                from app.utils.email import email_queue, email_worker_thread
 
-            queue_size = email_queue.qsize()
-
-            # Vérifier l'état du worker email
-            from app.utils.email import email_worker_thread
-
-            worker_alive = email_worker_thread and email_worker_thread.is_alive()
-
-            return {
-                "status": "healthy",
-                "database": "ok",
-                "email_queue_size": queue_size,
-                "email_worker_alive": worker_alive,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
+                response.update(
+                    {
+                        "database": "ok",
+                        "email_queue_size": email_queue.qsize(),
+                        "email_worker_alive": email_worker_thread and email_worker_thread.is_alive(),
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
+            return response
         except Exception as e:
             app.logger.error(f"Health check failed: {e}")
-            return {"status": "unhealthy", "error": str(e), "timestamp": datetime.now(UTC).isoformat()}, 500
+            if include_details:
+                return {
+                    "status": "unhealthy",
+                    "error": str(e),
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }, 503
+            return {"status": "unhealthy"}, 503
 
     # Commandes CLI
     @app.cli.command()

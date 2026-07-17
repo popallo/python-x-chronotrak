@@ -1,6 +1,13 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.6"
+  date: "2026-07"
+  items:
+  - type: improvement
+    text: 'test: add CSRF coverage for task clone flow'
+  - type: fix
+    text: add missing CSRF tokens to task clone and pin forms
 - version: "2.11.5"
   date: "2026-07"
   items:

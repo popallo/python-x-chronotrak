@@ -5,30 +5,32 @@ ARG VERSION=dev
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_APP=run.py \
     FLASK_ENV=production \
     TZ=Europe/Paris \
     PYTHON_JIT=1 \
     PYTHONOPTIMIZE=1 \
     PYTHONHASHSEED=0 \
-    PYTHONMALLOC=malloc
+    PYTHONMALLOC=malloc \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
-# Installer bash, cron, curl et les dépendances système
+# Installer bash, cron, curl, uv et les dépendances système
 RUN apk add --no-cache bash tzdata dcron curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
     addgroup -S chronouser && \
     adduser -S -G chronouser chronouser
 
-# Créer le répertoire de l'application
 WORKDIR /app
 
-# Copier uniquement les fichiers de dépendances d'abord
-COPY pyproject.toml .
+# Copier les fichiers de dépendances d'abord (cache Docker)
+COPY pyproject.toml uv.lock ./
 
-# Installer les dépendances Python dans une couche séparée
-RUN pip install --no-cache-dir -e . && \
-    pip install --upgrade setuptools>=70.0.0
+# Installer les dépendances Python sans le projet (couche cacheable)
+RUN uv venv && uv sync --frozen --no-dev --no-install-project
 
 # Copier les fichiers de l'application
 COPY app/ ./app/
@@ -36,6 +38,9 @@ COPY migrations/ ./migrations/
 COPY management/ ./management/
 COPY config.py run.py wsgi.py start.sh ./
 COPY RELEASE_NOTES.yaml ./
+
+# Installer le projet et finaliser l'environnement
+RUN uv sync --frozen --no-dev
 
 # Créer le fichier VERSION avec la valeur fournie
 RUN echo -n "$VERSION" > ./app/VERSION
@@ -57,9 +62,6 @@ RUN mkdir -p /app/instance /var/log /app/logs && \
     chmod +x /app/management/setup_cron.sh && \
     chmod +x /app/start.sh && \
     chown chronouser:chronouser /var/log
-
-# Configurer le cron job pour l'archivage automatique (seulement en production)
-# Le cron job sera créé conditionnellement dans le script de démarrage
 
 # Passer à l'utilisateur non-root
 USER chronouser

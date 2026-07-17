@@ -44,6 +44,7 @@
                 </a>
                 {% if not current_user.is_client() %}
                 <form action="{{ url_for('tasks.toggle_pin_task', slug_or_id=task.slug) }}" method="POST" class="d-inline menu-pin-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                     {% set is_pinned = task in current_user.pinned_tasks %}
                     <button type="submit" class="btn btn-outline-light" data-bs-toggle="tooltip" title="{% if is_pinned %}Désépingler{% else %}Épingler{% endif %} la tâche">
                         <i class="fas fa-thumbtack {% if is_pinned %}text-warning{% endif %}"></i>
@@ -793,6 +794,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <form action="{{ url_for('tasks.clone_task', slug_or_id=task.slug) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                         <input type="hidden" name="clone_checklist" id="cloneChecklistHidden" value="{% if task.checklist_items|length > 0 %}1{% else %}0{% endif %}">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-copy me-1"></i>Cloner

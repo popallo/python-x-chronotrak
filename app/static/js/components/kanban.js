@@ -213,6 +213,37 @@ function initKanban() {
 
     // Initialiser le système de recherche
     initKanbanSearch();
+
+    document.addEventListener("click", async (event) => {
+        const actionButton = event.target.closest(".kanban-action-btn");
+        if (actionButton) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const action = actionButton.dataset.action;
+            const taskSlug = actionButton.dataset.taskSlug;
+
+            if (action === "change-status") {
+                await changeTaskStatus(taskSlug, actionButton.dataset.newStatus);
+                return;
+            }
+
+            if (action === "archive-task") {
+                await archiveTask(taskSlug);
+            }
+            return;
+        }
+
+        const taskCard = event.target.closest(".kanban-task");
+        if (!taskCard) {
+            return;
+        }
+
+        const taskUrl = taskCard.dataset.taskUrl;
+        if (taskUrl) {
+            window.location.href = taskUrl;
+        }
+    });
 }
 
 // Auto-initialisation si le DOM est déjà chargé

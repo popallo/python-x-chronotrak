@@ -34,11 +34,15 @@
             <div class="kanban-items">
                 {% for task in tasks_todo %}
                     {% set is_upcoming = today and task.scheduled_for and task.scheduled_for > today %}
-                    <div class="kanban-task {% if is_upcoming %}is-upcoming{% endif %}" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task {% if is_upcoming %}is-upcoming{% endif %}"
+                         data-task-id="{{ task.id }}"
+                         data-task-url="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
                         {% if show_actions and not is_upcoming %}
                         <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-success"
-                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'en cours')"
+                            <button class="btn btn-sm btn-success kanban-action-btn"
+                                    data-action="change-status"
+                                    data-task-slug="{{ task.slug }}"
+                                    data-new-status="en cours"
                                     title="Commencer">
                                 <i class="fas fa-play"></i>
                             </button>
@@ -76,11 +80,15 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_in_progress %}
-                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task"
+                         data-task-id="{{ task.id }}"
+                         data-task-url="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
-                            <button class="btn btn-sm btn-primary"
-                                    onclick="event.stopPropagation(); changeTaskStatus('{{ task.slug }}', 'terminé')"
+                            <button class="btn btn-sm btn-primary kanban-action-btn"
+                                    data-action="change-status"
+                                    data-task-slug="{{ task.slug }}"
+                                    data-new-status="terminé"
                                     title="Terminer">
                                 <i class="fas fa-check"></i>
                             </button>
@@ -121,12 +129,15 @@
             </div>
             <div class="kanban-items">
                 {% for task in tasks_completed %}
-                    <div class="kanban-task" data-task-id="{{ task.id }}" onclick="window.location.href='{{ url_for('tasks.task_details', slug_or_id=task.slug) }}'">
+                    <div class="kanban-task"
+                         data-task-id="{{ task.id }}"
+                         data-task-url="{{ url_for('tasks.task_details', slug_or_id=task.slug) }}">
                         {% if show_actions %}
                         <div class="kanban-task-actions">
                             {% if not task.is_archived %}
-                                <button class="btn btn-sm btn-secondary"
-                                        onclick="event.stopPropagation(); archiveTask('{{ task.slug }}')"
+                                <button class="btn btn-sm btn-secondary kanban-action-btn"
+                                        data-action="archive-task"
+                                        data-task-slug="{{ task.slug }}"
                                         title="Archiver">
                                     <i class="fas fa-archive"></i>
                                 </button>

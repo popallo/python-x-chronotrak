@@ -11,6 +11,7 @@ def test_csp_uses_nonce_and_disallows_unsafe_script_directives(app):
     assert "script-src" in policy
     assert "'unsafe-inline'" not in policy.split("script-src", 1)[1].split(";", 1)[0]
     assert "'unsafe-eval'" not in policy
+    assert "https://cdn.jsdelivr.net" in policy.split("connect-src", 1)[1].split(";", 1)[0]
 
 
 def test_csp_response_header(client):

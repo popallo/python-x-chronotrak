@@ -8,48 +8,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  lint:
     runs-on: docker
     steps:
       - name: Configuration du runner
         run: |
-          # Installer les outils de base (Alpine)
           apk add --no-cache \
-          git \
-          curl \
-          ca-certificates \
-          bash \
-          nodejs \
-          npm \
-          python3 \
-          py3-pip \
-          build-base \
-          libffi-dev
+            git \
+            curl \
+            ca-certificates \
+            bash \
+            python3 \
+            build-base \
+            libffi-dev
 
-          # Créer un lien symbolique python -> python3 si nécessaire
           if ! command -v python >/dev/null 2>&1; then
-            ln -s $(which python3) /usr/local/bin/python || true
+            ln -s "$(which python3)" /usr/local/bin/python || true
           fi
 
-          # Installation de uv (gestionnaire de paquets Python ultra-rapide)
-          echo "📦 Installation de uv..."
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-
-          # Vérifier la version de Python disponible
-          PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-          echo "Python disponible: $PYTHON_VERSION"
-
-          # Si Python 3.13 n'est pas disponible, uv peut l'installer automatiquement
-          # Vérifier si Python 3.13 est requis et disponible via uv
-          if ! python3 -c "import sys; assert sys.version_info >= (3, 13)" 2>/dev/null; then
-            echo "⚠️ Python 3.13 requis mais version $PYTHON_VERSION détectée"
-            echo "ℹ️ uv installera automatiquement Python 3.13 lors de la création du venv"
-          fi
-
-          # Vérifier les versions installées
-          node --version
-          npm --version
           python --version || python3 --version
           uv --version
 
@@ -66,80 +44,92 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-uv-
 
-      - name: Création de l'environnement virtuel et installation des dépendances avec uv
+      - name: Installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-
-          # Installer Python 3.13 via uv si nécessaire
-          echo "🐍 Vérification/installation de Python 3.13 via uv..."
-          uv python install 3.13 || echo "⚠️ uv python install a échoué, utilisation de Python système"
-
-          echo "🔧 Création de l'environnement virtuel avec uv (Python 3.13)..."
-          uv venv --python 3.13 || uv venv || {
-            echo "⚠️ Échec de création du venv avec Python 3.13, tentative avec Python système"
-            uv venv
-          }
-
-          echo "📦 Installation des dépendances avec uv sync (depuis uv.lock)..."
-          # Installer les dépendances principales + extras dev (pytest-cov, etc.)
-          # uv sync installe les dev dependencies par défaut, mais pour les extras il faut --extra dev
-          uv sync --extra dev || uv sync --all-extras
-
-          echo "✅ Environnement virtuel créé et dépendances installées avec succès"
+          uv venv --python 3.13
+          uv sync --extra dev --frozen
           source .venv/bin/activate
           python --version
-          uv --version
 
-      - name: Configuration de l'environnement de test
+      - name: Lint et format (Ruff)
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           source .venv/bin/activate
-          # Créer une clé de chiffrement de test si elle n'existe pas
-          export ENCRYPTION_KEY=${ENCRYPTION_KEY:-$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")}
-          echo "ENCRYPTION_KEY=${ENCRYPTION_KEY}" >> $GITEA_ENV
-          export FLASK_ENV=testing
-          echo "FLASK_ENV=testing" >> $GITEA_ENV
+          echo "🔍 Vérification Ruff (lint + format)..."
+          ruff check app config.py run.py wsgi.py management tests migrations
+          ruff format --check app config.py run.py wsgi.py management tests migrations
+          echo "✅ Ruff OK"
 
-      - name: Audit de sécurité - Scan Trivy filesystem (dépendances et secrets)
+  security:
+    runs-on: docker
+    steps:
+      - name: Configuration du runner
+        run: |
+          apk add --no-cache \
+            git \
+            curl \
+            ca-certificates \
+            bash \
+            python3 \
+            build-base \
+            libffi-dev
+
+          if ! command -v python >/dev/null 2>&1; then
+            ln -s "$(which python3)" /usr/local/bin/python || true
+          fi
+
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          fi
+
+          python --version || python3 --version
+          uv --version
+          trivy --version
+
+      - name: Checkout du code
+        uses: actions/checkout@v6
+
+      - name: Cache des dépendances Python avec uv
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
+
+      - name: Installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          echo "🔒 Scan de sécurité Trivy (filesystem) - Dépendances et secrets..."
-          # Installer Trivy
-          apk add --no-cache curl || true
-          if ! command -v trivy >/dev/null 2>&1; then
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin || true
-          fi
+          uv venv --python 3.13
+          uv sync --extra dev --frozen
+          source .venv/bin/activate
+          python --version
 
-          # Scanner le filesystem pour les vulnérabilités dans pyproject.toml et les secrets
-          if command -v trivy >/dev/null 2>&1; then
-            echo "📦 Scan des dépendances Python (pyproject.toml)..."
-            echo "🔍 Scan des secrets dans le code..."
-            # Scanner avec exit-code 0 pour ne pas faire échouer le pipeline sur des warnings
-            # mais afficher les résultats pour information
-            trivy filesystem . \
-              --severity HIGH,CRITICAL \
-              --scanners vuln,secret \
-              --exit-code 0 \
-              --format table || true
+      - name: Audit de sécurité - Scan Trivy filesystem
+        run: |
+          echo "🔒 Scan de sécurité Trivy (filesystem)..."
+          trivy filesystem . \
+            --severity CRITICAL \
+            --scanners vuln,secret \
+            --exit-code 1 \
+            --format table
+          echo "✅ Scan Trivy filesystem terminé"
 
-            # Scanner à nouveau avec exit-code 1 pour faire échouer sur les vulnérabilités critiques
-            echo "🔍 Vérification stricte des vulnérabilités..."
-            trivy filesystem . \
-              --severity CRITICAL \
-              --scanners vuln \
-              --exit-code 1 \
-              --format table || {
-                echo "❌ Des vulnérabilités CRITICAL détectées dans les dépendances"
-                exit 1
-              }
-
-            echo "✅ Scan Trivy filesystem terminé"
-          else
-            echo "⚠️ Trivy non disponible, scan filesystem ignoré"
-          fi
-
-      # pip-audit utilise la base PyPI/OSV : détecte les CVE Python (cryptography, pip, etc.)
-      # que Trivy peut manquer (support uv.lock, délai de mise à jour des bases).
+      # pip-audit utilise la base PyPI/OSV : détecte les CVE Python que Trivy peut manquer.
       - name: Audit de sécurité - pip-audit (CVE dépendances Python)
         run: |
           export PATH="$HOME/.local/bin:$PATH"
@@ -154,15 +144,6 @@ jobs:
           source .venv/bin/activate
 
           echo "🔒 Audit de sécurité du code avec Bandit..."
-
-          # Vérifier que bandit est installé
-          if ! python -c "import bandit" 2>/dev/null; then
-            echo "⚠️ Bandit non trouvé, installation..."
-            uv pip install bandit || pip install bandit || exit 1
-          fi
-
-          # Exécuter Bandit sur le code source
-          # La configuration est dans pyproject.toml [tool.bandit]
           bandit -r app/ \
             -f json \
             -o bandit-report.json \
@@ -170,36 +151,64 @@ jobs:
             --confidence-level high \
             -c pyproject.toml || true
 
-          # Afficher un résumé et faire échouer le pipeline si HIGH détectés
-          if [ -f bandit-report.json ]; then
-            echo "📊 Résumé Bandit:"
-            python -c 'import json, sys; data = json.load(open("bandit-report.json")); metrics = data.get("metrics", {}).get("_totals", {}); high = metrics.get("SEVERITY.HIGH", 0); medium = metrics.get("SEVERITY.MEDIUM", 0); low = metrics.get("SEVERITY.LOW", 0); print(f"  - HIGH: {high}"); print(f"  - MEDIUM: {medium}"); print(f"  - LOW: {low}"); sys.exit(1 if high > 0 else 0)' || {
-              echo "❌ Bandit a détecté des problèmes HIGH de sécurité"
-              exit 1
-            }
-            echo "✅ Aucun problème HIGH détecté"
-          fi
-
-          # Format texte pour affichage dans les logs
-          bandit -r app/ \
-            --severity-level high \
-            --confidence-level high \
-            -c pyproject.toml \
-            --format txt || echo "⚠️ Bandit a détecté des problèmes de sécurité"
-
+          echo "📊 Résumé Bandit:"
+          python -c 'import json, sys; data = json.load(open("bandit-report.json")); metrics = data.get("metrics", {}).get("_totals", {}); high = metrics.get("SEVERITY.HIGH", 0); medium = metrics.get("SEVERITY.MEDIUM", 0); low = metrics.get("SEVERITY.LOW", 0); print(f"  - HIGH: {high}"); print(f"  - MEDIUM: {medium}"); print(f"  - LOW: {low}"); sys.exit(1 if high > 0 else 0)' || {
+            echo "❌ Bandit a détecté des problèmes HIGH de sécurité"
+            exit 1
+          }
           echo "✅ Audit Bandit terminé"
 
-      - name: Lint et format (Ruff)
+  unit-tests:
+    runs-on: docker
+    steps:
+      - name: Configuration du runner
+        run: |
+          apk add --no-cache \
+            git \
+            curl \
+            ca-certificates \
+            bash \
+            python3 \
+            build-base \
+            libffi-dev
+
+          if ! command -v python >/dev/null 2>&1; then
+            ln -s "$(which python3)" /usr/local/bin/python || true
+          fi
+
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          python --version || python3 --version
+          uv --version
+
+      - name: Checkout du code
+        uses: actions/checkout@v6
+
+      - name: Cache des dépendances Python avec uv
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Installation des dépendances avec uv
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          uv venv --python 3.13
+          uv sync --extra dev --frozen
+          source .venv/bin/activate
+          python --version
+
+      - name: Configuration de l'environnement de test
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           source .venv/bin/activate
-          echo "🔍 Vérification Ruff (lint + format)..."
-          if ! python -c "import ruff" 2>/dev/null; then
-            uv pip install ruff || pip install ruff
-          fi
-          ruff check app config.py run.py wsgi.py management tests migrations --fix --unsafe-fixes
-          ruff format --check app config.py run.py wsgi.py management tests migrations
-          echo "✅ Ruff OK"
+          export ENCRYPTION_KEY=${ENCRYPTION_KEY:-$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")}
+          echo "ENCRYPTION_KEY=${ENCRYPTION_KEY}" >> $GITEA_ENV
+          echo "FLASK_ENV=testing" >> $GITEA_ENV
 
       - name: Exécution des tests unitaires
         env:
@@ -207,114 +216,87 @@ jobs:
           FLASK_ENV: testing
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          echo "🧪 Exécution des tests..."
-          if [ ! -f ".venv/bin/activate" ]; then
-            echo "❌ Le venv n'existe pas, création avec uv..."
-            uv venv
-            uv sync --extra dev || uv sync --all-extras
-          fi
           source .venv/bin/activate
 
-          # Vérifier que pytest-cov est installé
-          if ! python -c "import pytest_cov" 2>/dev/null; then
-            echo "⚠️ pytest-cov non trouvé, installation..."
-            uv pip install pytest-cov || pip install pytest-cov
-          fi
-
-          # Vérifier si des tests existent
-          if [ -d "tests" ] || find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
-            echo "✅ Tests trouvés, exécution..."
-            # Exécuter pytest avec rapport de couverture
-            pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-report=html -v || exit 1
-            echo "✅ Tous les tests sont passés"
-          else
+          echo "🧪 Exécution des tests..."
+          if [ ! -d "tests" ] && ! find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null | grep -q .; then
             echo "❌ Aucun test trouvé dans le projet"
-            echo "ℹ️ Le pipeline échoue car aucun test n'a été trouvé"
-            echo "ℹ️ Ajoutez des tests dans un répertoire 'tests/' ou avec le préfixe 'test_'"
-            echo "ℹ️ Créez des fichiers comme tests/test_models.py, tests/test_routes.py, etc."
             exit 1
           fi
+
+          pytest --cov=app --cov-report=term-missing --cov-report=xml -q
+          echo "✅ Tous les tests sont passés"
 
       - name: Rapport de couverture (si disponible)
         if: success() || failure()
         run: |
-          # Ne s'exécuter que si le code a été checkouté (vérifier la présence de pyproject.toml)
-          if [ ! -f "pyproject.toml" ]; then
-            echo "⚠️ Code non checkouté, impossible de générer le rapport de couverture"
+          if [ ! -f "coverage.xml" ]; then
+            echo "ℹ️ Aucun rapport de couverture disponible"
             exit 0
           fi
 
           export PATH="$HOME/.local/bin:$PATH"
-          # Vérifier que le venv existe avant de l'activer
-          if [ -f ".venv/bin/activate" ]; then
-            source .venv/bin/activate
-          else
-            echo "⚠️ Environnement virtuel non trouvé, création d'un venv temporaire..."
-            uv venv .venv-temp 2>/dev/null || python -m venv .venv-temp 2>/dev/null || true
-            if [ -f ".venv-temp/bin/activate" ]; then
-              source .venv-temp/bin/activate
-            fi
-          fi
+          source .venv/bin/activate
+          echo "📊 Rapport de couverture généré"
+          python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); line_rate = float(root.get('line-rate', 0)) * 100; print(f'Couverture de code: {line_rate:.2f}%')" || echo "Impossible de lire le rapport de couverture"
 
-          if [ -f coverage.xml ]; then
-            echo "📊 Rapport de couverture généré"
-            python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); line_rate = float(root.get('line-rate', 0)) * 100; print(f'Couverture de code: {line_rate:.2f}%')" || echo "Impossible de lire le rapport de couverture"
-          else
-            echo "ℹ️ Aucun rapport de couverture disponible"
-          fi
-
-  build-and-push:
-    needs: test
+  build-and-deploy:
+    needs: [ lint, security, unit-tests ]
+    if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
     runs-on: docker
     steps:
       - name: Configuration du runner
         run: |
           apk add --no-cache \
-          docker \
-          docker-cli-buildx \
-          git \
-          curl \
-          bash \
-          nodejs \
-          npm
+            docker \
+            docker-cli-buildx \
+            git \
+            curl \
+            bash \
+            openssh-client \
+            file
 
-          # Vérifier la version de Node.js installée
-          node --version
-          npm --version
+          if ! command -v trivy >/dev/null 2>&1; then
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          fi
 
-      - name: Checkout du code avec actions/checkout
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking=no" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Checkout du code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      # Calcul du hash des fichiers de dépendances pour le cache
       - name: Calcul du hash des fichiers de build
         id: cache-hash
         run: |
-          # Calculer le hash des fichiers qui affectent le build Docker
           if command -v sha256sum >/dev/null 2>&1; then
             DOCKERFILE_HASH=$(sha256sum Dockerfile | cut -d' ' -f1)
             PYPROJECT_HASH=$(sha256sum pyproject.toml | cut -d' ' -f1)
+            UVLOCK_HASH=$(sha256sum uv.lock | cut -d' ' -f1)
           elif command -v sha256 >/dev/null 2>&1; then
             DOCKERFILE_HASH=$(sha256 -q Dockerfile)
             PYPROJECT_HASH=$(sha256 -q pyproject.toml)
+            UVLOCK_HASH=$(sha256 -q uv.lock)
           else
-            # Fallback: utiliser md5sum si disponible
             DOCKERFILE_HASH=$(md5sum Dockerfile | cut -d' ' -f1)
             PYPROJECT_HASH=$(md5sum pyproject.toml | cut -d' ' -f1)
+            UVLOCK_HASH=$(md5sum uv.lock | cut -d' ' -f1)
           fi
 
-          # Combiner les hashs pour créer une clé unique
-          CACHE_KEY_HASH=$(echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}" | sha256sum | cut -d' ' -f1 || echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}")
+          CACHE_KEY_HASH=$(echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}-${UVLOCK_HASH}" | sha256sum | cut -d' ' -f1 || echo "${DOCKERFILE_HASH}-${PYPROJECT_HASH}-${UVLOCK_HASH}")
 
           echo "DOCKERFILE_HASH=${DOCKERFILE_HASH}" >> $GITEA_ENV
           echo "PYPROJECT_HASH=${PYPROJECT_HASH}" >> $GITEA_ENV
+          echo "UVLOCK_HASH=${UVLOCK_HASH}" >> $GITEA_ENV
           echo "CACHE_KEY_HASH=${CACHE_KEY_HASH}" >> $GITEA_ENV
           echo "Hash Dockerfile: ${DOCKERFILE_HASH:0:12}..."
           echo "Hash pyproject.toml: ${PYPROJECT_HASH:0:12}..."
+          echo "Hash uv.lock: ${UVLOCK_HASH:0:12}..."
           echo "Clé de cache: ${CACHE_KEY_HASH:0:16}..."
 
-      # Configuration du cache Docker
       - name: Configuration du cache Docker
         uses: actions/cache@v5
         with:
@@ -323,7 +305,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # Détecter la version
+      - name: Cache Trivy DB
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
+
       - name: Détecter la version
         id: version
         run: |
@@ -340,22 +329,18 @@ jobs:
           echo "VERSION=$VERSION" >> $GITEA_ENV
           echo "Version détectée: $VERSION"
 
-      # Authentification au registre
       - name: Login au registre Docker
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login forge.apacher.eu -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
-      # Construction et push de l'image - VERSION OPTIMISÉE
       - name: Build et push de l'image Docker
         run: |
           set -e
 
-          # Nettoyage préventif des anciens conteneurs BuildKit
           echo "Nettoyage préventif des conteneurs BuildKit..."
           docker container ls -q --filter "name=buildx_buildkit" | xargs -r docker container stop || true
           docker container ls -aq --filter "name=buildx_buildkit" | xargs -r docker container rm || true
 
-          # Gestion intelligente du builder
           BUILDER_NAME="chronotrak-builder"
 
           if docker buildx ls | grep -q "$BUILDER_NAME"; then
@@ -366,7 +351,6 @@ jobs:
             docker buildx create --name $BUILDER_NAME --use
           fi
 
-          # Build avec gestion d'erreurs et cache optimisé
           echo "Démarrage du build de l'image..."
           docker buildx build --provenance=false --push \
             --cache-from=type=local,src=/tmp/.buildx-cache \
@@ -381,62 +365,30 @@ jobs:
 
           echo "Build terminé avec succès"
 
-      # Gestion du cache et nettoyage SÉCURISÉ
       - name: Gestion du cache et nettoyage sécurisé
         if: always()
         run: |
-          # Gestion du cache
           if [ -d "/tmp/.buildx-cache-new" ]; then
             rm -rf /tmp/.buildx-cache
             mv /tmp/.buildx-cache-new /tmp/.buildx-cache
             echo "Cache mis à jour"
           fi
 
-          # Nettoyage CIBLÉ des conteneurs BuildKit seulement
           echo "Nettoyage ciblé des conteneurs BuildKit..."
           BUILDKIT_CONTAINERS=$(docker container ls -aq --filter "name=buildx_buildkit" --filter "label=org.mobyproject.buildkit.worker.executor=oci" 2>/dev/null || echo "")
 
           if [ ! -z "$BUILDKIT_CONTAINERS" ]; then
             echo "Suppression des conteneurs BuildKit: $BUILDKIT_CONTAINERS"
             docker container rm -f $BUILDKIT_CONTAINERS 2>/dev/null || true
-          else
-            echo "Aucun conteneur BuildKit à supprimer"
           fi
 
-          # Nettoyage du cache BuildKit uniquement (pas docker system)
-          echo "Nettoyage du cache BuildKit..."
           docker buildx prune -f --reserved-space=1GB 2>/dev/null || true
-
-          # Nettoyage des images build temporaires sans tag (plus sûr)
-          echo "Nettoyage des images temporaires..."
           docker image prune -f --filter "dangling=true" 2>/dev/null || true
-
-          # Nettoyage des volumes BuildKit uniquement (SÉCURISÉ)
-          echo "Nettoyage des volumes BuildKit..."
           docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
 
-          # Affichage des statistiques pour monitoring
-          echo "=== État final des builders ==="
-          docker buildx ls
-          echo "=== Conteneurs BuildKit restants ==="
-          docker container ls --filter "name=buildx_buildkit" --format "table {{.Names}}\t{{.Status}}\t{{.CreatedAt}}" || true
-          echo "=== Utilisation disque Docker ==="
-          docker system df || true
-
-      # Analyse de sécurité avec Trivy - Scan de l'image Docker finale (uniquement sur main/master)
       - name: Scan Trivy - Image Docker finale
-        if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
         run: |
           echo "🔒 Scan de sécurité Trivy - Image Docker finale..."
-          apk add --no-cache curl || true
-
-          # Installer Trivy si nécessaire
-          if ! command -v trivy >/dev/null 2>&1; then
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          fi
-
-          # Scanner l'image Docker finale pour les vulnérabilités des packages installés
-          # Ignorer les vulnérabilités déjà corrigées (status: fixed)
           trivy image forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --severity HIGH,CRITICAL \
             --ignore-status fixed \
@@ -445,38 +397,18 @@ jobs:
               echo "⚠️ Des vulnérabilités HIGH/CRITICAL détectées dans l'image Docker"
               exit 1
             }
-
           echo "✅ Scan Trivy image terminé"
 
-  deploy:
-    needs: build-and-push
-    runs-on: docker
-    container:
-      image: docker:latest
-    steps:
-      # Installation des dépendances SSH
-      - name: Installation des dépendances SSH
-        run: |
-          apk add --no-cache openssh-client bash file
-          mkdir -p ~/.ssh
-          echo "StrictHostKeyChecking=no" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-      # Configuration de la clé SSH
       - name: Configuration de la clé SSH
         run: |
-          mkdir -p ~/.ssh
           echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      # Test de connexion SSH
       - name: Test de connexion SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
 
-      # Sauvegarde de la base de données (uniquement sur main/master)
       - name: Sauvegarde de la base de données
-        if: gitea.ref == 'refs/heads/main' || gitea.ref == 'refs/heads/master'
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex
@@ -504,7 +436,6 @@ jobs:
             echo 'Sauvegarde terminée'
           "
 
-      # Déploiement sur le serveur de production
       - name: Déploiement sur le serveur de production
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
@@ -512,23 +443,18 @@ jobs:
             echo 'Début du déploiement'
             cd ${{ secrets.PROJECT_DIRECTORY }}
 
-            # Login au registre
             docker login forge.apacher.eu -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
 
-            # Pull et déploiement
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
 
-            # Nettoyage post-déploiement
             docker system prune -f
-            # Nettoyage des volumes BuildKit uniquement sur le serveur de production
-            docker volume ls --filter "name=buildx_buildkit_" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
+            docker volume ls --filter \"name=buildx_buildkit_\" --format \"{{.Name}}\" | xargs -r docker volume rm 2>/dev/null || true
             docker logout forge.apacher.eu
 
             echo 'Déploiement terminé avec succès'
           "
 
-      # Health check post-déploiement (optionnel : définir le secret PROD_HEALTH_URL, ex. https://ton-domaine.com/health)
       - name: Health check post-déploiement
         env:
           PROD_HEALTH_URL: ${{ secrets.PROD_HEALTH_URL }}

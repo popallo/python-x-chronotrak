@@ -21,7 +21,8 @@ def build_content_security_policy(app: Flask, nonce: str) -> str:
         f"style-src {style_src}; "
         "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https:; "
-        "connect-src 'self' https://*.cloudflare.com https://*.cloudflareinsights.com; "
+        "connect-src 'self' https://cdn.jsdelivr.net https://code.jquery.com "
+        "https://*.cloudflare.com https://*.cloudflareinsights.com; "
         "frame-src 'self' https://*.cloudflare.com; "
         "worker-src 'self'"
     )

@@ -46,6 +46,7 @@ function initStatusToggle() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
                     task_id: parseInt(taskId),
@@ -433,9 +434,8 @@ function initCommentMentions() {
 
 // Initialiser la page des tâches
 export function initTasksPage() {
-    if (document.querySelector('.status-btn')) {
-        initStatusToggle();
-    }
+    // Les boutons .status-btn sont gérés exclusivement par task-status.js
+    // (évite un double POST dont l'un sans CSRF déclenchait l'alerte d'erreur)
 
     if (document.querySelector('.edit-comment-btn')) {
         initCommentManagement();

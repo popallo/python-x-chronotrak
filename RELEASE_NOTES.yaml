@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.9"
+  date: "2026-07"
+  items:
+  - type: fix
+    text: stop duplicate status updates without CSRF on task detail
 - version: "2.11.8"
   date: "2026-07"
   items:

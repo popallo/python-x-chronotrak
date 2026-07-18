@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.8"
+  date: "2026-07"
+  items:
+  - type: improvement
+    text: 'test: cover CSRF and endpoint behavior for status updates'
+  - type: fix
+    text: use correct update_status endpoint for kanban buttons
+  - type: fix
+    text: return JSON on CSRF errors for AJAX requests
 - version: "2.11.7"
   date: "2026-07"
   items:

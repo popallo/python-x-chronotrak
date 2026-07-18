@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 
 import click
 from config import config
-from flask import Flask, flash, g, redirect, render_template, request, url_for
+from flask import Flask, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
@@ -256,6 +256,9 @@ def create_app(config_name):
         flash("Votre session a expiré. Veuillez actualiser la page et réessayer.", "warning")
         if request.method == "GET":
             return redirect(url_for("auth.login"))
+        # Les appels AJAX JSON doivent recevoir du JSON, pas une redirection HTML
+        if request.is_json or "application/json" in (request.content_type or ""):
+            return jsonify({"success": False, "error": "CSRF token missing or invalid"}), 400
         referrer = request.referrer
         if referrer and request.host in referrer:
             return redirect(referrer)

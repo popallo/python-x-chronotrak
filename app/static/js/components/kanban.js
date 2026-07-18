@@ -4,15 +4,16 @@
  */
 
 // Fonction pour changer le statut d'une tâche
-async function changeTaskStatus(taskSlug, newStatus) {
+async function changeTaskStatus(taskId, newStatus) {
     try {
-        const response = await fetch(`/tasks/${taskSlug}/update_status`, {
+        const response = await fetch('/tasks/update_status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': window.csrfToken
             },
             body: JSON.stringify({
+                task_id: taskId,
                 status: newStatus
             })
         });
@@ -222,9 +223,15 @@ function initKanban() {
 
             const action = actionButton.dataset.action;
             const taskSlug = actionButton.dataset.taskSlug;
+            const taskCard = actionButton.closest(".kanban-task");
+            const taskId = taskCard?.dataset.taskId;
 
             if (action === "change-status") {
-                await changeTaskStatus(taskSlug, actionButton.dataset.newStatus);
+                if (!taskId) {
+                    console.error("Impossible de changer le statut: task_id manquant");
+                    return;
+                }
+                await changeTaskStatus(taskId, actionButton.dataset.newStatus);
                 return;
             }
 

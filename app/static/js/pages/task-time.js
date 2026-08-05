@@ -19,15 +19,18 @@ function parseTimeString(timeStr) {
     // Si c'est déjà un nombre, le retourner
     if (typeof timeStr === 'number') return timeStr;
 
+    const normalized = String(timeStr).trim();
+    const sign = normalized.startsWith("-") ? -1 : 1;
+
     // Extraire les heures et les minutes
-    const hoursMatch = timeStr.match(/(\d+)h/);
-    const minutesMatch = timeStr.match(/(\d+)min/);
+    const hoursMatch = normalized.match(/(\d+)h/);
+    const minutesMatch = normalized.match(/(\d+)min/);
 
     const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
     const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
 
     // Convertir en nombre décimal (heures)
-    return hours + (minutes / 60);
+    return sign * (hours + (minutes / 60));
 }
 
 // Fonction pour formater le temps

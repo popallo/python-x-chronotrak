@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.10"
+  date: "2026-08"
+  items:
+  - type: improvement
+    text: 'chore: update package versions in uv.lock file to latest releases for alembic, cachelib, certifi, and cffi'
 - version: "2.11.9"
   date: "2026-07"
   items:

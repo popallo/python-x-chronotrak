@@ -932,22 +932,12 @@ def log_time(slug_or_id):
         if task.project.time_tracking_enabled:
             current_credit = task.project.remaining_credit
             if current_credit < 120:  # 2 heures en minutes
-                remaining_hours = current_credit // 60
-                remaining_minutes = current_credit % 60
-                if remaining_hours > 0:
-                    credit_display = f"{remaining_hours}h{remaining_minutes:02d}min"
-                else:
-                    credit_display = f"{remaining_minutes}min"
+                credit_display = _format_minutes_display(current_credit)
                 warning_message = f"Attention: le crédit du projet est très bas ({credit_display})!"
 
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             # Formater le temps restant pour l'affichage
-            remaining_hours = task.project.remaining_credit // 60
-            remaining_minutes = task.project.remaining_credit % 60
-            if remaining_hours > 0:
-                remaining_display = f"{remaining_hours}h{remaining_minutes:02d}min"
-            else:
-                remaining_display = f"{remaining_minutes}min"
+            remaining_display = _format_minutes_display(task.project.remaining_credit)
 
             return jsonify(
                 {
@@ -1010,11 +1000,13 @@ def get_time_entries(slug_or_id):
 
 def _format_minutes_display(minutes: int) -> str:
     """Formate des minutes en affichage humain (ex. 2h30min ou 45min)."""
-    hours = minutes // 60
-    mins = minutes % 60
+    sign = "-" if minutes < 0 else ""
+    abs_minutes = abs(minutes)
+    hours = abs_minutes // 60
+    mins = abs_minutes % 60
     if hours > 0:
-        return f"{hours}h{mins:02d}min"
-    return f"{mins}min"
+        return f"{sign}{hours}h{mins:02d}min"
+    return f"{sign}{mins}min"
 
 
 @tasks.route("/tasks/<slug_or_id>/time_entries/<int:entry_id>", methods=["DELETE"])

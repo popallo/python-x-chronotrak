@@ -91,12 +91,13 @@ Exemple :
 import pytest
 from app.models.user import User
 
+
 def test_my_new_feature(app):
     """Test ma nouvelle fonctionnalité."""
     with app.app_context():
-        user = User(name='Test', email='test@example.com', role='admin')
+        user = User(name="Test", email="test@example.com", role="admin")
         # ... votre test
-        assert user.name == 'Test'
+        assert user.name == "Test"
 ```
 
 ## Couverture de code

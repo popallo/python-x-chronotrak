@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.14"
+  date: "2026-08"
+  items:
+  - type: fix
+    text: preserve negative remaining credit in realtime task updates
 - version: "2.11.13"
   date: "2026-08"
   items:

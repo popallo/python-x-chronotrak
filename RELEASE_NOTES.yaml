@@ -1,6 +1,16 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.12"
+  date: "2026-08"
+  items:
+  - type: improvement
+    text: 'chore: add nodejs installation and debug logging to CI workflow'
+- version: "2.11.11"
+  date: "2026-08"
+  items:
+  - type: improvement
+    text: 'chore: update package versions in uv.lock file to latest releases for cryptography'
 - version: "2.11.10"
   date: "2026-08"
   items:

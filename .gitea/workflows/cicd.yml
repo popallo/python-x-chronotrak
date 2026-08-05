@@ -20,7 +20,8 @@ jobs:
             bash \
             python3 \
             build-base \
-            libffi-dev
+            libffi-dev \
+            nodejs
 
           if ! command -v python >/dev/null 2>&1; then
             ln -s "$(which python3)" /usr/local/bin/python || true
@@ -30,6 +31,19 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           python --version || python3 --version
           uv --version
+
+      # #region agent log
+      - name: Debug - vérifier node pour actions JS
+        run: |
+          echo "DEBUG_HYP_A node_path=$(command -v node || echo MISSING)"
+          echo "DEBUG_HYP_A node_version=$(node --version 2>/dev/null || echo none)"
+          echo "DEBUG_HYP_A which_node=$(which node 2>/dev/null || echo none)"
+          if ! command -v node >/dev/null 2>&1; then
+            echo "DEBUG_HYP_A FAIL: node absent — checkout@v6 échouera avec Cannot find: node in PATH"
+            exit 1
+          fi
+          echo "DEBUG_HYP_A OK: node disponible pour actions/checkout et actions/cache"
+      # #endregion
 
       - name: Checkout du code
         uses: actions/checkout@v6
@@ -73,7 +87,8 @@ jobs:
             bash \
             python3 \
             build-base \
-            libffi-dev
+            libffi-dev \
+            nodejs
 
           if ! command -v python >/dev/null 2>&1; then
             ln -s "$(which python3)" /usr/local/bin/python || true
@@ -89,6 +104,18 @@ jobs:
           python --version || python3 --version
           uv --version
           trivy --version
+
+      # #region agent log
+      - name: Debug - vérifier node pour actions JS
+        run: |
+          echo "DEBUG_HYP_A node_path=$(command -v node || echo MISSING)"
+          echo "DEBUG_HYP_A node_version=$(node --version 2>/dev/null || echo none)"
+          if ! command -v node >/dev/null 2>&1; then
+            echo "DEBUG_HYP_A FAIL: node absent — checkout@v6 échouera avec Cannot find: node in PATH"
+            exit 1
+          fi
+          echo "DEBUG_HYP_A OK: node disponible pour actions/checkout et actions/cache"
+      # #endregion
 
       - name: Checkout du code
         uses: actions/checkout@v6
@@ -170,7 +197,8 @@ jobs:
             bash \
             python3 \
             build-base \
-            libffi-dev
+            libffi-dev \
+            nodejs
 
           if ! command -v python >/dev/null 2>&1; then
             ln -s "$(which python3)" /usr/local/bin/python || true
@@ -180,6 +208,18 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           python --version || python3 --version
           uv --version
+
+      # #region agent log
+      - name: Debug - vérifier node pour actions JS
+        run: |
+          echo "DEBUG_HYP_A node_path=$(command -v node || echo MISSING)"
+          echo "DEBUG_HYP_A node_version=$(node --version 2>/dev/null || echo none)"
+          if ! command -v node >/dev/null 2>&1; then
+            echo "DEBUG_HYP_A FAIL: node absent — checkout@v6 échouera avec Cannot find: node in PATH"
+            exit 1
+          fi
+          echo "DEBUG_HYP_A OK: node disponible pour actions/checkout et actions/cache"
+      # #endregion
 
       - name: Checkout du code
         uses: actions/checkout@v6
@@ -254,7 +294,8 @@ jobs:
             curl \
             bash \
             openssh-client \
-            file
+            file \
+            nodejs
 
           if ! command -v trivy >/dev/null 2>&1; then
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -263,6 +304,18 @@ jobs:
           mkdir -p ~/.ssh
           echo "StrictHostKeyChecking=no" > ~/.ssh/config
           chmod 600 ~/.ssh/config
+
+      # #region agent log
+      - name: Debug - vérifier node pour actions JS
+        run: |
+          echo "DEBUG_HYP_A node_path=$(command -v node || echo MISSING)"
+          echo "DEBUG_HYP_A node_version=$(node --version 2>/dev/null || echo none)"
+          if ! command -v node >/dev/null 2>&1; then
+            echo "DEBUG_HYP_A FAIL: node absent — checkout@v6 échouera avec Cannot find: node in PATH"
+            exit 1
+          fi
+          echo "DEBUG_HYP_A OK: node disponible pour actions/checkout et actions/cache"
+      # #endregion
 
       - name: Checkout du code
         uses: actions/checkout@v6

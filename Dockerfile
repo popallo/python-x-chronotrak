@@ -50,8 +50,8 @@ LABEL org.opencontainers.image.title="ChronoTrak" \
       org.opencontainers.image.description="Application de gestion de crédit-temps client" \
       org.opencontainers.image.version="$VERSION" \
       org.opencontainers.image.vendor="apacher.eu" \
-      org.opencontainers.image.url="https://chronotrak.fr" \
-      org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+      org.opencontainers.image.url="https://chronotrak.fr"
+# org.opencontainers.image.created est ajouté au build par la CI (--label) : LABEL n'exécute pas $(date)
 
 # Créer le répertoire instance et définir les permissions
 RUN mkdir -p /app/instance /var/log /app/logs && \

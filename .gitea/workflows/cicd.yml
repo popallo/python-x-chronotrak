@@ -403,6 +403,10 @@ jobs:
             docker buildx create --name $BUILDER_NAME --use
           fi
 
+          # Un LABEL du Dockerfile n'exécute pas $(date) : la date de build est calculée ici et passée en --label
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "Date de build: $BUILD_DATE"
+
           echo "Démarrage du build de l'image..."
           docker buildx build --provenance=false --push \
             --cache-from=type=local,src=/tmp/.buildx-cache \
@@ -410,6 +414,7 @@ jobs:
             --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max \
             --cache-to=type=registry,ref=forge.apacher.eu/aurelien-dazy/chronotrak:buildcache,mode=max \
             --build-arg VERSION="${{ env.VERSION }}" \
+            --label org.opencontainers.image.created="$BUILD_DATE" \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:latest \
             --tag forge.apacher.eu/aurelien-dazy/chronotrak:${{ env.VERSION }} \
             --progress=plain \

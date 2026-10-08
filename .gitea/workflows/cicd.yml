@@ -302,8 +302,6 @@ jobs:
           fi
 
           mkdir -p ~/.ssh
-          echo "StrictHostKeyChecking=no" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
 
       # #region agent log
       - name: Debug - vérifier node pour actions JS
@@ -474,13 +472,40 @@ jobs:
             exit 1
           fi
 
+      - name: Configuration de l'empreinte du serveur SSH (known_hosts)
+        env:
+          # Ligne known_hosts du serveur de prod, ex. "[hôte]:port ssh-ed25519 AAAA..." (sortie de ssh-keyscan).
+          # Donnée publique : une ligne suffit (le serveur n'expose qu'une clé ed25519), pas besoin de base64.
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+        run: |
+          if [ -z "$PROD_SSH_KNOWN_HOSTS" ]; then
+            echo "❌ Secret PROD_SSH_KNOWN_HOSTS absent ou vide"
+            exit 1
+          fi
+          printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts_prod
+          chmod 600 ~/.ssh/known_hosts_prod
+          if [ "${PROD_SSH_PORT:-22}" = "22" ]; then
+            HOST_ENTRY="$PROD_SSH_HOST"
+          else
+            HOST_ENTRY="[$PROD_SSH_HOST]:$PROD_SSH_PORT"
+          fi
+          if ! ssh-keygen -F "$HOST_ENTRY" -f ~/.ssh/known_hosts_prod >/dev/null; then
+            echo "❌ PROD_SSH_KNOWN_HOSTS ne contient aucune clé pour l'hôte/port de production"
+            rm -f ~/.ssh/known_hosts_prod
+            exit 1
+          fi
+          echo "Empreinte(s) du serveur épinglée(s) :"
+          ssh-keygen -l -f ~/.ssh/known_hosts_prod
+
       - name: Test de connexion SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts_prod -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "echo 'Connexion SSH réussie'"
 
       - name: Sauvegarde de la base de données
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts_prod -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex
             echo 'Création du répertoire de sauvegarde'
             mkdir -p ${{ secrets.PROJECT_DIRECTORY }}/backups
@@ -513,7 +538,7 @@ jobs:
 
       - name: Déploiement sur le serveur de production
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts_prod -i ~/.ssh/id_ed25519 -p ${{ secrets.PROD_SSH_PORT }} ${{ secrets.PROD_SSH_USERNAME }}@${{ secrets.PROD_SSH_HOST }} "
             set -ex
             echo 'Début du déploiement'
             cd ${{ secrets.PROJECT_DIRECTORY }}
@@ -554,5 +579,5 @@ jobs:
       - name: Nettoyage des secrets sur le runner
         if: always()
         run: |
-          rm -f ~/.ssh/id_ed25519
+          rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts_prod
           docker logout forge.apacher.eu || true

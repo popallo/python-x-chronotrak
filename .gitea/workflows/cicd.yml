@@ -536,3 +536,9 @@ jobs:
           done
           echo "❌ Health check échoué après 6 tentatives"
           exit 1
+
+      - name: Nettoyage des secrets sur le runner
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_ed25519
+          docker logout forge.apacher.eu || true

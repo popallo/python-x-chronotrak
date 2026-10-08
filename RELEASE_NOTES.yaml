@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.19"
+  date: "2026-10"
+  items:
+  - type: fix
+    text: set org.opencontainers.image.created to the real build date
+  - type: fix
+    text: pin the production SSH host key from PROD_SSH_KNOWN_HOSTS instead of disabling host key checking
+  - type: fix
+    text: give the cron service its own healthcheck
 - version: "2.11.18"
   date: "2026-10"
   items:

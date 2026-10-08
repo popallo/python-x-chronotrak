@@ -53,9 +53,7 @@ jobs:
       - name: Cache des dépendances Python avec uv
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.cache/uv
-            .venv
+          path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-uv-
@@ -63,7 +61,7 @@ jobs:
       - name: Installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv venv --python 3.13
+          uv venv --python 3.13 --clear
           uv sync --extra dev --frozen
           source .venv/bin/activate
           python --version
@@ -127,9 +125,7 @@ jobs:
       - name: Cache des dépendances Python avec uv
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.cache/uv
-            .venv
+          path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-uv-
@@ -145,7 +141,7 @@ jobs:
       - name: Installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv venv --python 3.13
+          uv venv --python 3.13 --clear
           uv sync --extra dev --frozen
           source .venv/bin/activate
           python --version
@@ -233,9 +229,7 @@ jobs:
       - name: Cache des dépendances Python avec uv
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.cache/uv
-            .venv
+          path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-uv-
@@ -243,7 +237,7 @@ jobs:
       - name: Installation des dépendances avec uv
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv venv --python 3.13
+          uv venv --python 3.13 --clear
           uv sync --extra dev --frozen
           source .venv/bin/activate
           python --version

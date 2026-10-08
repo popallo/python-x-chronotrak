@@ -476,9 +476,14 @@ jobs:
 
             BACKUP_DATE=\$(date +'%Y%m%d_%H%M%S')
 
-            docker run --rm -v docker-chronotrak_chronotrak_data:/app/instance -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup alpine sh -c \"
+            # Base en mode WAL : sauvegarde via l'API SQLite (online backup) au lieu d'un cp du seul .db.
+            # Image locale déjà déployée (python + sqlite3), sinon la même base que le Dockerfile.
+            BACKUP_IMAGE=forge.apacher.eu/aurelien-dazy/chronotrak:latest
+            docker image inspect \$BACKUP_IMAGE >/dev/null 2>&1 || BACKUP_IMAGE=python:3.13-alpine
+
+            docker run --rm --user root -v docker-chronotrak_chronotrak_data:/app/instance -v ${{ secrets.PROJECT_DIRECTORY }}/backups:/backup \$BACKUP_IMAGE sh -c \"
               if [ -f /app/instance/chronotrak.db ]; then
-                cp /app/instance/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db
+                python -c 'import sqlite3, sys; src = sqlite3.connect(sys.argv[1]); dst = sqlite3.connect(sys.argv[2]); src.backup(dst); dst.close(); src.close()' /app/instance/chronotrak.db /backup/chronotrak_\${BACKUP_DATE}.db &&
                 echo 'Sauvegarde effectuée avec succès'
               else
                 echo 'Base de données non trouvée dans le volume'

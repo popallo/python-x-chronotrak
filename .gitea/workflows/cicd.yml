@@ -453,8 +453,10 @@ jobs:
           echo "✅ Scan Trivy image terminé"
 
       - name: Configuration de la clé SSH
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
         run: |
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
       - name: Test de connexion SSH

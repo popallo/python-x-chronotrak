@@ -509,7 +509,7 @@ jobs:
             ENVIRONMENT=production docker compose pull
             ENVIRONMENT=production docker compose up -d
 
-            docker system prune -f
+            docker image prune -f --filter \"label=org.opencontainers.image.title=ChronoTrak\"
             docker volume ls --filter \"name=buildx_buildkit_\" --format \"{{.Name}}\" | xargs -r docker volume rm 2>/dev/null || true
             docker logout forge.apacher.eu
 

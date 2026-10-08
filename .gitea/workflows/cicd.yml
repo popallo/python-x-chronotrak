@@ -455,10 +455,24 @@ jobs:
 
       - name: Configuration de la clé SSH
         env:
-          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          # Clé privée encodée en base64 sur une seule ligne : masquée (***) dans les logs du runner
+          PROD_SSH_KEY_B64: ${{ secrets.PROD_SSH_KEY_B64 }}
         run: |
-          printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/id_ed25519
+          if [ -z "$PROD_SSH_KEY_B64" ]; then
+            echo "❌ Secret PROD_SSH_KEY_B64 absent ou vide"
+            exit 1
+          fi
+          printf '%s' "$PROD_SSH_KEY_B64" | base64 -d > ~/.ssh/id_ed25519 || {
+            echo "❌ PROD_SSH_KEY_B64 n'est pas un base64 valide"
+            rm -f ~/.ssh/id_ed25519
+            exit 1
+          }
           chmod 600 ~/.ssh/id_ed25519
+          if ! ssh-keygen -y -P "" -f ~/.ssh/id_ed25519 >/dev/null 2>&1; then
+            echo "❌ PROD_SSH_KEY_B64 ne contient pas une clé SSH privée valide"
+            rm -f ~/.ssh/id_ed25519
+            exit 1
+          fi
 
       - name: Test de connexion SSH
         run: |

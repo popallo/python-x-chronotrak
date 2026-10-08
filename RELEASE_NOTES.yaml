@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.18"
+  date: "2026-10"
+  items:
+  - type: fix
+    text: read the deploy SSH key from a single-line base64 secret so it stays masked in logs
 - version: "2.11.17"
   date: "2026-10"
   items:

@@ -1,6 +1,19 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.11.17"
+  date: "2026-10"
+  items:
+  - type: fix
+    text: remove the deploy SSH key and registry login from the runner after each run
+  - type: fix
+    text: limit prod image cleanup to ChronoTrak images instead of docker system prune
+  - type: fix
+    text: back up the SQLite database with the online backup API (WAL-safe)
+  - type: fix
+    text: tag images with git describe so untagged commits never overwrite a release tag
+  - type: improvement
+    text: 'chore(ci): run lint, security and tests on git flow branches and PRs to develop'
 - version: "2.11.16"
   date: "2026-10"
   items:

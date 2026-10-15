@@ -1,91 +1,186 @@
 /**
- * Styles spécifiques à la page des projets
- * Gère les favoris, catégories et drag & drop
+ * Styles — Liste des projets
+ * Tokens: --color-* (clair) / --dm-* (sombre via html.dark-mode)
  */
 
-/* ===== CARTES DE PROJETS ===== */
+/* ===== Stats strip ===== */
+.project-list-stats .stats-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    transition: all var(--transition-base, 0.2s) ease;
+    height: 100%;
+    color: #fff;
+}
+
+.project-list-stats .stats-item.success {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+}
+
+.project-list-stats .stats-item.warning {
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+}
+
+.project-list-stats .stats-item.danger {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+}
+
+.project-list-stats .stats-item.info {
+    background: linear-gradient(135deg, var(--color-info), var(--color-info-dark));
+}
+
+.project-list-stats .stats-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+    filter: brightness(1.05);
+}
+
+.project-list-stats .stats-item i {
+    font-size: 1.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #fff;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.project-list-stats .stats-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-list-stats .stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+    color: #fff;
+}
+
+.project-list-stats .stats-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== Cartes ===== */
 .project-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform var(--transition-base, 0.2s) ease, box-shadow var(--transition-base, 0.2s) ease;
+    border: 1px solid var(--color-border, #e2e8f0);
     border-radius: 0.75rem;
     overflow: hidden;
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    height: auto;
+    background: var(--color-bg-card, #fff);
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
+    height: 100%;
 }
 
 .project-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
 .project-card .card-header {
     border-bottom: none;
-    padding: 1rem 1.25rem;
 }
 
-.project-card .card-body {
-    padding: 1.25rem;
+.project-card-header {
+    color: #fff;
 }
 
-.project-card .card-footer {
-    padding: 1rem 1.25rem;
+.project-card-header--favorite {
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+    color: #1e293b;
+}
+
+.project-card-header--recent {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+}
+
+.project-card-header--old {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+}
+
+.project-card-header--flat {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
+.project-client-badge {
+    font-size: 0.7rem;
+    padding: 0.3em 0.55em;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
+}
+
+.project-card-header--favorite .project-client-badge {
+    background: #1e293b;
+    color: #fff;
+}
+
+.project-favorite-btn {
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #fff;
     background: transparent;
 }
 
-.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+.project-card-header--favorite .project-favorite-btn {
+    border-color: rgba(30, 41, 59, 0.35);
+    color: #1e293b;
 }
 
-.btn-group .btn {
-    border-radius: 6px !important;
-    margin-left: 0.25rem;
+.project-favorite-btn:hover {
+    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
 }
 
-.btn-group .btn:first-child {
-    margin-left: 0;
+.project-card-header--favorite .project-favorite-btn:hover {
+    color: #1e293b;
+    background: rgba(30, 41, 59, 0.08);
 }
 
-.badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
+.toggle-favorite i.fas.fa-star {
+    color: #fbbf24;
 }
 
-.text-truncate {
-    max-width: 200px;
+.project-card-header--favorite .toggle-favorite i.fas.fa-star {
+    color: #b45309;
 }
 
-@media (max-width: 768px) {
-    .col-xl-4 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
+.toggle-favorite i.far.fa-star {
+    color: rgba(255, 255, 255, 0.85);
 }
 
-/* ===== CATÉGORIES DE PROJETS ===== */
+.project-card-desc {
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.5rem;
+}
+
+/* ===== Catégories ===== */
 .category-section {
     margin-bottom: 2rem;
 }
 
 .category-title {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #e9ecef;
+    color: var(--color-text, #1e293b);
+    border-bottom: 2px solid var(--color-border, #e2e8f0);
     padding-bottom: 0.5rem;
 }
 
-/* ===== GRADIENTS SPÉCIFIQUES ===== */
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-}
-
-.bg-gradient-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-}
-
-/* ===== DRAG & DROP ===== */
+/* ===== Drag & drop ===== */
 .project-card[draggable="true"] {
     cursor: grab;
 }
@@ -96,54 +191,89 @@
 
 .project-card.dragging {
     opacity: 0.5;
-    transform: rotate(5deg);
+    transform: rotate(3deg);
 }
 
 .favorites-drop-zone {
-    transition: all 0.3s ease;
+    display: none;
+    transition: all var(--transition-base, 0.2s) ease;
 }
 
-.favorites-drop-zone.drag-over {
-    background-color: rgba(255, 193, 7, 0.2) !important;
-    border-color: #ffc107 !important;
+.favorites-drop-zone-inner {
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px dashed var(--color-warning);
+    border-radius: 0.75rem;
+    background: rgba(245, 158, 11, 0.08);
 }
 
-/* ===== BOUTONS DE FAVORIS ===== */
-.toggle-favorite {
-    transition: all 0.2s ease;
+.favorites-drop-zone.drag-over .favorites-drop-zone-inner {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: var(--color-warning-dark, #d97706);
 }
 
-.toggle-favorite:hover {
-    transform: scale(1.1);
+/* ===== Empty state ===== */
+.projects-empty-state {
+    text-align: center;
+    color: var(--color-text-muted, #64748b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.toggle-favorite i.fa-star {
-    color: #ffc107;
+.projects-empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
 }
 
-.toggle-favorite i.far {
-    color: rgba(255, 255, 255, 0.7);
+.projects-empty-state p {
+    margin: 0;
+    font-size: 0.95rem;
 }
 
-/* ===== MODE SOMBRE ===== */
+/* ===== Dark mode ===== */
 html.dark-mode .project-card {
     background: var(--dm-bg-card) !important;
     border-color: var(--dm-border) !important;
 }
 
 html.dark-mode .project-card:hover {
-    background: var(--dm-bg-elevated) !important;
-    border-color: var(--dm-border) !important;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
-html.dark-mode .project-info,
-html.dark-mode .task-stats {
-    background: var(--dm-bg-elevated) !important;
-    border-color: var(--dm-border) !important;
+html.dark-mode .category-title {
+    color: var(--dm-text) !important;
+    border-bottom-color: var(--dm-border) !important;
 }
 
-html.dark-mode .category-title {
-    color: var(--dm-text-primary) !important;
-    border-bottom-color: var(--dm-border) !important;
+html.dark-mode .project-card-desc,
+html.dark-mode .projects-empty-state {
+    color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .favorites-drop-zone-inner {
+    background: rgba(245, 158, 11, 0.12);
+}
+
+html.dark-mode .projects-page-header .text-muted {
+    color: var(--dm-text-muted) !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .project-list-stats .stats-number {
+        font-size: 1.25rem;
+    }
+
+    .project-list-stats .stats-item i {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+    }
+
+    .project-card .card-header h6 {
+        max-width: 140px;
+    }
 }

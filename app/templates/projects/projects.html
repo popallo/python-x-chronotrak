@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% from 'components/project_card.html' import project_card %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">
@@ -6,10 +7,26 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Projets</h1>
+{% set q_client = request.args.get('client_id', '') %}
+{% set q_search = request.args.get('search', '') %}
+{% set q_sort = request.args.get('sort_by', 'categories') %}
+{% set q_favorites = request.args.get('favorites_only', '') %}
+{% set q_credit = request.args.get('credit_status', '') %}
+{% set q_date_from = request.args.get('date_from', '') %}
+{% set q_date_to = request.args.get('date_to', '') %}
+
+{# Header #}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 projects-page-header">
+    <div class="min-w-0">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-project-diagram me-2 text-success" aria-hidden="true"></i>Projets
+        </h1>
+        <p class="text-muted mb-0 small">
+            {{ stats_total }} projet{{ 's' if stats_total != 1 else '' }}
+            {% if filters_active %}correspondant aux filtres{% endif %}
+        </p>
+    </div>
     <div>
-        <!-- Si l'utilisateur est admin ou technicien, afficher le bouton de création -->
         {% if not current_user.is_client() %}
         <a href="{{ url_for('clients.list_clients') }}" class="btn btn-success">
             <i class="fas fa-plus me-1"></i>Nouveau projet
@@ -18,7 +35,47 @@
     </div>
 </div>
 
-<!-- Panneau de filtres -->
+{# Stats strip #}
+<div class="row g-3 mb-3 project-list-stats">
+    <div class="col-6 col-lg-3">
+        <div class="stats-item success">
+            <i class="fas fa-project-diagram"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ stats_total }}</div>
+                <div class="stats-title">Total</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stats-item warning">
+            <i class="fas fa-star"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ stats_favorites }}</div>
+                <div class="stats-title">Favoris</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stats-item danger">
+            <i class="fas fa-exclamation-circle"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ stats_credit_critical }}</div>
+                <div class="stats-title">Crédit critique</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stats-item info">
+            <i class="fas fa-battery-half"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ stats_credit_low }}</div>
+                <div class="stats-title">Crédit bas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Panneau de filtres #}
 <div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
     <div id="filtersToggle" class="filters-header">
         <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
@@ -29,68 +86,62 @@
     <div id="filtersBody" class="filters-body {% if not filters_active %}hidden{% endif %}">
         <form id="projectsFilterForm" method="GET" action="{{ url_for('projects.list_projects') }}" class="mt-3">
             <div class="row">
-                <!-- Filtre par client -->
                 <div class="col-md-6 mb-3">
                     <label for="client_id" class="form-label">Client</label>
                     <select name="client_id" id="client_id" class="form-select" {% if current_user.is_client() %}disabled{% endif %}>
                         <option value="">Tous les clients</option>
                         {% for client in all_clients %}
-                            <option value="{{ client.id }}" {% if request.args.get('client_id')|int == client.id %}selected{% endif %}>
+                            <option value="{{ client.id }}" {% if q_client|int == client.id %}selected{% endif %}>
                                 {{ client.name }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <!-- Filtre par favoris -->
                 <div class="col-md-6 mb-3">
                     <label for="favorites_only" class="form-label">Favoris</label>
                     <select name="favorites_only" id="favorites_only" class="form-select">
                         <option value="">Tous les projets</option>
-                        <option value="true" {% if request.args.get('favorites_only') == 'true' %}selected{% endif %}>Favoris uniquement</option>
-                        <option value="false" {% if request.args.get('favorites_only') == 'false' %}selected{% endif %}>Non-favoris uniquement</option>
+                        <option value="true" {% if q_favorites == 'true' %}selected{% endif %}>Favoris uniquement</option>
+                        <option value="false" {% if q_favorites == 'false' %}selected{% endif %}>Non-favoris uniquement</option>
                     </select>
                 </div>
 
-                <!-- Filtre par état de crédit -->
                 <div class="col-md-6 mb-3">
                     <label for="credit_status" class="form-label">État du crédit</label>
                     <select name="credit_status" id="credit_status" class="form-select">
                         <option value="">Tous les crédits</option>
-                        <option value="critical" {% if request.args.get('credit_status') == 'critical' %}selected{% endif %}>Critique (< 2h)</option>
-                        <option value="low" {% if request.args.get('credit_status') == 'low' %}selected{% endif %}>Bas (< 5h)</option>
-                        <option value="normal" {% if request.args.get('credit_status') == 'normal' %}selected{% endif %}>Normal (≥ 5h)</option>
+                        <option value="critical" {% if q_credit == 'critical' %}selected{% endif %}>Critique (&lt; 2h)</option>
+                        <option value="low" {% if q_credit == 'low' %}selected{% endif %}>Bas (&lt; 5h)</option>
+                        <option value="normal" {% if q_credit == 'normal' %}selected{% endif %}>Normal (≥ 5h)</option>
                     </select>
                 </div>
 
-                <!-- Recherche par nom -->
                 <div class="col-md-6 mb-3">
                     <label for="search" class="form-label">Recherche par nom</label>
-                    <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher un projet..." value="{{ request.args.get('search', '') }}">
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher un projet..." value="{{ q_search }}">
                 </div>
 
-                <!-- Options de tri -->
                 <div class="col-md-6 mb-3">
                     <label for="sort_by" class="form-label">Trier par</label>
                     <select name="sort_by" id="sort_by" class="form-select">
-                        <option value="categories" {% if request.args.get('sort_by', 'categories') == 'categories' %}selected{% endif %}>Catégories (favoris, activité récente, ancienne)</option>
-                        <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Nom</option>
-                        <option value="date_asc" {% if request.args.get('sort_by') == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
-                        <option value="date_desc" {% if request.args.get('sort_by') == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
-                        <option value="credit_asc" {% if request.args.get('sort_by') == 'credit_asc' %}selected{% endif %}>Crédit (plus bas)</option>
-                        <option value="credit_desc" {% if request.args.get('sort_by') == 'credit_desc' %}selected{% endif %}>Crédit (plus haut)</option>
+                        <option value="categories" {% if q_sort == 'categories' %}selected{% endif %}>Catégories (favoris, activité récente, ancienne)</option>
+                        <option value="name" {% if q_sort == 'name' %}selected{% endif %}>Nom</option>
+                        <option value="date_asc" {% if q_sort == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
+                        <option value="date_desc" {% if q_sort == 'date_desc' %}selected{% endif %}>Date (plus récent)</option>
+                        <option value="credit_asc" {% if q_sort == 'credit_asc' %}selected{% endif %}>Crédit (plus bas)</option>
+                        <option value="credit_desc" {% if q_sort == 'credit_desc' %}selected{% endif %}>Crédit (plus haut)</option>
                     </select>
                 </div>
 
-                <!-- Période de création -->
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Période de création</label>
                     <div class="row">
                         <div class="col-6">
-                            <input type="date" class="form-control" id="date_from" name="date_from" placeholder="De" value="{{ request.args.get('date_from', '') }}">
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ q_date_from }}">
                         </div>
                         <div class="col-6">
-                            <input type="date" class="form-control" id="date_to" name="date_to" placeholder="À" value="{{ request.args.get('date_to', '') }}">
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ q_date_to }}">
                         </div>
                     </div>
                 </div>
@@ -106,395 +157,128 @@
             </div>
         </form>
 
-        <!-- Filtres actifs -->
         {% if filters_active %}
         <div id="activeFilters" class="active-filters">
-            {% if request.args.get('client_id') %}
-                {% set client = get_client_by_id(request.args.get('client_id')|int) %}
-                {% if client %}
-                <div class="filter-badge" data-type="client_id" data-value="{{ client.id }}">
-                    Client: {{ client.name }}
-                    <span class="remove-filter">×</span>
-                </div>
+            {% if selected_client %}
+            <div class="filter-badge" data-type="client_id" data-value="{{ selected_client.id }}">
+                Client: {{ selected_client.name }}
+                <span class="remove-filter">×</span>
+            </div>
+            {% endif %}
+
+            {% if q_favorites %}
+            <div class="filter-badge" data-type="favorites_only" data-value="{{ q_favorites }}">
+                Favoris: {% if q_favorites == 'true' %}Oui{% else %}Non{% endif %}
+                <span class="remove-filter">×</span>
+            </div>
+            {% endif %}
+
+            {% if q_credit %}
+            <div class="filter-badge" data-type="credit_status" data-value="{{ q_credit }}">
+                Crédit:
+                {% if q_credit == 'critical' %}Critique
+                {% elif q_credit == 'low' %}Bas
+                {% else %}Normal
                 {% endif %}
+                <span class="remove-filter">×</span>
+            </div>
             {% endif %}
 
-            {% if request.args.get('favorites_only') %}
-                <div class="filter-badge" data-type="favorites_only" data-value="{{ request.args.get('favorites_only') }}">
-                    Favoris:
-                    {% if request.args.get('favorites_only') == 'true' %}Oui
-                    {% else %}Non
-                    {% endif %}
-                    <span class="remove-filter">×</span>
-                </div>
+            {% if q_search %}
+            <div class="filter-badge" data-type="search" data-value="{{ q_search }}">
+                Recherche: {{ q_search }}
+                <span class="remove-filter">×</span>
+            </div>
             {% endif %}
 
-            {% if request.args.get('credit_status') %}
-                <div class="filter-badge" data-type="credit_status" data-value="{{ request.args.get('credit_status') }}">
-                    Crédit:
-                    {% if request.args.get('credit_status') == 'critical' %}Critique
-                    {% elif request.args.get('credit_status') == 'low' %}Bas
-                    {% else %}Normal
-                    {% endif %}
-                    <span class="remove-filter">×</span>
-                </div>
-            {% endif %}
-
-            {% if request.args.get('search') %}
-                <div class="filter-badge" data-type="search" data-value="{{ request.args.get('search') }}">
-                    Recherche: {{ request.args.get('search') }}
-                    <span class="remove-filter">×</span>
-                </div>
-            {% endif %}
-
-            {% if request.args.get('date_from') or request.args.get('date_to') %}
-                <div class="filter-badge" data-type="date_range" data-value="date_range">
-                    Période:
-                    {% if request.args.get('date_from') %}{{ request.args.get('date_from') }}{% else %}...{% endif %}
-                    à
-                    {% if request.args.get('date_to') %}{{ request.args.get('date_to') }}{% else %}...{% endif %}
-                    <span class="remove-filter">×</span>
-                </div>
+            {% if q_date_from or q_date_to %}
+            <div class="filter-badge" data-type="date_range" data-value="date_range">
+                Période:
+                {% if q_date_from %}{{ q_date_from }}{% else %}...{% endif %}
+                à
+                {% if q_date_to %}{{ q_date_to }}{% else %}...{% endif %}
+                <span class="remove-filter">×</span>
+            </div>
             {% endif %}
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Affichage des projets par catégories -->
-{% if projects %}
-    <!-- Zone de drop pour les favoris -->
-    <div id="favorites-drop-zone" class="favorites-drop-zone mb-4" style="display: none;">
-        <div class="text-center p-4 border-2 border-dashed border-warning rounded bg-warning bg-opacity-10">
+{% if projects.items %}
+    <div id="favorites-drop-zone" class="favorites-drop-zone mb-4">
+        <div class="favorites-drop-zone-inner">
             <i class="fas fa-star fa-2x text-warning mb-2"></i>
             <p class="mb-0 text-warning">Déposez ici pour ajouter aux favoris</p>
         </div>
     </div>
 
-    <!-- Projets favoris -->
-    {% if projects_by_category.favorites %}
-    <div class="category-section mb-4">
-        <h4 class="category-title d-flex align-items-center mb-3">
-            <i class="fas fa-star text-warning me-2"></i>
-            Projets favoris
-            <span class="badge bg-warning text-dark ms-2">{{ projects_by_category.favorites|length }}</span>
-        </h4>
-        <div class="row">
-            {% for project in projects_by_category.favorites %}
-                <div class="col-lg-6 col-xl-4 mb-3">
-                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
-                        <!-- En-tête compact -->
-                        <div class="card-header bg-gradient-warning text-dark d-flex justify-content-between align-items-center py-2">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-star me-2"></i>
-                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-dark text-white">{{ project.client.name }}</span>
-                                <button class="btn btn-sm btn-outline-dark toggle-favorite" data-project-slug="{{ project.slug }}" title="Retirer des favoris">
-                                    <i class="fas fa-star"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Corps compact -->
-                        <div class="card-body py-2">
-                            <!-- Description courte -->
-                            {% if project.description %}
-                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
-                            {% endif %}
-
-                            <!-- Informations essentielles en ligne -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
-                                    <i class="fas fa-calendar me-1 text-muted"></i>
-                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Crédit et statuts des tâches -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <!-- Crédit -->
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
-                                    {% if project.time_tracking_enabled %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
-                                            {{ project.remaining_credit|format_time }}
-                                        </span>
-                                    {% else %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge bg-secondary small">Désactivé</span>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
-                                {% if project.visible_tasks_total %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
-                                            <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
-                                        </div>
-                                        <div class="d-flex gap-1">
-                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
-                                            </span>
-                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
-                                            </span>
-                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Actions compactes -->
-                        <div class="card-footer bg-transparent border-top-0 py-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-warning btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
-                                    <i class="fas fa-eye me-1"></i>Détails
-                                </a>
-                                {% if not current_user.is_client() %}
-                                    <div class="d-flex gap-1">
-                                        {% if project.time_tracking_enabled %}
-                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
-                                            <i class="fas fa-plus"></i>
-                                        </a>
-                                        {% endif %}
-                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+    {% if sort_by == 'categories' %}
+        {% if projects_by_category.favorites %}
+        <div class="category-section mb-4">
+            <h4 class="category-title d-flex align-items-center mb-3">
+                <i class="fas fa-star text-warning me-2"></i>
+                Projets favoris
+                <span class="badge bg-warning text-dark ms-2">{{ projects_by_category.favorites|length }}</span>
+            </h4>
+            <div class="row">
+                {% for project in projects_by_category.favorites %}
+                    {{ project_card(project, 'favorite') }}
+                {% endfor %}
+            </div>
         </div>
-    </div>
+        {% endif %}
+
+        {% if projects_by_category.recent_activity %}
+        <div class="category-section mb-4">
+            <h4 class="category-title d-flex align-items-center mb-3">
+                <i class="fas fa-clock text-success me-2"></i>
+                Activité récente (moins d'un mois)
+                <span class="badge bg-success ms-2">{{ projects_by_category.recent_activity|length }}</span>
+            </h4>
+            <div class="row">
+                {% for project in projects_by_category.recent_activity %}
+                    {{ project_card(project, 'recent') }}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if projects_by_category.old_activity %}
+        <div class="category-section mb-4">
+            <h4 class="category-title d-flex align-items-center mb-3">
+                <i class="fas fa-history text-muted me-2"></i>
+                Activité ancienne (plus d'un mois)
+                <span class="badge bg-secondary ms-2">{{ projects_by_category.old_activity|length }}</span>
+            </h4>
+            <div class="row">
+                {% for project in projects_by_category.old_activity %}
+                    {{ project_card(project, 'old') }}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="category-section mb-4">
+            <h4 class="category-title d-flex align-items-center mb-3">
+                <i class="fas fa-list text-primary me-2"></i>
+                Résultats
+                <span class="badge bg-primary ms-2">{{ projects.items|length }}</span>
+            </h4>
+            <div class="row">
+                {% for project in projects.items %}
+                    {{ project_card(project, 'flat') }}
+                {% endfor %}
+            </div>
+        </div>
     {% endif %}
 
-    <!-- Projets avec activité récente -->
-    {% if projects_by_category.recent_activity %}
-    <div class="category-section mb-4">
-        <h4 class="category-title d-flex align-items-center mb-3">
-            <i class="fas fa-clock text-success me-2"></i>
-            Activité récente (moins d'un mois)
-            <span class="badge bg-success ms-2">{{ projects_by_category.recent_activity|length }}</span>
-        </h4>
-        <div class="row">
-            {% for project in projects_by_category.recent_activity %}
-                <div class="col-lg-6 col-xl-4 mb-3">
-                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
-                        <!-- En-tête compact -->
-                        <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center py-2">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-project-diagram me-2"></i>
-                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-light text-dark">{{ project.client.name }}</span>
-                                <button class="btn btn-sm btn-outline-light toggle-favorite" data-project-slug="{{ project.slug }}" title="Ajouter aux favoris">
-                                    <i class="far fa-star"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Corps compact -->
-                        <div class="card-body py-2">
-                            <!-- Description courte -->
-                            {% if project.description %}
-                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
-                            {% endif %}
-
-                            <!-- Informations essentielles en ligne -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
-                                    <i class="fas fa-calendar me-1 text-muted"></i>
-                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Crédit et statuts des tâches -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <!-- Crédit -->
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
-                                    {% if project.time_tracking_enabled %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
-                                            {{ project.remaining_credit|format_time }}
-                                        </span>
-                                    {% else %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge bg-secondary small">Désactivé</span>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
-                                {% if project.visible_tasks_total %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
-                                            <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
-                                        </div>
-                                        <div class="d-flex gap-1">
-                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
-                                            </span>
-                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
-                                            </span>
-                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Actions compactes -->
-                        <div class="card-footer bg-transparent border-top-0 py-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
-                                    <i class="fas fa-eye me-1"></i>Détails
-                                </a>
-                                {% if not current_user.is_client() %}
-                                    <div class="d-flex gap-1">
-                                        {% if project.time_tracking_enabled %}
-                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
-                                            <i class="fas fa-plus"></i>
-                                        </a>
-                                        {% endif %}
-                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Projets avec activité ancienne -->
-    {% if projects_by_category.old_activity %}
-    <div class="category-section mb-4">
-        <h4 class="category-title d-flex align-items-center mb-3">
-            <i class="fas fa-history text-muted me-2"></i>
-            Activité ancienne (plus d'un mois)
-            <span class="badge bg-secondary ms-2">{{ projects_by_category.old_activity|length }}</span>
-        </h4>
-        <div class="row">
-            {% for project in projects_by_category.old_activity %}
-                <div class="col-lg-6 col-xl-4 mb-3">
-                    <div class="card project-card shadow-sm no-collapse" draggable="true" data-project-id="{{ project.id }}" data-project-slug="{{ project.slug }}">
-                        <!-- En-tête compact -->
-                        <div class="card-header bg-gradient-secondary text-white d-flex justify-content-between align-items-center py-2">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-project-diagram me-2"></i>
-                                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-light text-dark">{{ project.client.name }}</span>
-                                <button class="btn btn-sm btn-outline-light toggle-favorite" data-project-slug="{{ project.slug }}" title="Ajouter aux favoris">
-                                    <i class="far fa-star"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Corps compact -->
-                        <div class="card-body py-2">
-                            <!-- Description courte -->
-                            {% if project.description %}
-                                <p class="text-muted small mb-2">{{ project.description|truncate(60) }}</p>
-                            {% endif %}
-
-                            <!-- Informations essentielles en ligne -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
-                                    <i class="fas fa-calendar me-1 text-muted"></i>
-                                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m') }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Crédit et statuts des tâches -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <!-- Crédit -->
-                                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
-                                    {% if project.time_tracking_enabled %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
-                                            {{ project.remaining_credit|format_time }}
-                                        </span>
-                                    {% else %}
-                                        <i class="fas fa-clock me-1 text-muted"></i>
-                                        <span class="badge bg-secondary small">Désactivé</span>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Statuts des tâches (tâches visibles uniquement: hors archives + hors occurrences futures) -->
-                                {% if project.visible_tasks_total %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Tâches restantes à traiter (à faire + en cours)">
-                                            <i class="fas fa-tasks me-1 text-muted"></i>
-                                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
-                                        </div>
-                                        <div class="d-flex gap-1">
-                                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
-                                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
-                                            </span>
-                                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
-                                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
-                                            </span>
-                                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
-                                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Actions compactes -->
-                        <div class="card-footer bg-transparent border-top-0 py-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Voir les détails du projet">
-                                    <i class="fas fa-eye me-1"></i>Détails
-                                </a>
-                                {% if not current_user.is_client() %}
-                                    <div class="d-flex gap-1">
-                                        {% if project.time_tracking_enabled %}
-                                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Ajouter du crédit">
-                                            <i class="fas fa-plus"></i>
-                                        </a>
-                                        {% endif %}
-                                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Modifier le projet">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    <!-- Pagination si nécessaire -->
-    {% if pagination %}
+    {% if pagination and pagination.pages > 1 %}
     <nav aria-label="Pagination des projets">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">
                         <i class="fas fa-chevron-left"></i> Précédent
                     </a>
                 </li>
@@ -504,15 +288,15 @@
                 </li>
             {% endif %}
 
-            {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page %}
-                    {% if page == pagination.page %}
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
                         <li class="page-item active">
-                            <span class="page-link">{{ page }}</span>
+                            <span class="page-link">{{ page_num }}</span>
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">{{ page }}</a>
+                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">{{ page_num }}</a>
                         </li>
                     {% endif %}
                 {% else %}
@@ -524,7 +308,7 @@
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, client_id=request.args.get('client_id', ''), search=request.args.get('search', ''), sort_by=request.args.get('sort_by', ''), favorites_only=request.args.get('favorites_only', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">
                         Suivant <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>
@@ -537,18 +321,15 @@
     </nav>
     {% endif %}
 {% else %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        {% if filters_active %}
-            Aucun projet ne correspond aux filtres sélectionnés.
-        {% else %}
-            Aucun projet n'a été créé pour le moment.
-        {% endif %}
+    <div class="empty-state projects-empty-state py-5">
+        <i class="fas fa-folder-open"></i>
+        <p>
+            {% if filters_active %}
+                Aucun projet ne correspond aux filtres sélectionnés.
+            {% else %}
+                Aucun projet n'a été créé pour le moment.
+            {% endif %}
+        </p>
     </div>
 {% endif %}
-{% endblock %}
-
-{% block scripts %}
-<script type="module" src="{{ url_for('static', filename='js/pages/project_filters.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/pages/project_favorites.js') }}"></script>
 {% endblock %}

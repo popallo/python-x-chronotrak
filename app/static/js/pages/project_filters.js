@@ -13,9 +13,4 @@ function initProjectFilters() {
     });
 }
 
-// Initialiser le module
-document.addEventListener('DOMContentLoaded', function() {
-    initProjectFilters();
-});
-
 export { initProjectFilters };

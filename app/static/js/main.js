@@ -63,6 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
         initProjectFavorites();
     }
 
+    // Favoris sur détail projet (boutons .toggle-favorite)
+    if (currentPath.startsWith('/projects/') && document.querySelector('.toggle-favorite')) {
+        initProjectFavorites();
+    }
+
     // Page des tâches - liste
     if (currentPath === '/my-tasks') {
         initTaskFilters();

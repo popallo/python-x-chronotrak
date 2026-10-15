@@ -9,30 +9,130 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/project_detail.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/components/kanban.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>{{ project.name }}</h1>
-    <div>
-        {% if not current_user.is_client() %}
+{% set todo_count = tasks_todo|length %}
+{% set progress_count = tasks_in_progress|length %}
+{% set done_count = tasks_done|length %}
+
+{# Toolbar sticky #}
+<div class="action-toolbar project-action-toolbar sticky-top shadow-sm py-2 bg-secondary text-white rounded mb-3">
+    <div class="action-toolbar-inner d-flex align-items-center gap-3 flex-wrap">
+        <div class="project-toolbar-title me-auto min-w-0">
+            <h1 class="project-page-title mb-0 text-truncate">
+                <i class="fas fa-project-diagram me-2" aria-hidden="true"></i>{{ project.name }}
+            </h1>
+            <a href="{{ url_for('clients.client_details', slug_or_id=project.client.slug) }}"
+               class="project-toolbar-subtitle text-truncate d-inline-block">
+                <i class="fas fa-building me-1" aria-hidden="true"></i>{{ project.client.name }}
+            </a>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0 align-items-center flex-wrap project-toolbar-actions">
+            {% if project.time_tracking_enabled %}
+            <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white d-flex align-items-center project-credit-badge"
+                  data-bs-toggle="tooltip" title="Crédit restant du projet">
+                <i class="fas fa-coins me-1"></i>{{ project.remaining_credit|format_time }}
+            </span>
+            {% endif %}
+
+            {% if not current_user.is_client() %}
+            <button type="button"
+                    class="btn btn-outline-light toggle-favorite"
+                    data-project-slug="{{ project.slug }}"
+                    data-bs-toggle="tooltip"
+                    title="{% if project.is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+                <i class="{% if project.is_favorite %}fas{% else %}far{% endif %} fa-star {% if project.is_favorite %}text-warning{% endif %}"></i>
+            </button>
+            {% endif %}
+
+            <a href="{{ url_for('tasks.new_task', slug_or_id=project.slug) }}"
+               class="btn btn-outline-light"
+               data-bs-toggle="tooltip"
+               title="Nouvelle tâche">
+                <i class="fas fa-plus"></i>
+                <span class="d-none d-md-inline ms-1">Nouvelle tâche</span>
+            </a>
+
+            {% if current_user.is_admin() %}
+            {% if project.time_tracking_enabled %}
+            <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}"
+               class="btn btn-outline-light"
+               data-bs-toggle="tooltip"
+               title="Ajouter du crédit">
+                <i class="fas fa-plus-circle"></i>
+                <span class="d-none d-lg-inline ms-1">Crédit</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}"
+               class="btn btn-outline-light"
+               data-bs-toggle="tooltip"
+               title="Modifier">
+                <i class="fas fa-edit"></i>
+            </a>
+            <button type="button"
+                    class="btn btn-outline-light"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteProjectModal"
+                    title="Supprimer">
+                <i class="fas fa-trash"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# Stats strip #}
+<div class="row g-3 mb-3 project-stats-row">
+    <div class="col-6 col-lg-3">
+        <div class="stats-item info">
+            <i class="fas fa-clock"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ todo_count }}</div>
+                <div class="stats-title">À faire</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stats-item warning">
+            <i class="fas fa-play"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ progress_count }}</div>
+                <div class="stats-title">En cours</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stats-item success">
+            <i class="fas fa-check"></i>
+            <div class="stats-content">
+                <div class="stats-number">{{ done_count }}</div>
+                <div class="stats-title">Terminé</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
         {% if project.time_tracking_enabled %}
-        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}" class="btn btn-success">
-            <i class="fas fa-plus me-1"></i>Ajouter du crédit
-        </a>
-        {% endif %}
-        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}" class="btn btn-outline-primary">
-            <i class="fas fa-edit me-1"></i>Modifier
-        </a>
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
-            <i class="fas fa-trash me-1"></i>Supprimer
-        </button>
+        <div class="stats-item {% if project.remaining_credit < 120 %}danger{% elif project.remaining_credit < 300 %}warning{% else %}primary{% endif %}">
+            <i class="fas fa-coins"></i>
+            <div class="stats-content">
+                <div class="stats-number stats-number-time">{{ project.remaining_credit|format_time }}</div>
+                <div class="stats-title">Crédit restant</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="stats-item secondary">
+            <i class="fas fa-clock"></i>
+            <div class="stats-content">
+                <div class="stats-number stats-number-muted">—</div>
+                <div class="stats-title">Suivi temps off</div>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Informations du projet -->
+{# Meta card #}
 <div class="project-info-container mb-4">
     <div class="info-card">
         <div class="compact-info-grid">
@@ -55,42 +155,12 @@
                     <span class="status-badge status-disabled">Désactivée</span>
                 {% endif %}
             </div>
-            {% if project.time_tracking_enabled %}
-            <div class="compact-info-item">
-                <i class="fas fa-coins text-primary me-2"></i>
-                <span class="compact-label">Crédits:</span>
-                <span class="compact-value credit-amount {% if project.remaining_credit < 120 %}text-danger{% elif project.remaining_credit < 300 %}text-warning{% else %}text-success{% endif %}">
-                    {{ project.remaining_credit|format_time }}
-                </span>
-            </div>
-            {% endif %}
-            <div class="compact-info-item compact-tasks">
-                <i class="fas fa-tasks text-primary me-2"></i>
-                <span class="compact-label">Tâches:</span>
-                <span class="compact-value task-count">{{ (tasks_todo|length) + (tasks_in_progress|length) + (tasks_done|length) }}</span>
-                {% if (tasks_todo or tasks_in_progress or tasks_done) %}
-                    <div class="compact-task-stats">
-                        <span class="compact-stat-badge stat-todo" title="À faire">
-                            <i class="fas fa-clock me-1"></i>{{ tasks_todo|length }}
-                        </span>
-                        <span class="compact-stat-badge stat-progress" title="En cours">
-                            <i class="fas fa-play me-1"></i>{{ tasks_in_progress|length }}
-                        </span>
-                        <span class="compact-stat-badge stat-done" title="Terminé">
-                            <i class="fas fa-check me-1"></i>{{ tasks_done|length }}
-                        </span>
-                    </div>
-                {% endif %}
-            </div>
             {% if project.description %}
             <div class="compact-info-item compact-description">
                 <i class="fas fa-align-left text-primary me-2"></i>
                 <span class="compact-label">Description:</span>
                 <span class="compact-value description-text"
-                      data-full-description="{{ project.description }}"
-                      data-bs-toggle="modal"
-                      data-bs-target="#descriptionModal"
-                      style="cursor: pointer;">
+                      data-full-description="{{ project.description }}">
                     {{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}
                 </span>
             </div>
@@ -99,7 +169,7 @@
     </div>
 </div>
 
-<!-- Tableau Kanban des tâches -->
+{# Kanban #}
 <div class="card mb-4 no-collapse kanban-card">
     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Tâches</h5>
@@ -109,13 +179,22 @@
     </div>
     <div class="card-body">
         {% from 'components/kanban_board.html' import kanban_board %}
-        {{ kanban_board(tasks_todo, tasks_in_progress, tasks_done, show_actions=true, show_archives_link=true, archives_url=url_for('tasks.archives', project_id=project.id), today=now.date()) }}
+        {{ kanban_board(
+            tasks_todo,
+            tasks_in_progress,
+            tasks_done,
+            show_actions=true,
+            show_archives_link=true,
+            archives_url=url_for('tasks.archives', project_id=project.id),
+            today=now.date(),
+            show_context=false
+        ) }}
     </div>
 </div>
 
-<!-- Historique des crédits et débits -->
+{# Historique des crédits et débits #}
 {% if project.time_tracking_enabled %}
-<div class="card mb-4 no-collapse">
+<div class="card mb-4 no-collapse project-history-card">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historique des crédits et débits</h5>
         <div class="d-flex align-items-center gap-2">
@@ -124,27 +203,27 @@
                     <i class="fas fa-external-link-alt me-1"></i>Voir tout
                 </a>
             {% endif %}
-            <span class="badge bg-light text-secondary ms-3">{{ history_items_total }}</span>
+            <span class="badge bg-light text-secondary">{{ history_items_total }}</span>
         </div>
     </div>
     <div class="card-body">
         {% if history_items %}
-            <div class="history-container" style="max-height: 400px; overflow-y: auto;">
-                <div class="list-group">
+            <div class="history-container">
+                <div class="list-group history-list">
                     {% for item in history_items %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
+                        <div class="list-group-item history-item">
+                            <div class="d-flex w-100 justify-content-between align-items-start gap-2">
+                                <h6 class="mb-1 history-amount">
                                     {% if item.amount > 0 %}
                                         <span class="text-success">+{{ item.amount|format_time }}</span>
                                     {% else %}
                                         <span class="text-danger">{{ item.amount|format_time }}</span>
                                     {% endif %}
                                 </h6>
-                                <small class="text-muted">{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                <small class="text-muted history-date flex-shrink-0">{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
                             </div>
-                            <p class="mb-1">{{ item.note }}</p>
-                            <small>
+                            <p class="mb-1 history-note">{{ item.note }}</p>
+                            <small class="history-meta">
                                 {% if item.user %}
                                     <i class="fas fa-user me-1"></i>{{ item.user.name }}
                                 {% endif %}
@@ -166,13 +245,16 @@
                 </div>
             {% endif %}
         {% else %}
-            <p class="text-muted">Aucun historique disponible.</p>
+            <div class="empty-state py-4">
+                <i class="fas fa-history"></i>
+                <p>Aucun historique disponible.</p>
+            </div>
         {% endif %}
     </div>
 </div>
 {% endif %}
 
-<!-- Modal de suppression -->
+{# Modal de suppression #}
 <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -194,7 +276,7 @@
     </div>
 </div>
 
-<!-- Modal pour afficher la description complète -->
+{# Modal description complète #}
 <div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -216,7 +298,6 @@
     </div>
 </div>
 
-<!-- Script pour la description complète -->
 <script src="{{ url_for('static', filename='js/pages/project-description.js') }}"></script>
 
 {% endblock %}

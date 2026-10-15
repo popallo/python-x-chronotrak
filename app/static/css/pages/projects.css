@@ -15,6 +15,10 @@
     color: #fff;
 }
 
+.project-list-stats .stats-item.primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
 .project-list-stats .stats-item.success {
     background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
 }
@@ -25,10 +29,6 @@
 
 .project-list-stats .stats-item.danger {
     background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
-}
-
-.project-list-stats .stats-item.info {
-    background: linear-gradient(135deg, var(--color-info), var(--color-info-dark));
 }
 
 .project-list-stats .stats-item:hover {

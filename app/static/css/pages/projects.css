@@ -15,12 +15,24 @@
     color: #fff;
 }
 
-.project-list-stats .stats-item.primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-}
-
 .project-list-stats .stats-item.success {
     background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+}
+
+/* Or / jaune étoile — distinct du warning ambre (crédit bas) */
+.project-list-stats .stats-item.favorites {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #1e293b;
+}
+
+.project-list-stats .stats-item.favorites .stats-number,
+.project-list-stats .stats-item.favorites .stats-title {
+    color: #1e293b;
+}
+
+.project-list-stats .stats-item.favorites i {
+    color: #1e293b;
+    background: rgba(30, 41, 59, 0.1);
 }
 
 .project-list-stats .stats-item.warning {
@@ -100,7 +112,7 @@
 }
 
 .project-card-header--favorite {
-    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+    background: linear-gradient(135deg, #facc15, #eab308);
     color: #1e293b;
 }
 

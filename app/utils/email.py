@@ -342,6 +342,10 @@ def send_task_notification(task, event_type, user=None, additional_data=None, no
             url=task_url,
         )
 
+        remaining_credit_line = ""
+        if new_status == "terminé" and task.project.time_tracking_enabled:
+            remaining_credit_line = f"\n- Temps restant sur le projet: {format_time(task.project.remaining_credit)}"
+
         text = f"""
 Bonjour,
 
@@ -351,7 +355,7 @@ La tâche "{task.title}" a changé de statut:
 - Client: {task.project.client.name}
 - Ancien statut: {old_status}
 - Nouveau statut: {new_status}
-- Modifié par: {user.name if user else "Système"}
+- Modifié par: {user.name if user else "Système"}{remaining_credit_line}
 
 Voir la tâche: {task_url}
 

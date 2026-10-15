@@ -92,6 +92,9 @@
                 <h3>Changement de statut</h3>
                 <p><strong>Ancien statut:</strong> {{ old_status }}</p>
                 <p><strong>Nouveau statut:</strong> {{ new_status }}</p>
+                {% if new_status == 'terminé' and task.project.time_tracking_enabled %}
+                <p><strong>Temps restant sur le projet:</strong> {{ task.project.remaining_credit|format_time }}</p>
+                {% endif %}
             </div>
             {% endif %}
 

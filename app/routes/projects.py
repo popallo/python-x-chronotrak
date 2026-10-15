@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app import db
 from app.forms.project import AddCreditForm, DeleteProjectForm, ProjectForm
@@ -29,29 +29,75 @@ def list_projects():
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
-    # Récupérer les filtres
-    filters = {
-        "search": request.args.get("search"),
-        "client_id": request.args.get("client_id", type=int),
-        "favorites_only": request.args.get("favorites_only"),
-    }
+    allowed_quick = {"all", "favorites", "credit_critical", "credit_low"}
+    quick = request.args.get("quick") or "all"
+    if quick not in allowed_quick:
+        quick = "all"
 
-    # Appliquer les filtres
-    query = get_accessible_projects()
-    query, filters_active = apply_filters(query, Project, filters)
-
-    # Appliquer le tri par catégories (favoris, activité récente, ancienne)
+    search = request.args.get("search")
+    client_id = request.args.get("client_id", type=int)
     sort_by = request.args.get("sort_by", "categories")
     sort_order = request.args.get("sort_order", "asc")
+    favorites_only = request.args.get("favorites_only")
+    credit_status = request.args.get("credit_status")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    # Base stable pour les stats (accessible + recherche + client)
+    base_query = get_accessible_projects()
+    base_query, base_active = apply_filters(
+        base_query,
+        Project,
+        {"search": search, "client_id": client_id},
+    )
+
+    stats_total = base_query.count()
+    stats_favorites = base_query.filter(Project.is_favorite.is_(True)).count()
+    stats_credit_critical = base_query.filter(
+        Project.time_tracking_enabled.is_(True),
+        Project.remaining_credit < 120,
+    ).count()
+    stats_credit_low = base_query.filter(
+        Project.time_tracking_enabled.is_(True),
+        Project.remaining_credit < 300,
+        Project.remaining_credit >= 120,
+    ).count()
+
+    query = base_query
+    filters_active = base_active
+
+    if quick == "favorites":
+        query = query.filter(Project.is_favorite.is_(True))
+        favorites_only = "true"
+        credit_status = None
+        date_from = None
+        date_to = None
+        filters_active = True
+    elif quick == "credit_critical":
+        query, credit_active = apply_filters(query, Project, {"credit_status": "critical"})
+        favorites_only = None
+        credit_status = "critical"
+        date_from = None
+        date_to = None
+        filters_active = filters_active or credit_active
+    elif quick == "credit_low":
+        query, credit_active = apply_filters(query, Project, {"credit_status": "low"})
+        favorites_only = None
+        credit_status = "low"
+        date_from = None
+        date_to = None
+        filters_active = filters_active or credit_active
+    else:
+        form_filters = {
+            "favorites_only": favorites_only,
+            "credit_status": credit_status,
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+        query, form_active = apply_filters(query, Project, form_filters)
+        filters_active = filters_active or form_active
 
     if sort_by == "categories":
-        # Tri par catégories : favoris d'abord, puis par activité récente
-        from datetime import timedelta
-
-        one_month_ago = get_utc_now() - timedelta(days=30)
-
-        # Sous-requête pour obtenir la dernière activité de chaque projet
-        # (en ignorant les tâches planifiées dans le futur)
         today = get_utc_now().date()
         last_activity_subquery = (
             db.session.query(Task.project_id, func.max(Task.updated_at).label("last_activity"))
@@ -60,38 +106,33 @@ def list_projects():
             .subquery()
         )
 
-        # Joindre avec la sous-requête pour obtenir la dernière activité
         query = query.outerjoin(last_activity_subquery, Project.id == last_activity_subquery.c.project_id)
-
-        # Tri : favoris d'abord, puis par dernière activité (récente d'abord), puis par nom
         query = query.order_by(
-            Project.is_favorite.desc(),  # Favoris en premier
-            func.coalesce(last_activity_subquery.c.last_activity, Project.created_at).desc(),  # Activité récente
-            Project.name.asc(),  # Puis par nom
+            Project.is_favorite.desc(),
+            func.coalesce(last_activity_subquery.c.last_activity, Project.created_at).desc(),
+            Project.name.asc(),
         )
     else:
-        # Tri classique
-        query = apply_sorting(query, Project, sort_by, sort_order)
+        sort_map = {
+            "name": ("name", "asc"),
+            "date_asc": ("created_at", "asc"),
+            "date_desc": ("created_at", "desc"),
+            "credit_asc": ("remaining_credit", "asc"),
+            "credit_desc": ("remaining_credit", "desc"),
+        }
+        mapped_field, mapped_order = sort_map.get(sort_by, ("name", "asc"))
+        query = apply_sorting(query, Project, mapped_field, mapped_order)
 
     projects = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Récupérer la liste des clients pour le filtre
     clients = Client.query.all() if current_user.is_admin() or current_user.is_technician() else current_user.clients
+    selected_client = Client.query.get(client_id) if client_id else None
 
-    # Organiser les projets par catégories pour l'affichage
-    from datetime import timedelta
-
-    # Convertir en datetime naive pour la comparaison avec les datetimes de la DB
     one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
-
     projects_by_category = {"favorites": [], "recent_activity": [], "old_activity": []}
-
-    # Pré-calculer des stats "tâches visibles" (exclure archives + occurrences futures)
     today = get_utc_now().date()
 
     for project in projects.items:
-        # Déterminer la dernière activité du projet
-        last_activity = None
         visible_tasks = [
             t for t in project.tasks if (not t.is_archived) and (t.scheduled_for is None or t.scheduled_for <= today)
         ]
@@ -107,7 +148,6 @@ def list_projects():
         else:
             last_activity = project.created_at
 
-        # S'assurer que last_activity est naive pour la comparaison
         if last_activity and hasattr(last_activity, "tzinfo") and last_activity.tzinfo is not None:
             last_activity = last_activity.replace(tzinfo=None)
 
@@ -123,10 +163,21 @@ def list_projects():
         projects=projects,
         projects_by_category=projects_by_category,
         clients=clients,
+        all_clients=clients,
+        selected_client=selected_client,
         filters_active=filters_active,
         sort_by=sort_by,
         sort_order=sort_order,
+        quick=quick,
+        favorites_only=favorites_only or "",
+        credit_status=credit_status or "",
+        date_from=date_from or "",
+        date_to=date_to or "",
         pagination=projects,
+        stats_total=stats_total,
+        stats_favorites=stats_favorites,
+        stats_credit_critical=stats_credit_critical,
+        stats_credit_low=stats_credit_low,
         title="Projets",
     )
 

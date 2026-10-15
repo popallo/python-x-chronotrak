@@ -23,6 +23,9 @@
                 <li><strong>Ancien statut:</strong> {{ old_status }}</li>
                 <li><strong>Nouveau statut:</strong> {{ new_status }}</li>
                 <li><strong>Modifié par:</strong> {{ user.name }}</li>
+                {% if new_status == 'terminé' and task.project.time_tracking_enabled %}
+                <li><strong>Temps restant sur le projet:</strong> {{ task.project.remaining_credit|format_time }}</li>
+                {% endif %}
             </ul>
             <p>
                 <a href="{{ url }}">Voir la tâche</a>

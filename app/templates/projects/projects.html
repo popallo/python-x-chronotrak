@@ -1,5 +1,5 @@
 {% extends 'layout.html' %}
-{% from 'components/project_card.html' import project_card %}
+{% from 'components/project_card.html' import project_card with context %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/filters.css') }}">

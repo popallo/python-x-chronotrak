@@ -31,10 +31,62 @@
     background: linear-gradient(135deg, var(--color-info), var(--color-info-dark));
 }
 
+.client-list-stats a.stats-item {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
 .client-list-stats .stats-item:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
     filter: brightness(1.05);
+}
+
+.client-list-stats .stats-item--active {
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.95),
+        0 0 0 6px rgba(37, 99, 235, 0.45),
+        var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+    filter: brightness(1.08);
+}
+
+.client-list-stats .stats-item--active::after {
+    content: "Filtre actif";
+    position: absolute;
+    top: 0.4rem;
+    right: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+}
+
+.client-list-stats .stats-item {
+    position: relative;
+}
+
+.filter-badge--quick {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.filter-badge-clear {
+    margin-left: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+    font-weight: 700;
+    opacity: 0.85;
+}
+
+.filter-badge-clear:hover {
+    opacity: 1;
+    color: inherit;
 }
 
 .client-list-stats .stats-item i {
@@ -226,6 +278,13 @@ html.dark-mode .clients-results-title {
 html.dark-mode .clients-empty-state,
 html.dark-mode .clients-page-header .text-muted {
     color: var(--dm-text-muted) !important;
+}
+
+html.dark-mode .client-list-stats .stats-item--active {
+    box-shadow:
+        0 0 0 3px rgba(241, 245, 249, 0.9),
+        0 0 0 6px rgba(96, 165, 250, 0.55),
+        0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== Responsive ===== */

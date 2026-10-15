@@ -28,32 +28,65 @@ def list_clients():
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
-    filters = {
-        "search": request.args.get("search"),
-        "date_from": request.args.get("date_from"),
-        "date_to": request.args.get("date_to"),
-    }
+    allowed_quick = {"all", "with_projects", "without_projects", "recent"}
+    quick = request.args.get("quick") or "all"
+    if quick not in allowed_quick:
+        quick = "all"
 
-    query = get_accessible_clients()
-    query, filters_active = apply_filters(query, Client, filters)
-
-    has_projects = request.args.get("has_projects")
-    if has_projects == "true":
-        query = query.filter(Client.projects.any())
-        filters_active = True
-    elif has_projects == "false":
-        query = query.filter(~Client.projects.any())
-        filters_active = True
-
-    # Stats sur le jeu filtré (avant tri par projets / pagination)
-    one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
-    stats_total = query.count()
-    stats_with_projects = query.filter(Client.projects.any()).count()
-    stats_without_projects = query.filter(~Client.projects.any()).count()
-    stats_recent = query.filter(Client.created_at >= one_month_ago).count()
-
+    search = request.args.get("search")
     sort_by = request.args.get("sort_by", "name")
     sort_order = request.args.get("sort_order", "asc")
+
+    # Base stable pour les stats (accessible + recherche) — indépendante du filtre rapide
+    base_query = get_accessible_clients()
+    base_query, search_active = apply_filters(base_query, Client, {"search": search})
+
+    one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
+    stats_total = base_query.count()
+    stats_with_projects = base_query.filter(Client.projects.any()).count()
+    stats_without_projects = base_query.filter(~Client.projects.any()).count()
+    stats_recent = base_query.filter(Client.created_at >= one_month_ago).count()
+
+    # Liste : base + filtre rapide OU filtres formulaire
+    query = base_query
+    filters_active = search_active
+    has_projects = request.args.get("has_projects")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    if quick == "with_projects":
+        query = query.filter(Client.projects.any())
+        has_projects = "true"
+        date_from = None
+        date_to = None
+        filters_active = True
+    elif quick == "without_projects":
+        query = query.filter(~Client.projects.any())
+        has_projects = "false"
+        date_from = None
+        date_to = None
+        filters_active = True
+    elif quick == "recent":
+        query = query.filter(Client.created_at >= one_month_ago)
+        has_projects = None
+        date_from = one_month_ago.strftime("%Y-%m-%d")
+        date_to = None
+        filters_active = True
+    else:
+        # Filtre rapide « tous » : appliquer les filtres du formulaire
+        form_filters = {
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+        query, form_active = apply_filters(query, Client, form_filters)
+        filters_active = filters_active or form_active
+
+        if has_projects == "true":
+            query = query.filter(Client.projects.any())
+            filters_active = True
+        elif has_projects == "false":
+            query = query.filter(~Client.projects.any())
+            filters_active = True
 
     if sort_by in ("projects_asc", "projects_desc"):
         project_count_subq = (
@@ -84,6 +117,10 @@ def list_clients():
         filters_active=filters_active,
         sort_by=sort_by,
         sort_order=sort_order,
+        quick=quick,
+        has_projects=has_projects or "",
+        date_from=date_from or "",
+        date_to=date_to or "",
         stats_total=stats_total,
         stats_with_projects=stats_with_projects,
         stats_without_projects=stats_without_projects,

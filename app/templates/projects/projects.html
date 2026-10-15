@@ -9,11 +9,13 @@
 {% block content %}
 {% set q_client = request.args.get('client_id', '') %}
 {% set q_search = request.args.get('search', '') %}
-{% set q_sort = request.args.get('sort_by', 'categories') %}
-{% set q_favorites = request.args.get('favorites_only', '') %}
-{% set q_credit = request.args.get('credit_status', '') %}
-{% set q_date_from = request.args.get('date_from', '') %}
-{% set q_date_to = request.args.get('date_to', '') %}
+{% set q_sort = sort_by %}
+{% set q_favorites = favorites_only %}
+{% set q_credit = credit_status %}
+{% set q_date_from = date_from %}
+{% set q_date_to = date_to %}
+{% set q_quick = quick %}
+{% set total_active = q_quick == 'all' and not q_favorites and not q_credit and not q_date_from and not q_date_to %}
 
 {# Header #}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 projects-page-header">
@@ -22,8 +24,9 @@
             <i class="fas fa-project-diagram me-2 text-success" aria-hidden="true"></i>Projets
         </h1>
         <p class="text-muted mb-0 small">
-            {{ stats_total }} projet{{ 's' if stats_total != 1 else '' }}
-            {% if filters_active %}correspondant aux filtres{% endif %}
+            {{ pagination.total }} résultat{{ 's' if pagination.total != 1 else '' }}
+            {% if filters_active %}filtrés{% endif %}
+            · {{ stats_total }} au total{% if q_search or selected_client %} (filtres de base){% endif %}
         </p>
     </div>
     <div>
@@ -35,43 +38,51 @@
     </div>
 </div>
 
-{# Stats strip #}
-<div class="row g-3 mb-3 project-list-stats">
+{# Stats strip — filtres rapides cliquables #}
+<div class="row g-3 mb-3 project-list-stats" role="group" aria-label="Filtres rapides">
     <div class="col-6 col-lg-3">
-        <div class="stats-item success">
+        <a href="{{ url_for('projects.list_projects', quick='all', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+           class="stats-item success {% if total_active %}stats-item--active{% endif %}"
+           aria-pressed="{{ 'true' if total_active else 'false' }}">
             <i class="fas fa-project-diagram"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_total }}</div>
                 <div class="stats-title">Total</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stats-item favorites">
+        <a href="{{ url_for('projects.list_projects', quick='favorites', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+           class="stats-item favorites {% if q_quick == 'favorites' %}stats-item--active{% endif %}"
+           aria-pressed="{{ 'true' if q_quick == 'favorites' else 'false' }}">
             <i class="fas fa-star"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_favorites }}</div>
                 <div class="stats-title">Favoris</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stats-item danger">
+        <a href="{{ url_for('projects.list_projects', quick='credit_critical', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+           class="stats-item danger {% if q_quick == 'credit_critical' %}stats-item--active{% endif %}"
+           aria-pressed="{{ 'true' if q_quick == 'credit_critical' else 'false' }}">
             <i class="fas fa-exclamation-circle"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_credit_critical }}</div>
                 <div class="stats-title">Crédit critique</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stats-item warning">
+        <a href="{{ url_for('projects.list_projects', quick='credit_low', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+           class="stats-item warning {% if q_quick == 'credit_low' %}stats-item--active{% endif %}"
+           aria-pressed="{{ 'true' if q_quick == 'credit_low' else 'false' }}">
             <i class="fas fa-battery-half"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_credit_low }}</div>
                 <div class="stats-title">Crédit bas</div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -159,6 +170,19 @@
 
         {% if filters_active %}
         <div id="activeFilters" class="active-filters">
+            {% if q_quick != 'all' %}
+            <div class="filter-badge filter-badge--quick">
+                {% if q_quick == 'favorites' %}Favoris
+                {% elif q_quick == 'credit_critical' %}Crédit critique
+                {% elif q_quick == 'credit_low' %}Crédit bas
+                {% endif %}
+                <a href="{{ url_for('projects.list_projects', quick='all', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+                   class="filter-badge-clear"
+                   title="Retirer le filtre rapide"
+                   aria-label="Retirer le filtre rapide">×</a>
+            </div>
+            {% endif %}
+
             {% if selected_client %}
             <div class="filter-badge" data-type="client_id" data-value="{{ selected_client.id }}">
                 Client: {{ selected_client.name }}
@@ -166,14 +190,14 @@
             </div>
             {% endif %}
 
-            {% if q_favorites %}
+            {% if q_quick == 'all' and q_favorites %}
             <div class="filter-badge" data-type="favorites_only" data-value="{{ q_favorites }}">
                 Favoris: {% if q_favorites == 'true' %}Oui{% else %}Non{% endif %}
                 <span class="remove-filter">×</span>
             </div>
             {% endif %}
 
-            {% if q_credit %}
+            {% if q_quick == 'all' and q_credit %}
             <div class="filter-badge" data-type="credit_status" data-value="{{ q_credit }}">
                 Crédit:
                 {% if q_credit == 'critical' %}Critique
@@ -191,7 +215,7 @@
             </div>
             {% endif %}
 
-            {% if q_date_from or q_date_to %}
+            {% if q_quick == 'all' and (q_date_from or q_date_to) %}
             <div class="filter-badge" data-type="date_range" data-value="date_range">
                 Période:
                 {% if q_date_from %}{{ q_date_from }}{% else %}...{% endif %}
@@ -278,7 +302,7 @@
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.prev_num, quick=q_quick, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites if q_quick == 'all' else '', credit_status=q_credit if q_quick == 'all' else '', date_from=q_date_from if q_quick == 'all' else '', date_to=q_date_to if q_quick == 'all' else '') }}">
                         <i class="fas fa-chevron-left"></i> Précédent
                     </a>
                 </li>
@@ -296,7 +320,7 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">{{ page_num }}</a>
+                            <a class="page-link" href="{{ url_for('projects.list_projects', page=page_num, quick=q_quick, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites if q_quick == 'all' else '', credit_status=q_credit if q_quick == 'all' else '', date_from=q_date_from if q_quick == 'all' else '', date_to=q_date_to if q_quick == 'all' else '') }}">{{ page_num }}</a>
                         </li>
                     {% endif %}
                 {% else %}
@@ -308,7 +332,7 @@
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites, credit_status=q_credit, date_from=q_date_from, date_to=q_date_to) }}">
+                    <a class="page-link" href="{{ url_for('projects.list_projects', page=pagination.next_num, quick=q_quick, client_id=q_client, search=q_search, sort_by=q_sort, favorites_only=q_favorites if q_quick == 'all' else '', credit_status=q_credit if q_quick == 'all' else '', date_from=q_date_from if q_quick == 'all' else '', date_to=q_date_to if q_quick == 'all' else '') }}">
                         Suivant <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>

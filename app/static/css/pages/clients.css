@@ -135,17 +135,6 @@
     overflow: hidden;
     background: var(--color-bg-card, #fff);
     box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
-    border-left-width: 4px;
-    border-left-style: solid;
-}
-
-/* Accent latéral = même sémantique que les encarts stats (entête inchangé) */
-.client-card--with-projects {
-    border-left-color: var(--color-success);
-}
-
-.client-card--no-projects {
-    border-left-color: var(--color-secondary);
 }
 
 .client-card:hover {

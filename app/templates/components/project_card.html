@@ -1,0 +1,125 @@
+{# Carte projet réutilisable — variant: favorite | recent | old | flat #}
+{% macro project_card(project, variant='flat') %}
+{% set header_class = {
+    'favorite': 'project-card-header--favorite',
+    'recent': 'project-card-header--recent',
+    'old': 'project-card-header--old',
+    'flat': 'project-card-header--flat'
+}.get(variant, 'project-card-header--flat') %}
+{% set details_class = {
+    'favorite': 'btn-outline-warning',
+    'recent': 'btn-outline-success',
+    'old': 'btn-outline-secondary',
+    'flat': 'btn-outline-primary'
+}.get(variant, 'btn-outline-primary') %}
+{% set can_drag = not current_user.is_client() %}
+
+<div class="col-lg-6 col-xl-4 mb-3">
+    <div class="card project-card shadow-sm no-collapse"
+         {% if can_drag %}draggable="true"{% endif %}
+         data-project-id="{{ project.id }}"
+         data-project-slug="{{ project.slug }}">
+        <div class="card-header project-card-header {{ header_class }} d-flex justify-content-between align-items-center py-2">
+            <div class="d-flex align-items-center min-w-0 me-2">
+                {% if variant == 'favorite' %}
+                    <i class="fas fa-star me-2 flex-shrink-0"></i>
+                {% else %}
+                    <i class="fas fa-project-diagram me-2 flex-shrink-0"></i>
+                {% endif %}
+                <h6 class="mb-0 text-truncate" title="{{ project.name }}">{{ project.name }}</h6>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <span class="badge project-client-badge">{{ project.client.name }}</span>
+                {% if not current_user.is_client() %}
+                <button type="button"
+                        class="btn btn-sm project-favorite-btn toggle-favorite"
+                        data-project-slug="{{ project.slug }}"
+                        data-bs-toggle="tooltip"
+                        title="{% if project.is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+                    <i class="{% if project.is_favorite %}fas{% else %}far{% endif %} fa-star"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body py-2">
+            {% if project.description %}
+                <p class="project-card-desc small mb-2">{{ project.description|truncate(60) }}</p>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center" data-bs-toggle="tooltip" title="Date de création du projet">
+                    <i class="fas fa-calendar me-1 text-muted"></i>
+                    <span class="small text-muted">{{ project.created_at.strftime('%d/%m/%Y') }}</span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div class="d-flex align-items-center"
+                     data-bs-toggle="tooltip"
+                     title="{% if project.time_tracking_enabled %}Crédit restant{% else %}Gestion de temps désactivée{% endif %}">
+                    <i class="fas fa-clock me-1 text-muted"></i>
+                    {% if project.time_tracking_enabled %}
+                        <span class="badge {% if project.remaining_credit < 120 %}bg-danger{% elif project.remaining_credit < 300 %}bg-warning{% else %}bg-success{% endif %} text-white small">
+                            {{ project.remaining_credit|format_time }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary small">Désactivé</span>
+                    {% endif %}
+                </div>
+
+                {% if project.visible_tasks_total %}
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center"
+                             data-bs-toggle="tooltip"
+                             title="Tâches restantes à traiter (à faire + en cours)">
+                            <i class="fas fa-tasks me-1 text-muted"></i>
+                            <span class="small text-muted">{{ project.visible_tasks_remaining }}</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <span class="badge bg-info small" data-bs-toggle="tooltip" title="Tâches à faire">
+                                <i class="fas fa-list me-1"></i>{{ project.visible_tasks_todo }}
+                            </span>
+                            <span class="badge bg-warning text-dark small" data-bs-toggle="tooltip" title="Tâches en cours">
+                                <i class="fas fa-spinner me-1"></i>{{ project.visible_tasks_in_progress }}
+                            </span>
+                            <span class="badge bg-success small" data-bs-toggle="tooltip" title="Tâches terminées">
+                                <i class="fas fa-check me-1"></i>{{ project.visible_tasks_done }}
+                            </span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top-0 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('projects.project_details', slug_or_id=project.slug) }}"
+                   class="btn {{ details_class }} btn-sm"
+                   data-bs-toggle="tooltip"
+                   title="Voir les détails du projet">
+                    <i class="fas fa-eye me-1"></i>Détails
+                </a>
+                {% if current_user.is_admin() %}
+                    <div class="d-flex gap-1">
+                        {% if project.time_tracking_enabled %}
+                        <a href="{{ url_for('projects.add_credit', slug_or_id=project.slug) }}"
+                           class="btn btn-outline-primary btn-sm"
+                           data-bs-toggle="tooltip"
+                           title="Ajouter du crédit">
+                            <i class="fas fa-plus"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('projects.edit_project', slug_or_id=project.slug) }}"
+                           class="btn btn-outline-secondary btn-sm"
+                           data-bs-toggle="tooltip"
+                           title="Modifier le projet">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

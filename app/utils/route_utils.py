@@ -130,54 +130,73 @@ def apply_filters(query, model, filters):
     filters_active = False
 
     for field, value in filters.items():
-        if value is not None:
-            if field == "search" and hasattr(model, "name"):
-                query = query.filter(model.name.ilike(f"%{value}%"))
+        if value is None or value == "":
+            continue
+
+        if field == "search" and hasattr(model, "name"):
+            query = query.filter(model.name.ilike(f"%{value}%"))
+            filters_active = True
+        elif field == "search" and hasattr(model, "title"):
+            query = query.filter(model.title.ilike(f"%{value}%"))
+            filters_active = True
+        elif field == "client_id" and hasattr(model, "client_id"):
+            query = query.filter(model.client_id == value)
+            filters_active = True
+        elif field == "project_id" and hasattr(model, "project_id"):
+            query = query.filter(model.project_id == value)
+            filters_active = True
+        elif field == "priority" and hasattr(model, "priority"):
+            query = query.filter(model.priority == value)
+            filters_active = True
+        elif field == "favorites_only" and hasattr(model, "is_favorite"):
+            if value == "true":
+                query = query.filter(model.is_favorite == True)
                 filters_active = True
-            elif field == "search" and hasattr(model, "title"):
-                query = query.filter(model.title.ilike(f"%{value}%"))
+            elif value == "false":
+                query = query.filter(model.is_favorite == False)
                 filters_active = True
-            elif field == "client_id" and hasattr(model, "client_id"):
-                query = query.filter(model.client_id == value)
+        elif field == "credit_status" and hasattr(model, "remaining_credit"):
+            if hasattr(model, "time_tracking_enabled"):
+                query = query.filter(model.time_tracking_enabled.is_(True))
+            if value == "critical":
+                query = query.filter(model.remaining_credit < 120)
                 filters_active = True
-            elif field == "project_id" and hasattr(model, "project_id"):
-                query = query.filter(model.project_id == value)
+            elif value == "low":
+                query = query.filter(model.remaining_credit < 300, model.remaining_credit >= 120)
                 filters_active = True
-            elif field == "priority" and hasattr(model, "priority"):
-                query = query.filter(model.priority == value)
+            elif value == "normal":
+                query = query.filter(model.remaining_credit >= 300)
                 filters_active = True
-            elif field == "favorites_only" and hasattr(model, "is_favorite"):
-                if value == "true":
-                    query = query.filter(model.is_favorite == True)
-                elif value == "false":
-                    query = query.filter(model.is_favorite == False)
-                filters_active = True
-            elif field == "credit_status" and hasattr(model, "remaining_credit"):
-                if value == "critical":
-                    query = query.filter(model.remaining_credit < 120)
-                elif value == "low":
-                    query = query.filter(model.remaining_credit < 300, model.remaining_credit >= 120)
-                elif value == "normal":
-                    query = query.filter(model.remaining_credit >= 300)
-                filters_active = True
-            elif field == "type" and hasattr(model, "type"):
-                query = query.filter(model.type == value)
-                filters_active = True
-            elif field == "recipient" and hasattr(model, "recipient"):
-                query = query.filter(model.recipient.ilike(f"%{value}%"))
-                filters_active = True
-            elif field == "date_from" and hasattr(model, "sent_at"):
+        elif field == "type" and hasattr(model, "type"):
+            query = query.filter(model.type == value)
+            filters_active = True
+        elif field == "recipient" and hasattr(model, "recipient"):
+            query = query.filter(model.recipient.ilike(f"%{value}%"))
+            filters_active = True
+        elif field == "date_from":
+            date_column = (
+                model.sent_at
+                if hasattr(model, "sent_at")
+                else (model.created_at if hasattr(model, "created_at") else None)
+            )
+            if date_column is not None:
                 try:
                     date_from = datetime.strptime(value, "%Y-%m-%d")
-                    query = query.filter(model.sent_at >= date_from)
+                    query = query.filter(date_column >= date_from)
                     filters_active = True
                 except ValueError:
                     pass
-            elif field == "date_to" and hasattr(model, "sent_at"):
+        elif field == "date_to":
+            date_column = (
+                model.sent_at
+                if hasattr(model, "sent_at")
+                else (model.created_at if hasattr(model, "created_at") else None)
+            )
+            if date_column is not None:
                 try:
                     date_to = datetime.strptime(value, "%Y-%m-%d")
                     date_to = date_to.replace(hour=23, minute=59, second=59)
-                    query = query.filter(model.sent_at <= date_to)
+                    query = query.filter(date_column <= date_to)
                     filters_active = True
                 except ValueError:
                     pass

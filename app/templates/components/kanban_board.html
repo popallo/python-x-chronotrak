@@ -1,4 +1,4 @@
-{% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None, today=None) %}
+{% macro kanban_board(tasks_todo, tasks_in_progress, tasks_completed, show_actions=true, show_archives_link=true, archives_url=None, today=None, show_context=true) %}
 <div class="kanban-container">
     <!-- Barre de recherche pour le kanban -->
     <div class="kanban-search-container mb-3">
@@ -9,7 +9,7 @@
             <input type="text"
                    class="form-control"
                    id="kanban-search"
-                   placeholder="Rechercher une tâche, projet ou client..."
+                   placeholder="{% if show_context %}Rechercher une tâche, projet ou client...{% else %}Rechercher une tâche...{% endif %}"
                    autocomplete="off">
             <button class="btn btn-outline-secondary"
                     type="button"
@@ -52,10 +52,12 @@
                             <span class="priority-dot priority-{{ task.priority }}"></span>
                             {{ task.title }}
                         </h6>
+                        {% if show_context %}
                         <div class="kanban-task-meta">
                             <i class="fas fa-folder me-1"></i>{{ task.project.name }}
                             <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
                         </div>
+                        {% endif %}
                         {% if is_upcoming %}
                             <div class="kanban-task-upcoming-date">
                                 <i class="fas fa-calendar me-1"></i>
@@ -98,10 +100,12 @@
                             <span class="priority-dot priority-{{ task.priority }}"></span>
                             {{ task.title }}
                         </h6>
+                        {% if show_context %}
                         <div class="kanban-task-meta">
                             <i class="fas fa-folder me-1"></i>{{ task.project.name }}
                             <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
                         </div>
+                        {% endif %}
                         <div class="kanban-task-time">
                             {% if task.estimated_time %}
                                 <i class="fas fa-hourglass-half"></i>
@@ -148,10 +152,12 @@
                             <span class="priority-dot priority-{{ task.priority }}"></span>
                             {{ task.title }}
                         </h6>
+                        {% if show_context %}
                         <div class="kanban-task-meta">
                             <i class="fas fa-folder me-1"></i>{{ task.project.name }}
                             <i class="fas fa-building me-1"></i>{{ task.project.client.name }}
                         </div>
+                        {% endif %}
                         <div class="kanban-task-time">
                             {% if task.completed_at %}
                                 <i class="fas fa-calendar-check"></i>

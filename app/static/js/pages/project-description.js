@@ -28,16 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Ajouter les styles et attributs pour indiquer que c'est cliquable
-            element.style.textDecoration = 'underline';
-            element.style.textDecorationStyle = 'dotted';
-            element.style.cursor = 'pointer';
             element.title = 'Cliquer pour voir la description complète';
             element.setAttribute('data-bs-toggle', 'modal');
             element.setAttribute('data-bs-target', '#descriptionModal');
         } else {
-            // Description complète - pas de clic nécessaire
-            element.style.cursor = 'default';
             element.title = 'Description complète';
             element.removeAttribute('data-bs-toggle');
             element.removeAttribute('data-bs-target');

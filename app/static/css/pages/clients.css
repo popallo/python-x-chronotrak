@@ -83,6 +83,17 @@
     overflow: hidden;
     background: var(--color-bg-card, #fff);
     box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+/* Accent latéral = même sémantique que les encarts stats (entête inchangé) */
+.client-card--with-projects {
+    border-left-color: var(--color-success);
+}
+
+.client-card--no-projects {
+    border-left-color: var(--color-secondary);
 }
 
 .client-card:hover {
@@ -102,8 +113,35 @@
 .client-projects-badge {
     font-size: 0.7rem;
     padding: 0.3em 0.55em;
-    background: rgba(255, 255, 255, 0.9);
-    color: #1e293b;
+    color: #fff;
+}
+
+.client-projects-badge--active {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+}
+
+.client-projects-badge--empty {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+}
+
+.client-status-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    color: #fff;
+}
+
+.client-status-chip--with {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+}
+
+.client-status-chip--without {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
 }
 
 .client-card-row {

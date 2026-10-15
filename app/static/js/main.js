@@ -11,6 +11,7 @@ import { initUserEditForm } from './pages/user_edit.js';
 import { initUserManagement } from './pages/user_management.js';
 import { initProjectFilters } from './pages/project_filters.js';
 import { initProjectFavorites } from './pages/project_favorites.js';
+import { initClientFilters } from './pages/client_filters.js';
 import { initNotificationPreferences } from './pages/notification_preferences.js';
 import { initCardCollapse } from './pages/card_collapse.js';
 import { initWelcomePage } from './pages/welcome-page.js';
@@ -66,6 +67,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Favoris sur détail projet (boutons .toggle-favorite)
     if (currentPath.startsWith('/projects/') && document.querySelector('.toggle-favorite')) {
         initProjectFavorites();
+    }
+
+    // Page des clients / sociétés - liste
+    if (currentPath === '/clients') {
+        initClientFilters();
     }
 
     // Page des tâches - liste

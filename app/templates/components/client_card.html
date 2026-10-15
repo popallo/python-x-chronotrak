@@ -1,0 +1,73 @@
+{# Carte client / société #}
+{% macro client_card(client) %}
+{% set project_count = client.projects|length %}
+<div class="col-lg-6 col-xl-4 mb-3">
+    <div class="card client-card shadow-sm no-collapse h-100">
+        <div class="card-header client-card-header d-flex justify-content-between align-items-center py-2">
+            <div class="d-flex align-items-center min-w-0 me-2">
+                <i class="fas fa-building me-2 flex-shrink-0"></i>
+                <h6 class="mb-0 text-truncate" title="{{ client.name }}">{{ client.name }}</h6>
+            </div>
+            <span class="badge client-projects-badge flex-shrink-0"
+                  data-bs-toggle="tooltip"
+                  title="Nombre de projets">
+                <i class="fas fa-project-diagram me-1"></i>{{ project_count }}
+            </span>
+        </div>
+
+        <div class="card-body py-2">
+            {% if client.contact_name %}
+            <div class="client-card-row">
+                <i class="fas fa-user"></i>
+                <span>{{ client.contact_name }}</span>
+            </div>
+            {% endif %}
+            {% if client.email %}
+            <div class="client-card-row">
+                <i class="fas fa-envelope"></i>
+                <span class="text-truncate" title="{{ client.safe_email }}">{{ client.safe_email }}</span>
+            </div>
+            {% endif %}
+            {% if client.phone %}
+            <div class="client-card-row">
+                <i class="fas fa-phone"></i>
+                <span>{{ client.phone }}</span>
+            </div>
+            {% endif %}
+            <div class="client-card-row client-card-meta">
+                <i class="fas fa-calendar"></i>
+                <span class="text-muted small">Créé le {{ client.created_at.strftime('%d/%m/%Y') }}</span>
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-top-0 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('clients.client_details', slug_or_id=client.slug) }}"
+                   class="btn btn-outline-primary btn-sm"
+                   data-bs-toggle="tooltip"
+                   title="Voir les détails">
+                    <i class="fas fa-eye me-1"></i>Détails
+                </a>
+                <div class="d-flex gap-1">
+                    {% if not current_user.is_client() %}
+                    <a href="{{ url_for('projects.new_project', client_id=client.id) }}"
+                       class="btn btn-outline-success btn-sm"
+                       data-bs-toggle="tooltip"
+                       title="Nouveau projet">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                    {% endif %}
+                    {% if current_user.is_admin() or current_user.is_technician() or current_user.is_client() %}
+                    <a href="{{ url_for('clients.edit_client', slug_or_id=client.slug) }}"
+                       class="btn btn-outline-secondary btn-sm"
+                       data-bs-toggle="tooltip"
+                       title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

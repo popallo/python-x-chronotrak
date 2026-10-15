@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from app import db
 from app.forms.client import ClientForm
 from app.models.client import Client
+from app.models.project import Project
+from app.utils import get_utc_now
 from app.utils.decorators import login_and_admin_required
 from app.utils.route_utils import (
     apply_filters,
@@ -13,42 +17,78 @@ from app.utils.route_utils import (
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
+from sqlalchemy import func
 
 clients = Blueprint("clients", __name__)
 
 
 @clients.route("/clients")
 @login_required
-# @cache.cached(timeout=300, query_string=True)  # Désactivé temporairement pour le débogage
 def list_clients():
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
-    # Récupérer les filtres
-    filters = {"search": request.args.get("search")}
+    filters = {
+        "search": request.args.get("search"),
+        "date_from": request.args.get("date_from"),
+        "date_to": request.args.get("date_to"),
+    }
 
-    # Appliquer les filtres avec une sous-requête optimisée
-    base_query = get_accessible_clients()
-    query, filters_active = apply_filters(base_query, Client, filters)
+    query = get_accessible_clients()
+    query, filters_active = apply_filters(query, Client, filters)
 
-    # Appliquer le tri avec un index implicite
+    has_projects = request.args.get("has_projects")
+    if has_projects == "true":
+        query = query.filter(Client.projects.any())
+        filters_active = True
+    elif has_projects == "false":
+        query = query.filter(~Client.projects.any())
+        filters_active = True
+
+    # Stats sur le jeu filtré (avant tri par projets / pagination)
+    one_month_ago = (get_utc_now() - timedelta(days=30)).replace(tzinfo=None)
+    stats_total = query.count()
+    stats_with_projects = query.filter(Client.projects.any()).count()
+    stats_without_projects = query.filter(~Client.projects.any()).count()
+    stats_recent = query.filter(Client.created_at >= one_month_ago).count()
+
     sort_by = request.args.get("sort_by", "name")
     sort_order = request.args.get("sort_order", "asc")
-    query = apply_sorting(query, Client, sort_by, sort_order)
 
-    # Charger explicitement les relations avec selectinload pour les collections
+    if sort_by in ("projects_asc", "projects_desc"):
+        project_count_subq = (
+            db.session.query(Project.client_id, func.count(Project.id).label("project_count"))
+            .group_by(Project.client_id)
+            .subquery()
+        )
+        query = query.outerjoin(project_count_subq, Client.id == project_count_subq.c.client_id)
+        count_expr = func.coalesce(project_count_subq.c.project_count, 0)
+        query = query.order_by(count_expr.asc() if sort_by == "projects_asc" else count_expr.desc(), Client.name.asc())
+    else:
+        sort_map = {
+            "name": ("name", "asc"),
+            "date_asc": ("created_at", "asc"),
+            "date_desc": ("created_at", "desc"),
+        }
+        mapped_field, mapped_order = sort_map.get(sort_by, ("name", "asc"))
+        query = apply_sorting(query, Client, mapped_field, mapped_order)
+
     query = query.options(db.selectinload(Client.projects))
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Pagination
-    clients = query.paginate(page=page, per_page=per_page, error_out=False)
+    entity_title = "Sociétés" if current_user.is_client() else "Clients"
 
     return render_template(
         "clients/clients.html",
-        clients=clients,
+        pagination=pagination,
         filters_active=filters_active,
         sort_by=sort_by,
         sort_order=sort_order,
-        title="Clients",
+        stats_total=stats_total,
+        stats_with_projects=stats_with_projects,
+        stats_without_projects=stats_without_projects,
+        stats_recent=stats_recent,
+        title=entity_title,
     )
 
 

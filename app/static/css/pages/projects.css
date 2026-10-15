@@ -135,8 +135,9 @@
 }
 
 .project-card-header--favorite .project-favorite-btn {
-    border-color: rgba(30, 41, 59, 0.35);
+    border-color: #1e293b;
     color: #1e293b;
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .project-favorite-btn:hover {
@@ -147,15 +148,16 @@
 
 .project-card-header--favorite .project-favorite-btn:hover {
     color: #1e293b;
-    background: rgba(30, 41, 59, 0.08);
+    background: rgba(255, 255, 255, 0.55);
 }
 
+/* Étoile pleine : dorée sur headers foncés, sombre sur header favori orange */
 .toggle-favorite i.fas.fa-star {
     color: #fbbf24;
 }
 
 .project-card-header--favorite .toggle-favorite i.fas.fa-star {
-    color: #b45309;
+    color: #1e293b;
 }
 
 .toggle-favorite i.far.fa-star {

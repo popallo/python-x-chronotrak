@@ -22,10 +22,80 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .filters-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
   .filters-header h5 {
     margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  /* Pastille compacte du filtre rapide, dans la barre de titre */
+  .filters-active-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.15rem 0.35rem 0.15rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border, #ced4da);
+    background: var(--color-bg-elevated, #e9ecef);
+    color: var(--color-text, #343a40);
+    font-size: 0.8rem;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .filters-active-chip:not(:has(.filters-active-chip-clear)) {
+    padding-right: 0.65rem;
+  }
+
+  .filters-active-chip--muted {
+    opacity: 0.85;
+  }
+
+  .filters-active-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .filters-active-chip-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .filters-active-chip-clear:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+  }
+
+  html.dark-mode .filters-active-chip {
+    background: var(--dm-bg-elevated, #334155);
+    border-color: var(--dm-border, #475569);
+    color: var(--dm-text, #e2e8f0);
+  }
+
+  html.dark-mode .filters-active-chip-clear:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .filters-body {
@@ -34,7 +104,10 @@
     transition: max-height 0.3s ease;
   }
 
+  /* display:none en plus de max-height:0 — évite tout "fuite" visuelle du formulaire */
+  .filters-panel.collapsed .filters-body,
   .filters-body.hidden {
+    display: none;
     max-height: 0;
     overflow: hidden;
     margin-top: 0;

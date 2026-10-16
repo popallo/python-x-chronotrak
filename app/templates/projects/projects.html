@@ -15,7 +15,15 @@
 {% set q_date_from = date_from %}
 {% set q_date_to = date_to %}
 {% set q_quick = quick %}
-{% set total_active = q_quick == 'all' and not q_favorites and not q_credit and not q_date_from and not q_date_to %}
+{% set quick_filter_active = q_quick != 'all' %}
+{# Panneau avancé : jamais ouvert avec un filtre rapide restrictif (tuiles hors Total). #}
+{% set panel_filters_open = (not quick_filter_active) and (q_search or q_client or q_favorites or q_credit or q_date_from or q_date_to) %}
+{% set quick_filter_label = {
+    'all': 'Total',
+    'favorites': 'Favoris',
+    'credit_critical': 'Crédit critique',
+    'credit_low': 'Crédit bas'
+}.get(q_quick, 'Total') %}
 
 {# Header #}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 projects-page-header">
@@ -42,8 +50,8 @@
 <div class="row g-3 mb-3 project-list-stats" role="group" aria-label="Filtres rapides">
     <div class="col-6 col-lg-3">
         <a href="{{ url_for('projects.list_projects', quick='all', search=q_search, client_id=q_client, sort_by=q_sort) }}"
-           class="stats-item success {% if total_active %}stats-item--active{% endif %}"
-           aria-pressed="{{ 'true' if total_active else 'false' }}">
+           class="stats-item success {% if not quick_filter_active %}stats-item--active{% endif %}"
+           aria-pressed="{{ 'false' if quick_filter_active else 'true' }}">
             <i class="fas fa-project-diagram"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_total }}</div>
@@ -87,15 +95,32 @@
 </div>
 
 {# Panneau de filtres #}
-<div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
+<div id="filtersPanel" class="filters-panel {% if not panel_filters_open %}collapsed{% endif %}">
     <div id="filtersToggle" class="filters-header">
-        <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+        <div class="filters-header-left">
+            <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+            <span class="filters-active-chip {% if not quick_filter_active %}filters-active-chip--muted{% endif %}"
+                  role="status"
+                  title="Filtre rapide : {{ quick_filter_label }}">
+                <span class="filters-active-chip-label">{{ quick_filter_label }}</span>
+                {% if quick_filter_active %}
+                <a href="{{ url_for('projects.list_projects', quick='all', search=q_search, client_id=q_client, sort_by=q_sort) }}"
+                   class="filters-active-chip-clear"
+                   data-stop-toggle
+                   title="Revenir au total"
+                   aria-label="Retirer le filtre {{ quick_filter_label }}">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </a>
+                {% endif %}
+            </span>
+        </div>
         <button type="button" class="btn btn-sm">
-            <i id="filtersIcon" class="fas {% if filters_active %}fa-minus{% else %}fa-plus{% endif %}"></i>
+            <i id="filtersIcon" class="fas {% if panel_filters_open %}fa-minus{% else %}fa-plus{% endif %}"></i>
         </button>
     </div>
-    <div id="filtersBody" class="filters-body {% if not filters_active %}hidden{% endif %}">
+    <div id="filtersBody" class="filters-body {% if not panel_filters_open %}hidden{% endif %}">
         <form id="projectsFilterForm" method="GET" action="{{ url_for('projects.list_projects') }}" class="mt-3">
+            {# Soumettre le formulaire réinitialise le filtre rapide (quick=all implicite) #}
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="client_id" class="form-label">Client</label>
@@ -168,21 +193,8 @@
             </div>
         </form>
 
-        {% if filters_active %}
+        {% if panel_filters_open %}
         <div id="activeFilters" class="active-filters">
-            {% if q_quick != 'all' %}
-            <div class="filter-badge filter-badge--quick">
-                {% if q_quick == 'favorites' %}Favoris
-                {% elif q_quick == 'credit_critical' %}Crédit critique
-                {% elif q_quick == 'credit_low' %}Crédit bas
-                {% endif %}
-                <a href="{{ url_for('projects.list_projects', quick='all', search=q_search, client_id=q_client, sort_by=q_sort) }}"
-                   class="filter-badge-clear"
-                   title="Retirer le filtre rapide"
-                   aria-label="Retirer le filtre rapide">×</a>
-            </div>
-            {% endif %}
-
             {% if selected_client %}
             <div class="filter-badge" data-type="client_id" data-value="{{ selected_client.id }}">
                 Client: {{ selected_client.name }}
@@ -190,14 +202,14 @@
             </div>
             {% endif %}
 
-            {% if q_quick == 'all' and q_favorites %}
+            {% if q_favorites %}
             <div class="filter-badge" data-type="favorites_only" data-value="{{ q_favorites }}">
                 Favoris: {% if q_favorites == 'true' %}Oui{% else %}Non{% endif %}
                 <span class="remove-filter">×</span>
             </div>
             {% endif %}
 
-            {% if q_quick == 'all' and q_credit %}
+            {% if q_credit %}
             <div class="filter-badge" data-type="credit_status" data-value="{{ q_credit }}">
                 Crédit:
                 {% if q_credit == 'critical' %}Critique
@@ -215,7 +227,7 @@
             </div>
             {% endif %}
 
-            {% if q_quick == 'all' and (q_date_from or q_date_to) %}
+            {% if q_date_from or q_date_to %}
             <div class="filter-badge" data-type="date_range" data-value="date_range">
                 Période:
                 {% if q_date_from %}{{ q_date_from }}{% else %}...{% endif %}

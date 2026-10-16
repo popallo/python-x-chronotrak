@@ -8,11 +8,14 @@
  * @param {Object} config - Configuration spécifique à la page
  * @param {string} config.formId - ID du formulaire de filtres
  * @param {string} config.resetBehavior - 'submit' ou 'redirect' pour le comportement de reset
+ *
+ * L'état ouvert/fermé initial est géré uniquement par le HTML (classes collapsed/hidden).
+ * Ne jamais auto-ouvrir depuis les query params : ça force le panneau sur les filtres rapides.
  */
 function initFilters(config = {}) {
     const {
         formId = 'filtersForm',
-        resetBehavior = 'submit'
+        resetBehavior = 'submit',
     } = config;
 
     // Éléments DOM
@@ -41,12 +44,14 @@ function initFilters(config = {}) {
 
         if (filtersVisible) {
             filtersBody.classList.remove('hidden');
+            filtersBody.style.display = '';
             filtersPanel.classList.remove('collapsed');
             if (filtersIcon) {
                 filtersIcon.classList.replace('fa-plus', 'fa-minus');
             }
         } else {
             filtersBody.classList.add('hidden');
+            filtersBody.style.display = 'none';
             filtersPanel.classList.add('collapsed');
             if (filtersIcon) {
                 filtersIcon.classList.replace('fa-minus', 'fa-plus');
@@ -122,6 +127,10 @@ function initFilters(config = {}) {
     // Configurer les écouteurs d'événements
     if (filtersToggle) {
         filtersToggle.addEventListener('click', toggleFilters);
+        // Liens/boutons dans le header (ex. retirer filtre rapide) ne doivent pas ouvrir le panneau
+        filtersToggle.querySelectorAll('[data-stop-toggle]').forEach((el) => {
+            el.addEventListener('click', (e) => e.stopPropagation());
+        });
     }
 
     if (resetButton) {
@@ -134,12 +143,6 @@ function initFilters(config = {}) {
         removeButtons.forEach(button => {
             button.addEventListener('click', removeFilter);
         });
-    }
-
-    // Si des paramètres de filtre sont dans l'URL, afficher automatiquement le panneau
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.toString() && !filtersVisible) {
-        toggleFilters();
     }
 
     // Retourner l'API publique si nécessaire

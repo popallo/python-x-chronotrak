@@ -4,14 +4,38 @@
 
 import { initFilters } from '../utils/filters.js';
 
+/**
+ * Garantit que le panneau avancé reste fermé quand un filtre rapide (tuile) est actif.
+ */
+function ensureClosedForQuickFilter() {
+    const quick = new URLSearchParams(window.location.search).get('quick');
+    if (!quick || quick === 'all') {
+        return;
+    }
+
+    const filtersPanel = document.getElementById('filtersPanel');
+    const filtersBody = document.getElementById('filtersBody');
+    const filtersIcon = document.getElementById('filtersIcon');
+    if (!filtersPanel || !filtersBody) {
+        return;
+    }
+
+    filtersBody.classList.add('hidden');
+    filtersBody.style.display = 'none';
+    filtersPanel.classList.add('collapsed');
+    if (filtersIcon) {
+        filtersIcon.classList.remove('fa-minus');
+        filtersIcon.classList.add('fa-plus');
+    }
+}
+
 function initClientFilters() {
-    return initFilters({
+    const api = initFilters({
         formId: 'clientsFilterForm',
         resetBehavior: 'submit',
-        // Ouverture gérée uniquement par le template (panel_filters_open).
-        // Un filtre rapide (tuiles) ne doit jamais dérouler le panneau.
-        autoOpen: false,
     });
+    ensureClosedForQuickFilter();
+    return api;
 }
 
 export { initClientFilters };

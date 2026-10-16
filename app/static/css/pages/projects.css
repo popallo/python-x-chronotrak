@@ -156,26 +156,31 @@
 }
 
 .project-favorite-btn {
-    border-color: rgba(255, 255, 255, 0.55);
+    border: none;
     color: #fff;
     background: transparent;
+    padding: 0.15rem 0.35rem;
+    line-height: 1;
+    box-shadow: none;
 }
 
 .project-card-header--favorite .project-favorite-btn {
-    border-color: #1e293b;
     color: #1e293b;
-    background: rgba(255, 255, 255, 0.35);
+    background: transparent;
 }
 
-.project-favorite-btn:hover {
-    transform: scale(1.08);
-    background: rgba(255, 255, 255, 0.15);
+.project-favorite-btn:hover,
+.project-favorite-btn:focus {
+    transform: scale(1.12);
+    background: transparent;
     color: #fff;
+    box-shadow: none;
 }
 
-.project-card-header--favorite .project-favorite-btn:hover {
+.project-card-header--favorite .project-favorite-btn:hover,
+.project-card-header--favorite .project-favorite-btn:focus {
     color: #1e293b;
-    background: rgba(255, 255, 255, 0.55);
+    background: transparent;
 }
 
 /* Étoile pleine : dorée sur headers foncés, sombre sur header favori orange */

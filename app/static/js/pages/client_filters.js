@@ -8,8 +8,9 @@ function initClientFilters() {
     return initFilters({
         formId: 'clientsFilterForm',
         resetBehavior: 'submit',
-        // Ne pas ouvrir le panneau pour un simple filtre rapide (quick) / tri / page
-        autoOpenIgnoreParams: ['quick', 'sort_by', 'page', 'sort_order'],
+        // Ouverture gérée uniquement par le template (panel_filters_open).
+        // Un filtre rapide (tuiles) ne doit jamais dérouler le panneau.
+        autoOpen: false,
     });
 }
 

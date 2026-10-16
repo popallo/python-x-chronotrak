@@ -93,24 +93,24 @@
     </div>
 </div>
 
-{% if quick_filter_active %}
-<div class="quick-filter-bar mb-3" role="status">
-    <span class="quick-filter-bar-label">
-        <i class="fas fa-filter me-1" aria-hidden="true"></i>Filtre actif :
-        <strong>{{ quick_filter_label }}</strong>
-    </span>
-    <a href="{{ url_for('clients.list_clients', quick='all', search=q_search, sort_by=q_sort) }}"
-       class="btn btn-sm btn-outline-secondary quick-filter-clear"
-       title="Retirer le filtre rapide">
-        <i class="fas fa-times me-1" aria-hidden="true"></i>Retirer
-    </a>
-</div>
-{% endif %}
-
 {# Panneau de filtres #}
 <div id="filtersPanel" class="filters-panel {% if not panel_filters_open %}collapsed{% endif %}">
     <div id="filtersToggle" class="filters-header">
-        <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+        <div class="filters-header-left">
+            <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+            {% if quick_filter_active %}
+            <span class="filters-active-chip" role="status" title="Filtre rapide actif">
+                <span class="filters-active-chip-label">{{ quick_filter_label }}</span>
+                <a href="{{ url_for('clients.list_clients', quick='all', search=q_search, sort_by=q_sort) }}"
+                   class="filters-active-chip-clear"
+                   data-stop-toggle
+                   title="Retirer le filtre"
+                   aria-label="Retirer le filtre {{ quick_filter_label }}">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </a>
+            </span>
+            {% endif %}
+        </div>
         <button type="button" class="btn btn-sm">
             <i id="filtersIcon" class="fas {% if panel_filters_open %}fa-minus{% else %}fa-plus{% endif %}"></i>
         </button>

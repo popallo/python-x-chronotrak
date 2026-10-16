@@ -127,6 +127,10 @@ function initFilters(config = {}) {
     // Configurer les écouteurs d'événements
     if (filtersToggle) {
         filtersToggle.addEventListener('click', toggleFilters);
+        // Liens/boutons dans le header (ex. retirer filtre rapide) ne doivent pas ouvrir le panneau
+        filtersToggle.querySelectorAll('[data-stop-toggle]').forEach((el) => {
+            el.addEventListener('click', (e) => e.stopPropagation());
+        });
     }
 
     if (resetButton) {

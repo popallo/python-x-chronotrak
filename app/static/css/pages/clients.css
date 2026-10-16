@@ -57,28 +57,6 @@
     filter: brightness(1.03);
 }
 
-.quick-filter-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    padding: 0.6rem 0.85rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border, #e2e8f0);
-    background: var(--color-bg-elevated, #f1f5f9);
-    font-size: 0.875rem;
-    color: var(--color-text, #1e293b);
-}
-
-.quick-filter-bar-label strong {
-    font-weight: 600;
-}
-
-.quick-filter-clear {
-    white-space: nowrap;
-}
-
 .client-list-stats .stats-item i {
     font-size: 1.25rem;
     width: 2.5rem;
@@ -241,12 +219,6 @@ html.dark-mode .clients-page-header .text-muted {
 
 html.dark-mode .client-list-stats .stats-item--active {
     box-shadow: inset 0 0 0 2px rgba(241, 245, 249, 0.55);
-}
-
-html.dark-mode .quick-filter-bar {
-    background: var(--dm-bg-elevated);
-    border-color: var(--dm-border);
-    color: var(--dm-text);
 }
 
 /* ===== Responsive ===== */

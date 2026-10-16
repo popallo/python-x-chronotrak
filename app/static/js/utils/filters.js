@@ -8,11 +8,15 @@
  * @param {Object} config - Configuration spécifique à la page
  * @param {string} config.formId - ID du formulaire de filtres
  * @param {string} config.resetBehavior - 'submit' ou 'redirect' pour le comportement de reset
+ * @param {boolean} config.autoOpen - Ouvrir le panneau si l'URL a des query params (défaut: true)
+ * @param {string[]} config.autoOpenIgnoreParams - Params URL ignorés pour l'auto-ouverture
  */
 function initFilters(config = {}) {
     const {
         formId = 'filtersForm',
-        resetBehavior = 'submit'
+        resetBehavior = 'submit',
+        autoOpen = true,
+        autoOpenIgnoreParams = [],
     } = config;
 
     // Éléments DOM
@@ -137,9 +141,13 @@ function initFilters(config = {}) {
     }
 
     // Si des paramètres de filtre sont dans l'URL, afficher automatiquement le panneau
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.toString() && !filtersVisible) {
-        toggleFilters();
+    if (autoOpen && !filtersVisible) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ignore = new Set(autoOpenIgnoreParams);
+        const hasRelevantParams = [...urlParams.keys()].some((key) => !ignore.has(key) && urlParams.get(key));
+        if (hasRelevantParams) {
+            toggleFilters();
+        }
     }
 
     // Retourner l'API publique si nécessaire

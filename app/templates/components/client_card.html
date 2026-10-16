@@ -17,17 +17,6 @@
         </div>
 
         <div class="card-body py-2">
-            <div class="client-status-row mb-2">
-                {% if has_projects %}
-                <span class="client-status-chip client-status-chip--with">
-                    <i class="fas fa-project-diagram me-1"></i>Avec projets
-                </span>
-                {% else %}
-                <span class="client-status-chip client-status-chip--without">
-                    <i class="fas fa-folder-open me-1"></i>Sans projet
-                </span>
-                {% endif %}
-            </div>
             {% if client.contact_name %}
             <div class="client-card-row">
                 <i class="fas fa-user"></i>

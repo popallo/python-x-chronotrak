@@ -15,7 +15,14 @@
 {% set q_date_from = date_from %}
 {% set q_date_to = date_to %}
 {% set q_quick = quick %}
-{% set total_active = q_quick == 'all' and not q_has_projects and not q_date_from and not q_date_to %}
+{% set quick_filter_active = q_quick != 'all' %}
+{# Ouvrir le panneau seulement pour les filtres avancés (pas le filtre rapide seul) #}
+{% set panel_filters_open = q_search or (q_quick == 'all' and (q_has_projects or q_date_from or q_date_to)) %}
+{% set quick_filter_label = {
+    'with_projects': 'Avec projets',
+    'without_projects': 'Sans projet',
+    'recent': 'Créés < 30j'
+}.get(q_quick, '') %}
 
 {# Header #}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 clients-page-header">
@@ -42,8 +49,8 @@
 <div class="row g-3 mb-3 client-list-stats" role="group" aria-label="Filtres rapides">
     <div class="col-6 col-lg-3">
         <a href="{{ url_for('clients.list_clients', quick='all', search=q_search, sort_by=q_sort) }}"
-           class="stats-item primary {% if total_active %}stats-item--active{% endif %}"
-           aria-pressed="{{ 'true' if total_active else 'false' }}">
+           class="stats-item primary"
+           aria-pressed="{{ 'false' if quick_filter_active else 'true' }}">
             <i class="fas fa-building"></i>
             <div class="stats-content">
                 <div class="stats-number">{{ stats_total }}</div>
@@ -86,15 +93,29 @@
     </div>
 </div>
 
+{% if quick_filter_active %}
+<div class="quick-filter-bar mb-3" role="status">
+    <span class="quick-filter-bar-label">
+        <i class="fas fa-filter me-1" aria-hidden="true"></i>Filtre actif :
+        <strong>{{ quick_filter_label }}</strong>
+    </span>
+    <a href="{{ url_for('clients.list_clients', quick='all', search=q_search, sort_by=q_sort) }}"
+       class="btn btn-sm btn-outline-secondary quick-filter-clear"
+       title="Retirer le filtre rapide">
+        <i class="fas fa-times me-1" aria-hidden="true"></i>Retirer
+    </a>
+</div>
+{% endif %}
+
 {# Panneau de filtres #}
-<div id="filtersPanel" class="filters-panel {% if not filters_active %}collapsed{% endif %}">
+<div id="filtersPanel" class="filters-panel {% if not panel_filters_open %}collapsed{% endif %}">
     <div id="filtersToggle" class="filters-header">
         <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
         <button type="button" class="btn btn-sm">
-            <i id="filtersIcon" class="fas {% if filters_active %}fa-minus{% else %}fa-plus{% endif %}"></i>
+            <i id="filtersIcon" class="fas {% if panel_filters_open %}fa-minus{% else %}fa-plus{% endif %}"></i>
         </button>
     </div>
-    <div id="filtersBody" class="filters-body {% if not filters_active %}hidden{% endif %}">
+    <div id="filtersBody" class="filters-body {% if not panel_filters_open %}hidden{% endif %}">
         <form id="clientsFilterForm" method="GET" action="{{ url_for('clients.list_clients') }}" class="mt-3">
             {# Soumettre le formulaire réinitialise le filtre rapide (quick=all implicite) #}
             <div class="row">
@@ -148,20 +169,8 @@
             </div>
         </form>
 
-        {% if filters_active %}
+        {% if panel_filters_open %}
         <div id="activeFilters" class="active-filters">
-            {% if q_quick != 'all' %}
-            <div class="filter-badge filter-badge--quick">
-                {% if q_quick == 'with_projects' %}Avec projets
-                {% elif q_quick == 'without_projects' %}Sans projet
-                {% elif q_quick == 'recent' %}Créés &lt; 30j
-                {% endif %}
-                <a href="{{ url_for('clients.list_clients', quick='all', search=q_search, sort_by=q_sort) }}"
-                   class="filter-badge-clear"
-                   title="Retirer le filtre rapide"
-                   aria-label="Retirer le filtre rapide">×</a>
-            </div>
-            {% endif %}
             {% if q_search %}
             <div class="filter-badge" data-type="search" data-value="{{ q_search }}">
                 Recherche: {{ q_search }}

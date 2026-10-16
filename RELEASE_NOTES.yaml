@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.12.1"
+  date: "2026-10"
+  items:
+  - type: fix
+    text: keep the advanced filters panel closed when using quick stats filters on clients and projects
+  - type: improvement
+    text: show the active quick filter as a compact chip in the Filtres header (including Total)
+  - type: improvement
+    text: simplify client cards and project favorite star UI (no status chips, no duplicate/boxed stars)
 - version: "2.12.0"
   date: "2026-10"
   items:

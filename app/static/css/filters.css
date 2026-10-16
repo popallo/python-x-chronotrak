@@ -55,6 +55,14 @@
     font-weight: 500;
   }
 
+  .filters-active-chip:not(:has(.filters-active-chip-clear)) {
+    padding-right: 0.65rem;
+  }
+
+  .filters-active-chip--muted {
+    opacity: 0.85;
+  }
+
   .filters-active-chip-label {
     overflow: hidden;
     text-overflow: ellipsis;

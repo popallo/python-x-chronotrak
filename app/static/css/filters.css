@@ -34,7 +34,10 @@
     transition: max-height 0.3s ease;
   }
 
+  /* display:none en plus de max-height:0 — évite tout "fuite" visuelle du formulaire */
+  .filters-panel.collapsed .filters-body,
   .filters-body.hidden {
+    display: none;
     max-height: 0;
     overflow: hidden;
     margin-top: 0;

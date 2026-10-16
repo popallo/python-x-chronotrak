@@ -45,12 +45,14 @@ function initFilters(config = {}) {
 
         if (filtersVisible) {
             filtersBody.classList.remove('hidden');
+            filtersBody.style.display = '';
             filtersPanel.classList.remove('collapsed');
             if (filtersIcon) {
                 filtersIcon.classList.replace('fa-plus', 'fa-minus');
             }
         } else {
             filtersBody.classList.add('hidden');
+            filtersBody.style.display = 'none';
             filtersPanel.classList.add('collapsed');
             if (filtersIcon) {
                 filtersIcon.classList.replace('fa-minus', 'fa-plus');

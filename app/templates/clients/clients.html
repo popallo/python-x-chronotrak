@@ -16,8 +16,8 @@
 {% set q_date_to = date_to %}
 {% set q_quick = quick %}
 {% set quick_filter_active = q_quick != 'all' %}
-{# Ouvrir le panneau seulement pour les filtres avancés (pas le filtre rapide seul) #}
-{% set panel_filters_open = q_search or (q_quick == 'all' and (q_has_projects or q_date_from or q_date_to)) %}
+{# Panneau avancé : jamais ouvert avec un filtre rapide (tuiles). #}
+{% set panel_filters_open = (not quick_filter_active) and (q_search or q_has_projects or q_date_from or q_date_to) %}
 {% set quick_filter_label = {
     'with_projects': 'Avec projets',
     'without_projects': 'Sans projet',

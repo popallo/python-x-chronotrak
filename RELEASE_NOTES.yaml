@@ -1,6 +1,11 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.13.1"
+  date: "2026-10"
+  items:
+  - type: fix
+    text: bump virtualenv (and packaging) to fix CVE-2026-113725 and CVE-2026-113722
 - version: "2.13.0"
   date: "2026-10"
   items:

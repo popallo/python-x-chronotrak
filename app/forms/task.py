@@ -1,3 +1,4 @@
+from app.models.task import WAITING_STATUS_CHOICES
 from app.models.user import User
 from app.utils.time_format import generate_hour_options
 from flask_wtf import FlaskForm
@@ -17,6 +18,11 @@ class TaskForm(FlaskForm):
         "Priorité",
         choices=[("basse", "Basse"), ("normale", "Normale"), ("haute", "Haute"), ("urgente", "Urgente")],
         validators=[DataRequired()],
+    )
+    waiting_status = SelectField(
+        "Attente",
+        choices=[("", "Aucun")] + list(WAITING_STATUS_CHOICES),
+        validators=[Optional()],
     )
     estimated_time = SelectField("Temps estimé", coerce=float, validators=[Optional()])
     user_id = SelectField("Assigné à", coerce=int, validators=[Optional()])

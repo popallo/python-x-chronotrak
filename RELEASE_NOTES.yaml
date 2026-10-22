@@ -1,6 +1,15 @@
 # Notes de version ChronoTrak - source pour la page /version
 # Éditer les items (types: feature, fix, improvement) puis commit + tag.
 
+- version: "2.13.0"
+  date: "2026-10"
+  items:
+  - type: feature
+    text: add an optional waiting sub-status on tasks (client validation, information, blocked, internal)
+  - type: improvement
+    text: show waiting chips on kanban cards and waiting controls under the status bar on task detail
+  - type: improvement
+    text: update package versions in uv.lock
 - version: "2.12.1"
   date: "2026-10"
   items:

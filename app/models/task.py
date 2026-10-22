@@ -7,6 +7,22 @@ from app.utils.slug_utils import update_slug
 from cryptography.fernet import Fernet
 from flask import current_app
 
+# Sous-statut d'attente (orthogonal au statut kanban)
+WAITING_STATUS_CHOICES = [
+    ("attente validation client", "Attente validation client"),
+    ("attente information", "Attente information"),
+    ("bloqué", "Bloqué"),
+    ("attente interne", "Attente interne"),
+]
+WAITING_STATUS_VALUES = {value for value, _ in WAITING_STATUS_CHOICES}
+WAITING_STATUS_LABELS = dict(WAITING_STATUS_CHOICES)
+WAITING_STATUS_SHORT_LABELS = {
+    "attente validation client": "Validation client",
+    "attente information": "Information",
+    "bloqué": "Bloqué",
+    "attente interne": "Interne",
+}
+
 
 class TaskRecurrenceSeries(db.Model):
     """
@@ -192,6 +208,8 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default="à faire")  # à faire, en cours, terminé
     priority = db.Column(db.String(20), nullable=False, default="normale")  # basse, normale, haute, urgente
+    # Sous-statut d'attente (nullable) — indépendant du statut kanban
+    waiting_status = db.Column(db.String(50), nullable=True)
     estimated_minutes = db.Column(db.Integer, nullable=True)  # en minutes
     actual_minutes = db.Column(db.Integer, nullable=True)  # en minutes
     # Date "d'apparition" (utilisée pour masquer les occurrences futures des tâches récurrentes)
@@ -253,6 +271,7 @@ class Task(db.Model):
             description=self.description,
             status="à faire",  # Nouvelle tâche commence toujours à "à faire"
             priority=self.priority,
+            waiting_status=self.waiting_status,
             estimated_minutes=self.estimated_minutes,
             project_id=self.project_id,
             user_id=self.user_id,
@@ -279,6 +298,7 @@ class Task(db.Model):
             description=self.description,
             status="à faire",
             priority=self.priority,
+            waiting_status=self.waiting_status,
             estimated_minutes=self.estimated_minutes,
             project_id=self.project_id,
             user_id=self.user_id,
@@ -297,6 +317,20 @@ class Task(db.Model):
         if self.recurrence_series:
             return self.recurrence_series.human_summary()
         return "Aucune récurrence"
+
+    @property
+    def waiting_status_label(self) -> str | None:
+        """Libellé affiché du sous-statut d'attente, ou None si absent."""
+        if not self.waiting_status:
+            return None
+        return WAITING_STATUS_LABELS.get(self.waiting_status, self.waiting_status)
+
+    @property
+    def waiting_status_short_label(self) -> str | None:
+        """Libellé court pour les cartes kanban."""
+        if not self.waiting_status:
+            return None
+        return WAITING_STATUS_SHORT_LABELS.get(self.waiting_status, self.waiting_status)
 
     def log_time(self, hours, user_id, description=None):
         """Enregistre du temps passé sur la tâche et le déduit du crédit du projet"""

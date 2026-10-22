@@ -92,6 +92,7 @@
                                     <th>Projet</th>
                                     <th>Statut</th>
                                     <th>Priorité</th>
+                                    <th>Attente</th>
                                     <th>Assigné à</th>
                                     <th>Créée le</th>
                                     <th>Actions</th>
@@ -119,6 +120,15 @@
                                         <span class="badge bg-{{ task.priority|priority_color }}">
                                             {{ task.priority }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {% if task.waiting_status %}
+                                        <span class="badge bg-{{ task.waiting_status|waiting_status_color }}">
+                                            {{ task.waiting_status_short_label }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if task.assigned_to %}

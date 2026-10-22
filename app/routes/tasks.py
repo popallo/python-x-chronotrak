@@ -4,7 +4,17 @@ from datetime import UTC, datetime, timedelta
 from app import db
 from app.forms.task import CommentForm, DeleteTaskForm, EditCommentForm, TaskForm, TimeEntryForm
 from app.models.project import Project
-from app.models.task import ChecklistItem, Comment, Task, TaskRecurrenceSeries, TimeEntry, UserPinnedTask
+from app.models.task import (
+    WAITING_STATUS_CHOICES,
+    WAITING_STATUS_LABELS,
+    WAITING_STATUS_VALUES,
+    ChecklistItem,
+    Comment,
+    Task,
+    TaskRecurrenceSeries,
+    TimeEntry,
+    UserPinnedTask,
+)
 from app.models.user import User
 from app.utils import get_utc_now
 from app.utils import task_attachments as attachments_util
@@ -188,11 +198,14 @@ def new_task(slug_or_id):
         # Convertir 0.0 (valeur pour "Non défini") à None
         estimated_time = None if form.estimated_time.data == 0.0 else form.estimated_time.data
 
+        waiting_status = form.waiting_status.data or None
+
         task = Task(
             title=form.title.data,
             description=form.description.data,
             status=form.status.data,
             priority=form.priority.data,
+            waiting_status=waiting_status,
             estimated_time=estimated_time,
             project_id=project.id,
             user_id=user_id,
@@ -342,6 +355,7 @@ def task_details(slug_or_id):
         form=delete_form,
         recurrence_info=recurrence_info,
         task_attachments=task_attachments,
+        waiting_status_choices=WAITING_STATUS_CHOICES,
         title=task.title,
     )
 
@@ -760,6 +774,7 @@ def edit_task(slug_or_id):
         task.description = form.description.data
         task.status = form.status.data
         task.priority = form.priority.data
+        task.waiting_status = form.waiting_status.data or None
         task.estimated_time = form.estimated_time.data
         task.user_id = user_id
 
@@ -792,6 +807,7 @@ def edit_task(slug_or_id):
         form.description.data = task.description
         form.status.data = task.status
         form.priority.data = task.priority
+        form.waiting_status.data = task.waiting_status or ""
         form.estimated_time.data = task.estimated_time
         form.user_id.data = task.user_id if task.user_id else 0
 
@@ -1126,6 +1142,48 @@ def update_status():
         )
     except Exception as e:
         current_app.logger.error(f"Erreur lors de la mise à jour du statut: {str(e)}")
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@tasks.route("/tasks/update_waiting_status", methods=["POST"])
+@login_required
+def update_waiting_status():
+    """Met à jour le sous-statut d'attente d'une tâche (indépendant du statut kanban)."""
+    try:
+        data = request.get_json() or {}
+        task_id = data.get("task_id")
+        raw_waiting = data.get("waiting_status", "")
+
+        if not task_id:
+            return jsonify({"success": False, "error": "Paramètres manquants"}), 400
+
+        # Chaîne vide / null = aucun sous-statut
+        if raw_waiting in (None, ""):
+            new_waiting = None
+        else:
+            new_waiting = str(raw_waiting).strip()
+            if new_waiting not in WAITING_STATUS_VALUES:
+                return jsonify({"success": False, "error": "Sous-statut d'attente invalide"}), 400
+
+        task = Task.query.get_or_404(task_id)
+
+        if current_user.is_client():
+            if not current_user.has_access_to_client(task.project.client_id):
+                return jsonify({"success": False, "error": "Accès non autorisé"}), 403
+
+        task.waiting_status = new_waiting
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "waiting_status": new_waiting,
+                "waiting_status_label": WAITING_STATUS_LABELS.get(new_waiting) if new_waiting else None,
+            }
+        )
+    except Exception as e:
+        current_app.logger.error("Erreur lors de la mise à jour du sous-statut d'attente: %s", e)
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
 

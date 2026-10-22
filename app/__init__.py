@@ -414,6 +414,29 @@ def create_app(config_name):
         priority_colors = {"basse": "secondary", "normale": "primary", "haute": "warning", "urgente": "danger"}
         return priority_colors.get(priority, "secondary")
 
+    # Filtre pour la couleur / modificateur CSS du sous-statut d'attente
+    @app.template_filter("waiting_status_color")
+    def waiting_status_color_filter(waiting_status):
+        """Couleur Bootstrap discrète pour un sous-statut d'attente."""
+        waiting_colors = {
+            "attente validation client": "warning",
+            "attente information": "info",
+            "bloqué": "danger",
+            "attente interne": "secondary",
+        }
+        return waiting_colors.get(waiting_status, "secondary")
+
+    @app.template_filter("waiting_status_modifier")
+    def waiting_status_modifier_filter(waiting_status):
+        """Suffixe CSS pour les chips kanban / détail."""
+        modifiers = {
+            "attente validation client": "validation",
+            "attente information": "information",
+            "bloqué": "bloque",
+            "attente interne": "interne",
+        }
+        return modifiers.get(waiting_status, "default")
+
     # Filtre pour gérer les comparaisons avec None
     @app.template_filter("safe_compare")
     def safe_compare_filter(value, operator, threshold):
